@@ -15,11 +15,10 @@ export class AuthController {
 
   static async login(req: Request, res: Response) {
     try {
-      const { email } = req.body;
-      const user = await authService.login(email);
-      res.json(user);
+      const { email, password } = req.body;
+      const result = await authService.login({ email, password });
+      res.json(result);
     } catch (error: any) {
-      res.status(404).json({ message: error.message });
-    }
+       res.status(401).json({ message: error.message });    }
   }
 }

@@ -4,6 +4,7 @@ type CreateUserDTO = {
   email: string;
   firstName: string;
   lastName: string;
+  password: string;
   role?: Role;
 };
 
@@ -13,6 +14,7 @@ export class UserFactory {
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
+      password: data.password,
       role: data.role ?? Role.CITIZEN,
     };
   }
