@@ -10,7 +10,6 @@ CREATE TABLE "User" (
     "role" "Role" NOT NULL DEFAULT 'CITIZEN',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 

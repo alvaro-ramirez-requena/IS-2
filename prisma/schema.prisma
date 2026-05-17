@@ -1,48 +1,16 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model User {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  firstName  String
-  lastName   String
-  role       Role     @default(CITIZEN)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  reports    Report[]
 }
 
 enum Role {
   CITIZEN
   OPERATOR
   TECHNICIAN
-}
-
-
-model Report {
-  id          String   @id @default(uuid())
-  title       String
-  description String
-  location    String
-  status      Status   @default(REGISTERED)
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
 }
 
 enum Status {
@@ -54,4 +22,81 @@ enum Status {
   ASSIGNED
   IN_PROGRESS
   RESOLVED
+}
+
+enum CategoryGroup {
+  SECURITY
+  AMBIENCE
+  INFRASTRUCTURE
+  MOBILITY
+}
+
+model District {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  users     User[]
+  reports   Report[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id              String    @id @default(uuid())
+  firstName       String
+  lastName        String
+  email           String    @unique
+  password        String
+  role            Role      @default(CITIZEN)
+  districtId      String?
+  district        District? @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  reports         Report[]  @relation("CreatedReports")
+  reviewedReports Report[]  @relation("ReviewedReports")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Category {
+  id        String         @id @default(uuid())
+  name      String         @unique
+  slug      String         @unique
+  group     CategoryGroup
+  icon      String?
+  reports   Report[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model Report {
+  id              String   @id @default(uuid())
+  code            String   @unique @default(cuid())
+  title           String
+  description     String
+  location        String
+  latitude        Float?
+  longitude       Float?
+  evidenceUrl     String?
+  isAnonymous     Boolean  @default(false)
+  severity        Int      @default(1)
+  urgency         Int      @default(1)
+  priorityScore   Int      @default(0)
+  status          Status   @default(REGISTERED)
+  rejectionReason String?
+  userId          String
+  districtId      String
+  categoryId      String
+  reviewedById    String?
+  reviewedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user        User      @relation("CreatedReports", fields: [userId], references: [id], onDelete: Cascade)
+  district    District  @relation(fields: [districtId], references: [id])
+  category    Category  @relation(fields: [categoryId], references: [id])
+  reviewedBy  User?     @relation("ReviewedReports", fields: [reviewedById], references: [id])
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([districtId])
+  @@index([status])
 }

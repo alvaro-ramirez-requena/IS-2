@@ -1,35 +1,100 @@
-import { Request, Response } from "express";
-import { ReportService } from "../services/report.service";
+import { NextFunction, Request, Response } from "express";
+import { HttpError } from "../utils/httpError";
+import * as reportService from "../services/report.service";
 
-const reportService = new ReportService();
+export async function create(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) throw new HttpError(401, "No autenticado");
 
-export class ReportController {
-    static async create(req: Request, res: Response) {
-        try {
-            const report = await reportService.createReport(req.body);
-            res.status(201).json(report);
-        } catch (error: any) {
-            res.status(400).json({ message: error.message });
-        }
+    const {
+      title,
+      description,
+      location,
+      categoryId,
+      districtId,
+      isAnonymous,
+      latitude,
+      longitude,
+      evidenceUrl,
+      severity,
+      urgency,
+    } = req.body;
+
+    if (!title || !description || !location || !categoryId) {
+      throw new HttpError(400, "Faltan campos obligatorios");
     }
 
-    static async getByUser(req: Request, res: Response) {
-        try {
-            const userId = req.params.userId as string;
-            const reports = await reportService.getReportsByUser(userId);
-            res.json(reports);
-        } catch (error: any) {
-            res.status(400).json({ message: error.message });
-        }
+    const finalDistrictId = districtId || req.user.districtId;
+
+    if (!finalDistrictId) {
+      throw new HttpError(400, "Debes indicar un distrito");
     }
 
-    static async getById(req: Request, res: Response) {
-        try {
-            const id = req.params.id as string;
-            const report = await reportService.getReportById(id);
-            res.json(report);
-        } catch (error: any) {
-            res.status(404).json({ message: error.message });
-        }
+    const report = await reportService.createReport(req.user.id, {
+      title,
+      description,
+      location,
+      categoryId,
+      districtId: finalDistrictId,
+      isAnonymous,
+      latitude: latitude !== undefined ? Number(latitude) : undefined,
+      longitude: longitude !== undefined ? Number(longitude) : undefined,
+      evidenceUrl,
+      severity: severity !== undefined ? Number(severity) : undefined,
+      urgency: urgency !== undefined ? Number(urgency) : undefined,
+    });
+
+    return res.status(201).json(report);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function mine(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) throw new HttpError(401, "No autenticado");
+
+    const reports = await reportService.listReportsByUser(req.user.id);
+    return res.status(200).json(reports);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getByUser(
+  req: Request<{ userId: string }>,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!req.user) throw new HttpError(401, "No autenticado");
+
+    const { userId } = req.params;
+
+    if (req.user.role === "CITIZEN" && req.user.id !== userId) {
+      throw new HttpError(403, "No puedes ver los reportes de otro usuario");
     }
+
+    const reports = await reportService.listReportsByUser(userId);
+    return res.status(200).json(reports);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getById(
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!req.user) throw new HttpError(401, "No autenticado");
+
+    const { id } = req.params;
+    const report = await reportService.getReportById(id, req.user.id, req.user.role);
+
+    return res.status(200).json(report);
+  } catch (error) {
+    next(error);
+  }
 }

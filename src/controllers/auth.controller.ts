@@ -1,25 +1,53 @@
-import { Request, Response } from "express";
-import { AuthService } from "../services/auth.service";
+import { NextFunction, Request, Response } from "express";
+import { HttpError } from "../utils/httpError";
+import * as authService from "../services/auth.service";
 
-const authService = new AuthService();
+export async function register(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { firstName, lastName, email, password, districtId } = req.body;
 
-export class AuthController {
-  static async register(req: Request, res: Response) {
-    try {
-      const user = await authService.register(req.body);
-      res.status(201).json(user);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
+    if (!firstName || !lastName || !email || !password) {
+      throw new HttpError(400, "Faltan campos obligatorios");
     }
+
+    const result = await authService.register({
+      firstName,
+      lastName,
+      email,
+      password,
+      districtId,
+    });
+
+    return res.status(201).json(result);
+  } catch (error) {
+    next(error);
   }
+}
 
-  static async login(req: Request, res: Response) {
-    try {
-      const { email } = req.body;
-      const user = await authService.login(email);
-      res.json(user);
-    } catch (error: any) {
-      res.status(404).json({ message: error.message });
+export async function login(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      throw new HttpError(400, "Email y contraseña son obligatorios");
     }
+
+    const result = await authService.login({ email, password });
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function me(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      throw new HttpError(401, "No autenticado");
+    }
+
+    const user = await authService.me(req.user.id);
+    return res.status(200).json(user);
+  } catch (error) {
+    next(error);
   }
 }
