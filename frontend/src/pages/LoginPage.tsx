@@ -1,0 +1,223 @@
+import { useState } from "react";
+
+import type {
+    LoginFormValues,
+} from "../types/auth.types";
+
+import {
+    validateLogin,
+} from "../validators/auth.validator";
+
+import {
+    AuthService,
+} from "../services/auth.service";
+
+import Input
+    from "../components/ui/Input";
+
+import Button
+    from "../components/ui/Button";
+
+export default function LoginPage() {
+
+    const [formData, setFormData] =
+        useState<LoginFormValues>({
+            email: "",
+            password: "",
+        });
+
+    const [errors, setErrors] =
+        useState<
+            Partial<
+                Record<
+                    keyof LoginFormValues,
+                    string
+                >
+            >
+        >({});
+
+    const [message, setMessage] =
+        useState("");
+
+    const [isSubmitting, setIsSubmitting] =
+        useState(false);
+
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+
+        const { name, value } = e.target;
+
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const handleSubmit = async (
+        e: React.FormEvent
+    ) => {
+
+        e.preventDefault();
+
+        setMessage("");
+
+        const validationErrors =
+            validateLogin(formData);
+
+        setErrors(validationErrors);
+
+        if (
+            Object.keys(validationErrors).length > 0
+        ) {
+            return;
+        }
+
+        try {
+
+            setIsSubmitting(true);
+
+            const response =
+                await AuthService.login(formData);
+
+            localStorage.setItem(
+                "userId",
+                response.user.id
+            );
+
+            setMessage(
+                response.message
+            );
+
+        } catch (error: any) {
+
+            setMessage(
+                error?.message
+                || "Error inesperado"
+            );
+
+        } finally {
+
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="
+  min-h-screen
+  grid
+  lg:grid-cols-2
+">
+
+            <div className="
+  bg-[#03152E]
+  text-white
+  p-8
+  lg:p-16
+  flex
+  flex-col
+  justify-center
+">
+
+                <h1 className="text-5xl font-bold">
+                    reporta
+                    <span className="text-yellow-400">
+                        Ya
+                    </span>
+                </h1>
+
+                <div className="mt-16">
+
+                    <h2 className="
+  text-3xl
+  lg:text-5xl
+  font-bold
+  leading-tight
+">
+                        Bienvenido nuevamente
+                    </h2>
+
+                    <p className="
+  mt-6
+  lg:mt-8
+  text-lg
+  lg:text-2xl
+  text-gray-300
+">
+                        Inicia sesión para continuar.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div className="bg-white flex items-center justify-center">
+
+                <div className="
+  w-full
+  max-w-xl
+  px-6
+  lg:px-0
+">
+
+                    <h2 className="text-4xl font-bold text-gray-800 mb-10">
+                        Iniciar sesión
+                    </h2>
+
+                    <form
+                        className="space-y-6"
+                        onSubmit={handleSubmit}
+                    >
+
+                        <div>
+
+                            <Input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                placeholder="Correo electrónico"
+                                error={errors.email}
+                            />
+
+                        </div>
+
+                        <div>
+
+                            <Input
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                placeholder="Contraseña"
+                                error={errors.password}
+                            />
+
+                        </div>
+
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                        >
+                            {
+                                isSubmitting
+                                    ? "Ingresando..."
+                                    : "Ingresar"
+                            }
+                        </Button>
+
+                        {message && (
+                            <div className="text-center">
+                                {message}
+                            </div>
+                        )}
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+    );
+}
