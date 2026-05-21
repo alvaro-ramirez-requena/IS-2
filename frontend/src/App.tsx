@@ -13,6 +13,11 @@ import LoginPage
 import HomePage
   from "./pages/HomePage";
 
+import CreateReportPage from "./pages/CreateReportPage";
+
+
+
+
 export default function App() {
 
   return (
@@ -39,6 +44,13 @@ export default function App() {
         element={
           <Navigate to="/login" />
         }
+      />
+
+      <Route 
+        path="/create-report" 
+        element={
+          <CreateReportPage />
+        } 
       />
 
     </Routes>
