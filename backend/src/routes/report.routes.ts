@@ -5,6 +5,8 @@ const router = Router();
 
 router.post("/", ReportController.create);
 
+router.get("/pending", ReportController.getPending);
+
 router.get("/user/:userId", ReportController.getByUser);
 
 router.get("/category/:category", ReportController.getByCategory);

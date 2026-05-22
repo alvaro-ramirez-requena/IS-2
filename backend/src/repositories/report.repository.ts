@@ -45,4 +45,21 @@ export class ReportRepository {
       where: { id },
     });
   }
+
+  async findPending() {
+    return await prisma.report.findMany({
+      where: { status: "REGISTERED" },
+      orderBy: { createdAt: "asc" },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
 }

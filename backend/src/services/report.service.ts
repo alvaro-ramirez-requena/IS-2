@@ -44,4 +44,8 @@ export class ReportService {
 
     return report;
   }
+
+  async getPendingReports() {
+    return await this.reportRepository.findPending();
+  }
 }
