@@ -30,6 +30,9 @@ export class ReportFactory {
       longitude:
         formData.longitude,
 
+      imageUrls:
+        formData.imageUrls,
+
       userId,
     };
   }

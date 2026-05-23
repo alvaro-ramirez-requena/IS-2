@@ -24,6 +24,9 @@ import { ReportService }
 import ReportLocationStep
     from "../components/report/ReportLocationStep";
 
+import ReportEvidenceStep
+    from "../components/report/ReportEvidenceStep";
+
 export default function CreateReportPage() {
 
     const [formData, setFormData] =
@@ -35,6 +38,10 @@ export default function CreateReportPage() {
             isAnonymous: false,
             latitude: undefined,
             longitude: undefined,
+
+            images: [],
+
+            imageUrls: [],
         });
 
     const [errors, setErrors] =
@@ -105,6 +112,15 @@ export default function CreateReportPage() {
                 return;
             }
 
+            if (currentStep === 2) {
+
+                setCurrentStep(3);
+
+                setIsSubmitting(false);
+
+                return;
+            }
+
             const dto =
                 ReportFactory
                     .toCreateReportDTO(
@@ -126,6 +142,10 @@ export default function CreateReportPage() {
                 isAnonymous: false,
                 latitude: undefined,
                 longitude: undefined,
+
+                images: [],
+
+                imageUrls: [],
             });
 
             setCurrentStep(1);
@@ -209,6 +229,15 @@ export default function CreateReportPage() {
 
                 )}
 
+                {currentStep === 3 && (
+
+                    <ReportEvidenceStep
+                        formData={formData}
+                        setFormData={setFormData}
+                    />
+
+                )}
+
                 <button
                     onClick={handleNext}
                     disabled={isSubmitting}
@@ -226,7 +255,9 @@ export default function CreateReportPage() {
                     {
                         isSubmitting
                             ? "Creando..."
-                            : "Siguiente"
+                            : currentStep === 3
+                                ? "Crear reporte"
+                                : "Siguiente"
                     }
                 </button>
 

@@ -28,14 +28,31 @@ export class ReportService {
     isAnonymous?: boolean;
 
     userId: string;
+
+    imageUrls: string[];
   }) {
 
-    const report =
-      ReportFactory.create(data);
+    const reportData =
+  ReportFactory.create(data);
 
-    return await this
-      .reportRepository
-      .create(report);
+const report =
+  await this
+    .reportRepository
+    .create(reportData);
+
+if (data.imageUrls.length > 0) {
+
+  await this
+    .reportRepository
+    .createEvidences(
+
+      report.id,
+
+      data.imageUrls
+    );
+}
+
+return report;
   }
 
   async getReportsByUser(

@@ -36,6 +36,31 @@ export class ReportRepository {
     });
   }
 
+  async createEvidences(
+
+  reportId: string,
+
+  imageUrls: string[]
+) {
+
+  return await prisma
+    .reportEvidence
+    .createMany({
+
+      data:
+        imageUrls.map(
+          (imageUrl) => ({
+
+            reportId,
+
+            imageUrl,
+          })
+        ),
+    });
+}
+
+  
+
   async findByUser(
     userId: string
   ) {
@@ -47,6 +72,7 @@ export class ReportRepository {
         createdAt: "desc",
       },
     });
+
   }
 
   async findByCategory(

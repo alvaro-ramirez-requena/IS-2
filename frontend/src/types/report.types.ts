@@ -11,6 +11,10 @@ export type ReportFormValues = {
   latitude?: number;
 
   longitude?: number;
+
+  images: File[];
+
+  imageUrls: string[];
 };
 
 export type CreateReportDTO = {
@@ -26,6 +30,8 @@ export type CreateReportDTO = {
   latitude?: number;
 
   longitude?: number;
+
+  imageUrls: string[];
 
   userId: string;
 };
@@ -47,14 +53,14 @@ export type ApiReport = {
   longitude?: number;
 
   status:
-    | "REGISTERED"
-    | "VALIDATING"
-    | "APPROVED"
-    | "REJECTED"
-    | "PRIORITIZED"
-    | "ASSIGNED"
-    | "IN_PROGRESS"
-    | "RESOLVED";
+  | "REGISTERED"
+  | "VALIDATING"
+  | "APPROVED"
+  | "REJECTED"
+  | "PRIORITIZED"
+  | "ASSIGNED"
+  | "IN_PROGRESS"
+  | "RESOLVED";
 
   userId: string;
 

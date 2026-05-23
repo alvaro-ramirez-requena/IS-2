@@ -51,10 +51,27 @@ model Report {
   userId         String
   user           User @relation(fields: [userId], references: [id])
 
+  evidences     ReportEvidence[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([userId])
+}
+
+model ReportEvidence {
+
+  id         String   @id @default(uuid())
+
+  imageUrl   String
+
+  reportId   String
+
+  report     Report @relation(fields: [reportId], references: [id])
+
+  createdAt  DateTime @default(now())
+
+  @@index([reportId])
 }
 
 enum Status {

@@ -35,11 +35,48 @@ export class ReportService {
 
         message = error?.message || message;
 
-      } catch {}
+      } catch { }
 
       throw new Error(message);
     }
 
     return response.json();
+
+
+  }
+
+  static async uploadImage(
+    image: File
+  ): Promise<string> {
+
+    const formData =
+      new FormData();
+
+    formData.append(
+      "image",
+      image
+    );
+
+    const response =
+      await fetch(
+        `${API_URL}/api/uploads`,
+        {
+          method: "POST",
+
+          body: formData,
+        }
+      );
+
+    if (!response.ok) {
+
+      throw new Error(
+        "No se pudo subir la imagen"
+      );
+    }
+
+    const data =
+      await response.json();
+
+    return data.imageUrl;
   }
 }
