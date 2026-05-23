@@ -26,6 +26,61 @@ type Props = {
     >;
 };
 
+const categoryProblems = {
+
+    SECURITY: [
+
+        "Robos y asaltos",
+
+        "Consumo de alcohol en la vía pública",
+
+        "Venta ambulante no autorizada",
+
+        "Personas sospechosas",
+
+        "Ruidos molestos",
+    ],
+
+    ENVIRONMENT: [
+
+        "Acumulación de basura",
+
+        "Mal olor en la vía pública",
+
+        "Contaminación de áreas verdes",
+
+        "Residuos fuera de contenedores",
+
+        "Quema de residuos",
+    ],
+
+    INFRASTRUCTURE: [
+
+        "Alumbrado público defectuoso",
+
+        "Pistas en mal estado",
+
+        "Veredas en mal estado",
+
+        "Semáforos inoperativos",
+
+        "Señalización dañada",
+    ],
+
+    MOBILITY: [
+
+        "Congestión vehicular",
+
+        "Estacionamiento en zonas prohibidas",
+
+        "Transporte público deficiente",
+
+        "Autos abandonados",
+
+        "Exceso de velocidad",
+    ],
+};
+
 export default function ReportInformationStep({
     formData,
     setFormData,
@@ -57,8 +112,13 @@ export default function ReportInformationStep({
                         value={formData.category}
                         onChange={(e) =>
                             setFormData((prev) => ({
+
                                 ...prev,
-                                category: e.target.value,
+
+                                category:
+                                    e.target.value,
+
+                                problemType: "",
                             }))
                         }
                         className="
@@ -137,17 +197,22 @@ export default function ReportInformationStep({
                             Selecciona un tipo de problema
                         </option>
 
-                        <option value="POTHOLES">
-                            Pistas en mal estado
-                        </option>
+                        {
+                            formData.category &&
 
-                        <option value="GARBAGE">
-                            Acumulación de basura
-                        </option>
+                            categoryProblems[
+                                formData.category as keyof typeof categoryProblems
+                            ]?.map((problem) => (
 
-                        <option value="LIGHTING">
-                            Alumbrado público defectuoso
-                        </option>
+                                <option
+                                    key={problem}
+                                    value={problem}
+                                >
+                                    {problem}
+                                </option>
+
+                            ))
+                        }
 
                     </select>
 

@@ -27,6 +27,9 @@ import ReportLocationStep
 import ReportEvidenceStep
     from "../components/report/ReportEvidenceStep";
 
+import ReportReviewStep
+    from "../components/report/ReportReviewStep";
+
 export default function CreateReportPage() {
 
     const [formData, setFormData] =
@@ -84,7 +87,6 @@ export default function CreateReportPage() {
 
         try {
 
-            setIsSubmitting(true);
 
             setMessage("");
 
@@ -120,6 +122,17 @@ export default function CreateReportPage() {
 
                 return;
             }
+
+            if (currentStep === 3) {
+
+                setCurrentStep(4);
+
+                setIsSubmitting(false);
+
+                return;
+            }
+
+            setIsSubmitting(true);
 
             const dto =
                 ReportFactory
@@ -160,6 +173,16 @@ export default function CreateReportPage() {
         } finally {
 
             setIsSubmitting(false);
+        }
+    };
+
+    const handlePrevious = () => {
+
+        if (currentStep > 1) {
+
+            setCurrentStep(
+                (prev) => prev - 1
+            );
         }
     };
 
@@ -231,6 +254,7 @@ export default function CreateReportPage() {
 
                 {currentStep === 3 && (
 
+
                     <ReportEvidenceStep
                         formData={formData}
                         setFormData={setFormData}
@@ -238,28 +262,67 @@ export default function CreateReportPage() {
 
                 )}
 
-                <button
-                    onClick={handleNext}
-                    disabled={isSubmitting}
-                    className="
-          mt-10
-          w-full
-          bg-blue-600
-          hover:bg-blue-700
-          text-white
-          rounded-2xl
-          py-5
-          text-2xl
-          font-semibold
-        ">
-                    {
-                        isSubmitting
-                            ? "Creando..."
-                            : currentStep === 3
-                                ? "Crear reporte"
-                                : "Siguiente"
-                    }
-                </button>
+                {currentStep === 4 && (
+
+                    <ReportReviewStep
+                        formData={formData}
+                    />
+
+                )}
+
+                <div className="
+    mt-10
+    flex
+    justify-between
+    gap-4
+">
+
+                    {currentStep > 1 && (
+
+                        <button
+                            onClick={handlePrevious}
+
+                            className="
+                px-8
+                py-5
+                border
+                rounded-2xl
+                text-xl
+                font-semibold
+                hover:bg-gray-100
+            "
+                        >
+                            ← Anterior
+                        </button>
+
+                    )}
+
+                    <button
+                        onClick={handleNext}
+
+                        disabled={isSubmitting}
+
+                        className="
+            flex-1
+            bg-blue-600
+            hover:bg-blue-700
+            text-white
+            rounded-2xl
+            py-5
+            text-2xl
+            font-semibold
+        "
+                    >
+                        {
+                            isSubmitting
+                                ? "Creando..."
+                                : currentStep === 4
+                                    ? "Crear reporte"
+                                    : "Siguiente"
+                        }
+                    </button>
+
+                </div>
 
                 {message && (
 
