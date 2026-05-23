@@ -7,7 +7,12 @@ import ProblemBanner
 import CategorySection
     from "../components/home/CategorySection";
 
+import { useNavigate }
+from "react-router-dom";
+
 export default function HomePage() {
+
+    const navigate = useNavigate();
 
     return (
 
@@ -27,6 +32,50 @@ export default function HomePage() {
 ">
 
                 <ProblemBanner />
+
+                <div className="
+  grid
+  grid-cols-1
+  md:grid-cols-2
+  lg:grid-cols-5
+  gap-6
+  mb-12
+">
+
+                    <button 
+                    onClick={() => navigate("/reports/create")}
+                    className="
+    bg-red-700
+    hover:bg-red-800
+    text-white
+    rounded-2xl
+    p-6
+    text-left
+    transition
+  ">
+
+                        <p className="
+      text-4xl
+      font-bold
+    ">
+                            +
+                        </p>
+
+                        <h3 className="
+      text-2xl
+      font-semibold
+      mt-4
+    ">
+                            Crear reporte
+                        </h3>
+
+                        <p className="mt-2 text-red-100">
+                            Reporta un problema en tu distrito
+                        </p>
+
+                    </button>
+
+                </div>
 
                 <CategorySection />
 

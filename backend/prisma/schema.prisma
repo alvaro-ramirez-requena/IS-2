@@ -33,27 +33,23 @@ enum Role {
 
 
 model Report {
-  id            String   @id @default(uuid())
+  id             String   @id @default(uuid())
 
-  title         String
-  description   String
+  category       ReportCategory
 
-  category      ReportCategory
+  problemType    String
 
-  location      String
+  description    String
 
-  latitude      Float?
-  longitude     Float?
+  isAnonymous    Boolean @default(false)
 
-  isAnonymous   Boolean @default(false)
+  status         Status @default(REGISTERED)
 
-  status        Status @default(REGISTERED)
+  userId         String
+  user           User @relation(fields: [userId], references: [id])
 
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([userId])
 }

@@ -1,15 +1,15 @@
-import { Status, ReportCategory } from "@prisma/client";
+import {
+  Status,
+  ReportCategory,
+} from "@prisma/client";
 
 type CreateReportDTO = {
-  title: string;
-  description: string;
 
   category: ReportCategory;
 
-  location: string;
+  problemType: string;
 
-  latitude?: number;
-  longitude?: number;
+  description: string;
 
   isAnonymous?: boolean;
 
@@ -17,23 +17,30 @@ type CreateReportDTO = {
 };
 
 export class ReportFactory {
-  static create(data: CreateReportDTO) {
+
+  static create(
+    data: CreateReportDTO
+  ) {
+
     return {
-      title: data.title,
-      description: data.description,
 
-      category: data.category,
+      category:
+        data.category,
 
-      location: data.location,
+      problemType:
+        data.problemType,
 
-      latitude: data.latitude,
-      longitude: data.longitude,
+      description:
+        data.description,
 
-      isAnonymous: data.isAnonymous ?? false,
+      isAnonymous:
+        data.isAnonymous ?? false,
 
-      userId: data.userId,
+      userId:
+        data.userId,
 
-      status: Status.REGISTERED,
+      status:
+        Status.REGISTERED,
     };
   }
 }

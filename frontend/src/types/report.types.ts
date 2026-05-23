@@ -1,18 +1,17 @@
 export type ReportFormValues = {
-  title: string;
-  description: string;
-  location: string;
   category: string;
+  problemType: string;
+  description: string;
+  isAnonymous: boolean;
 };
 
 export type CreateReportDTO = {
-  title: string;
-  description: string;
-  location: string;
-  userId: string;
   category: string;
+  problemType: string;
+  description: string;
+  isAnonymous: boolean;
+  userId: string;
 };
-
 export type ApiReport = {
   id: string;
   title: string;
