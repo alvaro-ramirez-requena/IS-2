@@ -1,22 +1,50 @@
 export type ReportFormValues = {
+
   category: string;
+
   problemType: string;
+
   description: string;
+
   isAnonymous: boolean;
+
+  latitude?: number;
+
+  longitude?: number;
 };
 
 export type CreateReportDTO = {
+
   category: string;
+
   problemType: string;
+
   description: string;
+
   isAnonymous: boolean;
+
+  latitude?: number;
+
+  longitude?: number;
+
   userId: string;
 };
+
 export type ApiReport = {
+
   id: string;
-  title: string;
+
+  category: string;
+
+  problemType: string;
+
   description: string;
-  location: string;
+
+  isAnonymous: boolean;
+
+  latitude?: number;
+
+  longitude?: number;
 
   status:
     | "REGISTERED"
@@ -31,5 +59,6 @@ export type ApiReport = {
   userId: string;
 
   createdAt: string;
+
   updatedAt: string;
 };

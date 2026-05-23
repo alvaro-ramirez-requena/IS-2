@@ -21,6 +21,9 @@ import { ReportFactory }
 import { ReportService }
     from "../services/report.service";
 
+import ReportLocationStep
+    from "../components/report/ReportLocationStep";
+
 export default function CreateReportPage() {
 
     const [formData, setFormData] =
@@ -30,6 +33,8 @@ export default function CreateReportPage() {
             problemType: "",
             description: "",
             isAnonymous: false,
+            latitude: undefined,
+            longitude: undefined,
         });
 
     const [errors, setErrors] =
@@ -49,18 +54,25 @@ export default function CreateReportPage() {
         setIsSubmitting] =
         useState(false);
 
+    const [currentStep,
+        setCurrentStep] =
+        useState(1);
+
     const handleNext = async () => {
 
-        const validationErrors =
-            validateReport(formData);
+        if (currentStep === 1) {
 
-        setErrors(validationErrors);
+            const validationErrors =
+                validateReport(formData);
 
-        if (
-            Object.keys(validationErrors)
-                .length > 0
-        ) {
-            return;
+            setErrors(validationErrors);
+
+            if (
+                Object.keys(validationErrors)
+                    .length > 0
+            ) {
+                return;
+            }
         }
 
         try {
@@ -77,6 +89,16 @@ export default function CreateReportPage() {
                 setMessage(
                     "Usuario no autenticado"
                 );
+
+                setIsSubmitting(false);
+
+                return;
+            }
+
+
+            if (currentStep === 1) {
+
+                setCurrentStep(2);
 
                 setIsSubmitting(false);
 
@@ -102,7 +124,11 @@ export default function CreateReportPage() {
                 problemType: "",
                 description: "",
                 isAnonymous: false,
+                latitude: undefined,
+                longitude: undefined,
             });
+
+            setCurrentStep(1);
 
         } catch (error: any) {
 
@@ -158,15 +184,30 @@ export default function CreateReportPage() {
 
                 <div className="mt-12">
 
-                    <ReportStepper currentStep={1} />
+                    <ReportStepper
+                        currentStep={currentStep}
+                    />
 
                 </div>
 
-                <ReportInformationStep
-                    formData={formData}
-                    setFormData={setFormData}
-                    errors={errors}
-                />
+                {currentStep === 1 && (
+
+                    <ReportInformationStep
+                        formData={formData}
+                        setFormData={setFormData}
+                        errors={errors}
+                    />
+
+                )}
+
+                {currentStep === 2 && (
+
+                    <ReportLocationStep
+                        formData={formData}
+                        setFormData={setFormData}
+                    />
+
+                )}
 
                 <button
                     onClick={handleNext}

@@ -24,6 +24,12 @@ export class ReportFactory {
       isAnonymous:
         formData.isAnonymous,
 
+      latitude:
+        formData.latitude,
+
+      longitude:
+        formData.longitude,
+
       userId,
     };
   }

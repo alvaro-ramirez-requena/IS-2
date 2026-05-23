@@ -1,8 +1,8 @@
 import { ReportRepository }
-from "../repositories/report.repository";
+  from "../repositories/report.repository";
 
 import { ReportFactory }
-from "../factories/report.factory";
+  from "../factories/report.factory";
 
 import {
   ReportCategory,
@@ -20,6 +20,10 @@ export class ReportService {
     problemType: string;
 
     description: string;
+
+    latitude?: number;
+
+    longitude?: number;
 
     isAnonymous?: boolean;
 

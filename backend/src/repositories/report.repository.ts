@@ -1,5 +1,5 @@
 import { prisma }
-from "../config/prisma";
+  from "../config/prisma";
 
 import {
   Status,
@@ -13,6 +13,10 @@ type CreateReportInput = {
   problemType: string;
 
   description: string;
+
+  latitude?: number;
+
+  longitude?: number;
 
   isAnonymous?: boolean;
 

@@ -41,6 +41,9 @@ model Report {
 
   description    String
 
+  latitude      Float?
+  longitude     Float?
+
   isAnonymous    Boolean @default(false)
 
   status         Status @default(REGISTERED)
