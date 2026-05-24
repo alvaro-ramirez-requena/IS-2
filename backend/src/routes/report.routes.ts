@@ -9,6 +9,16 @@ router.get("/user/:userId", ReportController.getByUser);
 
 router.get("/category/:category", ReportController.getByCategory);
 
+router.get(
+    "/problem/:problemType",
+    ReportController.getByProblemType
+);
+
+router.get(
+  "/top-problems",
+  ReportController.getTopProblems
+);
+
 router.get("/:id", ReportController.getById);
 
 export default router;

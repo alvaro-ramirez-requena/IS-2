@@ -38,28 +38,28 @@ export class ReportRepository {
 
   async createEvidences(
 
-  reportId: string,
+    reportId: string,
 
-  imageUrls: string[]
-) {
+    imageUrls: string[]
+  ) {
 
-  return await prisma
-    .reportEvidence
-    .createMany({
+    return await prisma
+      .reportEvidence
+      .createMany({
 
-      data:
-        imageUrls.map(
-          (imageUrl) => ({
+        data:
+          imageUrls.map(
+            (imageUrl) => ({
 
-            reportId,
+              reportId,
 
-            imageUrl,
-          })
-        ),
-    });
-}
+              imageUrl,
+            })
+          ),
+      });
+  }
 
-  
+
 
   async findByUser(
     userId: string
@@ -87,6 +87,50 @@ export class ReportRepository {
       },
     });
   }
+
+  async findByProblemType(
+    problemType: string
+  ) {
+
+    return await prisma
+      .report
+      .findMany({
+
+        where: {
+          problemType,
+        },
+
+        include: {
+          evidences: true,
+        },
+
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+  }
+
+  async getTopProblems() {
+
+  return await prisma
+    .report
+    .groupBy({
+
+      by: ["problemType"],
+
+      _count: {
+        problemType: true,
+      },
+
+      orderBy: {
+        _count: {
+          problemType: "desc",
+        },
+      },
+
+      take: 7,
+    });
+}
 
   async findById(id: string) {
 

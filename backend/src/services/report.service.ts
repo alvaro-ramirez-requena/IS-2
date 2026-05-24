@@ -33,26 +33,26 @@ export class ReportService {
   }) {
 
     const reportData =
-  ReportFactory.create(data);
+      ReportFactory.create(data);
 
-const report =
-  await this
-    .reportRepository
-    .create(reportData);
+    const report =
+      await this
+        .reportRepository
+        .create(reportData);
 
-if (data.imageUrls.length > 0) {
+    if (data.imageUrls.length > 0) {
 
-  await this
-    .reportRepository
-    .createEvidences(
+      await this
+        .reportRepository
+        .createEvidences(
 
-      report.id,
+          report.id,
 
-      data.imageUrls
-    );
-}
+          data.imageUrls
+        );
+    }
 
-return report;
+    return report;
   }
 
   async getReportsByUser(
@@ -71,6 +71,24 @@ return report;
     return await this
       .reportRepository
       .findByCategory(category);
+  }
+
+  async getReportsByProblemType(
+    problemType: string
+  ) {
+
+    return await this
+      .reportRepository
+      .findByProblemType(
+        problemType
+      );
+  }
+
+  async getTopProblems() {
+
+    return await this
+      .reportRepository
+      .getTopProblems();
   }
 
   async getReportById(id: string) {

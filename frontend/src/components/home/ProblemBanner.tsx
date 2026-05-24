@@ -1,62 +1,95 @@
-const problems = [
-    {
-        id: 1,
-        title: "Acumulación de basura",
-        reports: 1248,
-        image:
-            "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b",
-    },
+import {
+    useRef,
+    useEffect,
+    useState,
+} from "react";
 
-    {
-        id: 2,
-        title: "Alumbrado defectuoso",
-        reports: 987,
-        image:
-            "https://images.unsplash.com/photo-1507914372368-b2b085b925a1",
-    },
+import {
+    useNavigate,
+} from "react-router-dom";
 
-    {
-        id: 3,
-        title: "Pistas dañadas",
-        reports: 842,
-        image:
-            "https://images.unsplash.com/photo-1518391846015-55a9cc003b25",
-    },
+const API_URL =
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:3000";
 
-    {
-        id: 4,
-        title: "Graffitis",
-        reports: 715,
-        image:
-            "https://images.unsplash.com/photo-1519608487953-e999c86e7455",
-    },
+type TopProblem = {
 
-    {
-        id: 5,
-        title: "Animales callejeros",
-        reports: 612,
-        image:
-            "https://images.unsplash.com/photo-1517849845537-4d257902454a",
-    },
+    problemType: string;
 
-    {
-        id: 6,
-        title: "Veredas dañadas",
-        reports: 543,
-        image:
-            "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b",
-    },
+    _count: {
 
-    {
-        id: 7,
-        title: "Congestión vehicular",
-        reports: 512,
-        image:
-            "https://images.unsplash.com/photo-1502877338535-766e1452684a",
-    },
-];
+        problemType: number;
+    };
+};
 
 export default function ProblemBanner() {
+
+    const scrollRef =
+
+
+
+        useRef<HTMLDivElement | null>(
+            null
+        );
+
+    const navigate =
+        useNavigate();
+
+    const [problems, setProblems] =
+        useState<TopProblem[]>([]);
+
+    const scroll = (
+        direction: "left" | "right"
+    ) => {
+
+        const container =
+            scrollRef.current;
+
+        if (!container) {
+            return;
+        }
+
+        const scrollAmount =
+            container.clientWidth;
+
+        container.scrollBy({
+
+            left:
+                direction === "left"
+                    ? -scrollAmount
+                    : scrollAmount,
+
+            behavior: "smooth",
+        });
+    };
+
+    useEffect(() => {
+
+        const fetchTopProblems =
+            async () => {
+
+                try {
+
+                    const response =
+                        await fetch(
+
+                            `${API_URL}/api/reports/top-problems`
+                        );
+
+                    const data =
+                        await response.json();
+
+                    setProblems(data);
+
+                } catch (error) {
+
+                    console.error(error);
+                }
+            };
+
+        fetchTopProblems();
+
+    }, []);
 
     return (
 
@@ -80,74 +113,168 @@ export default function ProblemBanner() {
                 y análisis recientes
             </p>
 
-            <div className="
-        grid
-        grid-cols-7
-        gap-4
-      ">
+            <div className="relative">
 
-                {problems.map((problem) => (
+                <button
+                    onClick={() =>
+                        scroll("left")
+                    }
 
-                    <div
-                        key={problem.id}
-                        className="
-      relative
-      h-[420px]
-      rounded-3xl
-      overflow-hidden
-      text-white
-      p-4
-      flex
-      flex-col
-      justify-end
-      shadow-lg
-      bg-cover
-      bg-center
-    "
-                        style={{
-                            backgroundImage:
-                                `linear-gradient(
-                to top,
-                rgba(0,0,0,0.8),
-                rgba(0,0,0,0.2)
-            ),
-            url(${problem.image})`,
-                        }}
-                    >
+                    className="
+            hidden
+            md:flex
+            absolute
+            left-0
+            top-1/2
+            -translate-y-1/2
+            z-10
+            w-12
+            h-12
+            rounded-full
+            bg-white
+            shadow-lg
+            items-center
+            justify-center
+            font-bold
+        "
+                >
+                    ←
+                </button>
 
-                        <div className="
-              absolute
-              top-4
-              left-4
-              bg-white
-              text-black
-              w-10
-              h-10
-              rounded-full
-              flex
-              items-center
-              justify-center
-              font-bold
-            ">
-                            {problem.id}
+                <button
+                    onClick={() =>
+                        scroll("right")
+                    }
+
+                    className="
+            hidden
+            md:flex
+            absolute
+            right-0
+            top-1/2
+            -translate-y-1/2
+            z-10
+            w-12
+            h-12
+            rounded-full
+            bg-white
+            shadow-lg
+            items-center
+            justify-center
+            font-bold
+        "
+                >
+                    →
+                </button>
+
+                <div
+
+                    ref={scrollRef}
+
+                    className="
+            flex
+            gap-4
+            overflow-x-auto
+            snap-x
+            snap-mandatory
+            scroll-smooth
+            pb-2
+        "
+                >
+
+                    {problems.map((
+                        problem,
+                        index
+                    ) => (
+
+                        <div
+                            key={problem.problemType}
+
+                            onClick={() =>
+
+                                navigate(
+
+                                    `/reports/problem/${encodeURIComponent(
+                                        problem.problemType
+                                    )}`
+                                )
+                            }
+
+                            className="
+                    min-w-full
+                    sm:min-w-[48%]
+                    md:min-w-[31%]
+                    lg:min-w-[22%]
+                    xl:min-w-[14%]
+                    relative
+                    h-[420px]
+                    rounded-3xl
+                    overflow-hidden
+                    text-white
+                    p-4
+                    flex
+                    flex-col
+                    justify-end
+                    shadow-lg
+                    bg-cover
+                    bg-center
+                    snap-start
+                    flex-shrink-0
+                    cursor-pointer
+hover:scale-[1.02]
+transition
+                "
+
+                            style={{
+                                backgroundImage:
+                                    `linear-gradient(
+            to top,
+            rgba(0,0,0,0.8),
+            rgba(0,0,0,0.2)
+        ),
+        url(https://images.unsplash.com/photo-1518391846015-55a9cc003b25)`,
+                            }}
+                        >
+
+                            <div className="
+                    absolute
+                    top-4
+                    left-4
+                    bg-white
+                    text-black
+                    w-10
+                    h-10
+                    rounded-full
+                    flex
+                    items-center
+                    justify-center
+                    font-bold
+                ">
+                                {index + 1}
+                            </div>
+
+                            <h3 className="
+                    text-3xl
+                    font-bold
+                ">
+                                {problem.problemType}
+                            </h3>
+
+                            <p className="
+                    text-xl
+                    mt-2
+                ">
+                                {
+                                    problem._count.problemType
+                                } reportes
+                            </p>
+
                         </div>
 
-                        <h3 className="
-              text-3xl
-              font-bold
-            ">
-                            {problem.title}
-                        </h3>
 
-                        <p className="
-              text-xl
-              mt-2
-            ">
-                            {problem.reports} reportes
-                        </p>
+                    ))}
 
-                    </div>
-                ))}
+                </div>
 
             </div>
 

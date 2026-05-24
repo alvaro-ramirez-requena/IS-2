@@ -45,6 +45,57 @@ export class ReportController {
     }
   }
 
+  static async getByProblemType(
+    req: Request,
+    res: Response
+  ) {
+
+    try {
+
+      const problemType =
+        req.params.problemType as string;
+
+      const reports =
+        await reportService
+          .getReportsByProblemType(
+            problemType
+          );
+
+      res.json(reports);
+
+    } catch (error: any) {
+
+      res.status(400).json({
+
+        message:
+          error.message,
+      });
+    }
+  }
+
+  static async getTopProblems(
+    req: Request,
+    res: Response
+  ) {
+
+    try {
+
+      const topProblems =
+        await reportService
+          .getTopProblems();
+
+      res.json(topProblems);
+
+    } catch (error: any) {
+
+      res.status(400).json({
+
+        message:
+          error.message,
+      });
+    }
+  }
+
   static async getById(req: Request, res: Response) {
     try {
       const id = req.params.id as string;

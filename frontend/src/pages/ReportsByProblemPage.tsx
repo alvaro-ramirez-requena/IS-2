@@ -1,0 +1,396 @@
+import {
+    useEffect,
+    useState,
+} from "react";
+
+import {
+    useParams,
+    useNavigate,
+} from "react-router-dom";
+
+const API_URL =
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:3000";
+
+type Report = {
+
+    id: string;
+
+    problemType: string;
+
+    description: string;
+
+    latitude?: number;
+
+    longitude?: number;
+
+    createdAt: string;
+
+    status: string;
+
+    evidences: {
+
+        imageUrl: string;
+
+    }[];
+};
+
+export default function
+    ReportsByProblemPage() {
+
+    const { problemType } =
+        useParams();
+
+    const navigate =
+        useNavigate();
+
+    const [reports, setReports] =
+        useState<Report[]>([]);
+
+    const [loading, setLoading] =
+        useState(true);
+
+
+    useEffect(() => {
+
+        const fetchReports =
+            async () => {
+
+                try {
+
+                    const response =
+                        await fetch(
+
+                            `${API_URL}/api/reports/problem/${problemType}`
+                        );
+
+                    const data =
+                        await response.json();
+
+            
+
+                    setReports(data);
+
+                    
+
+                } catch (error) {
+
+                    console.error(error);
+
+                } finally {
+
+                    setLoading(false);
+                }
+            };
+
+        fetchReports();
+
+    }, [problemType]);
+
+    if (loading) {
+
+        return (
+
+            <div className="
+        min-h-screen
+        flex
+        items-center
+        justify-center
+        text-3xl
+        font-bold
+      ">
+                Cargando reportes...
+            </div>
+        );
+    }
+
+    return (
+
+        <div className="
+    min-h-screen
+    bg-[#F5F7FA]
+    p-4
+    lg:p-10
+  ">
+
+            <div className="
+      max-w-7xl
+      mx-auto
+    ">
+
+                <button
+
+                    onClick={() =>
+                        navigate("/home")
+                    }
+
+                    className="
+          mb-8
+          text-blue-700
+          font-semibold
+          hover:underline
+        "
+                >
+                    ← Volver al inicio
+                </button>
+
+                <h1 className="
+        text-4xl
+        lg:text-5xl
+        font-bold
+        mb-3
+      ">
+                    {decodeURIComponent(
+                        problemType || ""
+                    )}
+                </h1>
+
+                <p className="
+        text-gray-500
+        text-lg
+        lg:text-xl
+        mb-10
+      ">
+                    {
+                        reports.length
+                    } reportes encontrados
+                </p>
+
+                {reports.length === 0 ? (
+
+                    <div className="
+          bg-white
+          rounded-3xl
+          p-16
+          text-center
+          shadow-sm
+          border
+        ">
+
+                        <h2 className="
+            text-3xl
+            font-bold
+            mb-4
+          ">
+                            No hay reportes
+                        </h2>
+
+                        <p className="
+            text-gray-500
+            text-lg
+          ">
+                            Todavía no existen
+                            reportes para este
+                            tipo de problema.
+                        </p>
+
+                    </div>
+
+                ) : (
+
+                    <div className="
+          space-y-6
+        ">
+
+                        {reports.map((report) => (
+
+                            <div
+                                key={report.id}
+
+                                className="
+                bg-white
+                rounded-3xl
+                border
+                overflow-hidden
+                shadow-sm
+                hover:shadow-md
+                transition
+                flex
+                flex-col
+                md:flex-row
+              "
+                            >
+
+                                <div className="
+                md:w-[320px]
+                h-[240px]
+                bg-gray-200
+                flex-shrink-0
+              ">
+
+                                    <img
+
+                                        src={
+                                            report.evidences[0]
+                                                ?.imageUrl ||
+
+                                            "https://placehold.co/600x400?text=Sin+imagen"
+                                        }
+
+                                        className="
+                    w-full
+                    h-full
+                    object-cover
+                  "
+                                    />
+
+                                </div>
+
+                                <div className="
+                flex-1
+                p-6
+                lg:p-8
+              ">
+
+                                    <div className="
+                  flex
+                  items-start
+                  justify-between
+                  gap-4
+                ">
+
+                                        <h2 className="
+                    text-2xl
+                    font-bold
+                  ">
+                                            {report.problemType}
+                                        </h2>
+
+                                        <div className="
+                    px-4
+                    py-2
+                    rounded-full
+                    text-sm
+                    font-semibold
+                    bg-yellow-100
+                    text-yellow-700
+                    whitespace-nowrap
+                  ">
+                                            {report.status}
+                                        </div>
+
+                                    </div>
+
+                                    <p className="
+                  mt-5
+                  text-gray-600
+                  text-lg
+                  leading-relaxed
+                ">
+                                        {report.description}
+                                    </p>
+
+                                    <p className="
+  mt-4
+  text-gray-500
+">
+
+    Ubicación aproximada:
+
+    {" "}
+
+    {report.latitude?.toFixed(5)}
+
+    ,
+
+    {" "}
+
+    {report.longitude?.toFixed(5)}
+
+</p>
+
+                                    <div className="
+                  mt-8
+                  flex
+                  items-center
+                  justify-between
+                  gap-4
+                  flex-wrap
+                ">
+
+                                        <div className="
+    flex
+    items-center
+    gap-4
+    text-gray-400
+    flex-wrap
+">
+
+                                            <p>
+                                                {
+                                                    new Date(
+                                                        report.createdAt
+                                                    ).toLocaleDateString()
+                                                }
+                                            </p>
+
+                                            <p>
+
+                                                {
+                                                    (() => {
+
+                                                        const diffMs =
+                                                            Date.now() -
+
+                                                            new Date(
+                                                                report.createdAt
+                                                            ).getTime();
+
+                                                        const minutes =
+                                                            Math.floor(
+                                                                diffMs / (1000 * 60)
+                                                            );
+
+                                                        const hours =
+                                                            Math.floor(
+                                                                minutes / 60
+                                                            );
+
+                                                        const days =
+                                                            Math.floor(
+                                                                hours / 24
+                                                            );
+
+                                                        if (minutes < 60) {
+
+                                                            return `Hace ${minutes} minuto${minutes !== 1 ? "s" : ""}`;
+                                                        }
+
+                                                        if (hours < 24) {
+
+                                                            return `Hace ${hours} hora${hours !== 1 ? "s" : ""}`;
+                                                        }
+
+                                                        return `Hace ${days} día${days !== 1 ? "s" : ""}`;
+
+                                                    })()
+                                                }
+
+                                            </p>
+
+                                        </div>
+
+                                        <button
+                                            className="
+                      text-blue-700
+                      font-semibold
+                    "
+                                        >
+                                            Ver detalle →
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        ))}
+
+                    </div>
+                )}
+
+            </div>
+
+        </div>
+    );
+}

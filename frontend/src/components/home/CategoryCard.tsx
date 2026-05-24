@@ -1,3 +1,7 @@
+import {
+  useNavigate,
+} from "react-router-dom";
+
 type Props = {
   title: string;
   reports: number;
@@ -10,14 +14,32 @@ export default function CategoryCard({
   color,
 }: Props) {
 
+  const navigate =
+    useNavigate();
+
   return (
 
     <div
+
+      onClick={() =>
+
+        navigate(
+
+          `/reports/problem/${encodeURIComponent(
+            title
+          )
+          }`
+        )
+      }
+
       className={`
         ${color}
         rounded-2xl
         p-6
         border
+        cursor-pointer
+hover:scale-[1.02]
+transition
       `}
     >
 

@@ -16,6 +16,9 @@ import HomePage
 import CreateReportPage
   from "./pages/CreateReportPage";
 
+import ReportsByProblemPage
+  from "./pages/ReportsByProblemPage";
+
 export default function App() {
 
   return (
@@ -40,6 +43,11 @@ export default function App() {
       <Route
         path="/reports/create"
         element={<CreateReportPage />}
+      />
+
+      <Route
+        path="/reports/problem/:problemType"
+        element={<ReportsByProblemPage />}
       />
 
       <Route

@@ -30,7 +30,14 @@ import ReportEvidenceStep
 import ReportReviewStep
     from "../components/report/ReportReviewStep";
 
+import {
+    useNavigate,
+} from "react-router-dom";
+
 export default function CreateReportPage() {
+
+    const navigate =
+    useNavigate();
 
     const [formData, setFormData] =
 
@@ -162,6 +169,8 @@ export default function CreateReportPage() {
             });
 
             setCurrentStep(1);
+
+            navigate("/home");
 
         } catch (error: any) {
 
