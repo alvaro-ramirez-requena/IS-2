@@ -66,7 +66,12 @@ export class ReportRepository {
   ) {
 
     return await prisma.report.findMany({
+
       where: { userId },
+
+      include: {
+        evidences: true,
+      },
 
       orderBy: {
         createdAt: "desc",
@@ -112,25 +117,25 @@ export class ReportRepository {
 
   async getTopProblems() {
 
-  return await prisma
-    .report
-    .groupBy({
+    return await prisma
+      .report
+      .groupBy({
 
-      by: ["problemType"],
+        by: ["problemType"],
 
-      _count: {
-        problemType: true,
-      },
-
-      orderBy: {
         _count: {
-          problemType: "desc",
+          problemType: true,
         },
-      },
 
-      take: 7,
-    });
-}
+        orderBy: {
+          _count: {
+            problemType: "desc",
+          },
+        },
+
+        take: 7,
+      });
+  }
 
   async findById(id: string) {
 

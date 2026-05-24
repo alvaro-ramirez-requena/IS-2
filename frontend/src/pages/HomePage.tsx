@@ -8,7 +8,7 @@ import CategorySection
     from "../components/home/CategorySection";
 
 import { useNavigate }
-from "react-router-dom";
+    from "react-router-dom";
 
 export default function HomePage() {
 
@@ -42,9 +42,9 @@ export default function HomePage() {
   mb-12
 ">
 
-                    <button 
-                    onClick={() => navigate("/reports/create")}
-                    className="
+                    <button
+                        onClick={() => navigate("/reports/create")}
+                        className="
     bg-red-700
     hover:bg-red-800
     text-white
@@ -71,6 +71,47 @@ export default function HomePage() {
 
                         <p className="mt-2 text-red-100">
                             Reporta un problema en tu distrito
+                        </p>
+
+                    </button>
+
+                    <button
+
+                        onClick={() =>
+                            navigate("/my-reports")
+                        }
+
+                        className="
+    bg-white
+    hover:bg-gray-50
+    border
+    rounded-2xl
+    p-6
+    text-left
+    transition
+  "
+                    >
+
+                        <p className="
+      text-4xl
+      font-bold
+    ">
+                            📄
+                        </p>
+
+                        <h3 className="
+      text-2xl
+      font-semibold
+      mt-4
+    ">
+                            Mis reportes
+                        </h3>
+
+                        <p className="
+      mt-2
+      text-gray-500
+    ">
+                            Consulta y da seguimiento
                         </p>
 
                     </button>
