@@ -137,10 +137,58 @@ export class ReportRepository {
       });
   }
 
+  async findByStatus(
+    status: Status
+  ) {
+
+    return await prisma
+      .report
+      .findMany({
+
+        where: {
+          status,
+        },
+
+        include: {
+          evidences: true,
+        },
+
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+  }
+
+  async updateStatus(
+    id: string,
+    status: Status
+  ) {
+
+    return await prisma
+      .report
+      .update({
+
+        where: {
+          id,
+        },
+
+        data: {
+          status,
+        },
+      });
+  }
+
   async findById(id: string) {
 
-    return await prisma.report.findUnique({
-      where: { id },
-    });
+    return await prisma
+      .report
+      .findUnique({
+
+        where: { id },
+
+        include: {
+          evidences: true,
+        },
+      });
   }
 }

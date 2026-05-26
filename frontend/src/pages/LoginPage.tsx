@@ -1,4 +1,10 @@
-import { useState } from "react";
+import {
+    useState,
+} from "react";
+
+import {
+    useNavigate,
+} from "react-router-dom";
 
 import type {
     LoginFormValues,
@@ -19,6 +25,9 @@ import Button
     from "../components/ui/Button";
 
 export default function LoginPage() {
+
+    const navigate =
+        useNavigate();
 
     const [formData, setFormData] =
         useState<LoginFormValues>({
@@ -85,9 +94,26 @@ export default function LoginPage() {
                 response.user.id
             );
 
+            localStorage.setItem(
+                "role",
+                response.user.role
+            );
+
             setMessage(
                 response.message
             );
+
+            if (
+                response.user.role ===
+                "OPERATOR"
+            ) {
+
+                navigate("/operator");
+
+            } else {
+
+                navigate("/home");
+            }
 
         } catch (error: any) {
 

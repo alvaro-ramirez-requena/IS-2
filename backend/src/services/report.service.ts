@@ -6,6 +6,7 @@ import { ReportFactory }
 
 import {
   ReportCategory,
+  Status,
 } from "@prisma/client";
 
 export class ReportService {
@@ -89,6 +90,28 @@ export class ReportService {
     return await this
       .reportRepository
       .getTopProblems();
+  }
+
+  async getReportsByStatus(
+    status: Status
+  ) {
+
+    return await this
+      .reportRepository
+      .findByStatus(status);
+  }
+
+  async updateReportStatus(
+    id: string,
+    status: Status
+  ) {
+
+    return await this
+      .reportRepository
+      .updateStatus(
+        id,
+        status
+      );
   }
 
   async getReportById(id: string) {

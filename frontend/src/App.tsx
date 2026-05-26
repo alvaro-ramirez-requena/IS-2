@@ -21,6 +21,12 @@ import ReportsByProblemPage
 
 import MyReportsPage from "./pages/MyReportsPage";
 
+import OperatorDashboardPage
+  from "./pages/OperatorDashboardPage";
+
+import OperatorReportDetailPage
+  from "./pages/OperatorReportDetailPage";
+
 export default function App() {
 
   return (
@@ -55,6 +61,20 @@ export default function App() {
       <Route
         path="/my-reports"
         element={<MyReportsPage />}
+      />
+
+      <Route
+        path="/operator"
+        element={
+          <OperatorDashboardPage />
+        }
+      />
+
+      <Route
+        path="/operator/report/:id"
+        element={
+          <OperatorReportDetailPage />
+        }
       />
 
       <Route

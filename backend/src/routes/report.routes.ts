@@ -15,8 +15,18 @@ router.get(
 );
 
 router.get(
+    "/status/:status",
+    ReportController.getByStatus
+);
+
+router.get(
   "/top-problems",
   ReportController.getTopProblems
+);
+
+router.patch(
+    "/:id/status",
+    ReportController.updateStatus
 );
 
 router.get("/:id", ReportController.getById);

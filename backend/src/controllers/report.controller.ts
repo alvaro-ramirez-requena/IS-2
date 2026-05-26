@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { ReportService } from "../services/report.service";
-import { ReportCategory } from "@prisma/client";
+import {
+  ReportCategory,
+  Status,
+} from "@prisma/client";
 
 const reportService = new ReportService();
 
@@ -85,6 +88,66 @@ export class ReportController {
           .getTopProblems();
 
       res.json(topProblems);
+
+    } catch (error: any) {
+
+      res.status(400).json({
+
+        message:
+          error.message,
+      });
+    }
+  }
+
+  static async getByStatus(
+    req: Request,
+    res: Response
+  ) {
+
+    try {
+
+      const status =
+        req.params.status as Status;
+
+      const reports =
+        await reportService
+          .getReportsByStatus(
+            status
+          );
+
+      res.json(reports);
+
+    } catch (error: any) {
+
+      res.status(400).json({
+
+        message:
+          error.message,
+      });
+    }
+  }
+
+  static async updateStatus(
+    req: Request,
+    res: Response
+  ) {
+
+    try {
+
+      const id =
+        req.params.id as string;
+
+      const { status } =
+        req.body;
+
+      const updatedReport =
+        await reportService
+          .updateReportStatus(
+            id,
+            status
+          );
+
+      res.json(updatedReport);
 
     } catch (error: any) {
 
