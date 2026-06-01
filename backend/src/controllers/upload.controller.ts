@@ -6,6 +6,8 @@ import type {
 import { UploadService }
 from "../services/upload.service";
 
+import fs from "fs";
+
 const uploadService =
   new UploadService();
 
@@ -33,6 +35,8 @@ export class UploadController {
       const result =
         await uploadService
           .uploadImage(file.path);
+      
+      fs.unlinkSync(file.path);
 
       return res.status(200)
         .json(result);
