@@ -172,4 +172,16 @@ export class ReportController {
       });
     }
   }
+
+  static async getPending(req: Request, res: Response) {
+    try {
+      const reports = await reportService.getPendingReports();
+
+      res.json(reports);
+    } catch (error: any) {
+      res.status(400).json({
+        message: error.message,
+      });
+    }
+  }
 }
