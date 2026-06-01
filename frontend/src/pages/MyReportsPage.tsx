@@ -19,6 +19,8 @@ type Report = {
 
     createdAt: string;
 
+    address?: string;
+
     evidences: {
 
         imageUrl: string;
@@ -294,6 +296,35 @@ export default function MyReportsPage() {
                                                         }
 
                                                     </p>
+
+                                                    <div className="
+    mt-5
+    bg-gray-50
+    rounded-2xl
+    p-4
+">
+
+                                                        <p className="
+        text-sm
+        text-gray-500
+        mb-1
+    ">
+                                                            Ubicación
+                                                        </p>
+
+                                                        <p className="
+        text-gray-700
+        font-medium
+    ">
+
+                                                            {
+                                                                report.address
+                                                                || "Ubicación no disponible"
+                                                            }
+
+                                                        </p>
+
+                                                    </div>
 
                                                 </div>
 

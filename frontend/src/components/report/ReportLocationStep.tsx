@@ -187,11 +187,18 @@ export default function ReportLocationStep({
                                 </h3>
 
                                 <p className="
-                  text-gray-500
-                  mt-2
-                ">
-                                    Obteniendo tu
-                                    ubicación actual...
+    text-gray-500
+    mt-2
+">
+
+                                    {
+                                        formData.latitude
+                                            &&
+                                            formData.longitude
+                                            ? "Ubicación capturada correctamente."
+                                            : "Solicita permisos para obtener tu ubicación."
+                                    }
+
                                 </p>
 
                             </div>
@@ -213,59 +220,42 @@ export default function ReportLocationStep({
 
                     </div>
 
-                    <div className="
+                    {
+                        formData.latitude
+                        &&
+                        formData.longitude
+                        && (
+
+                            <div className="
             mt-8
-            grid
-            md:grid-cols-2
-            gap-6
             bg-green-50
             rounded-2xl
             p-6
-          ">
+        ">
 
-                        <div>
+                                <p className="
+                text-green-700
+                font-semibold
+                text-lg
+            ">
 
-                            <p className="
+                                    ✓ Ubicación obtenida correctamente
+
+                                </p>
+
+                                <p className="
                 text-gray-500
-              ">
-                                Latitud
-                            </p>
-
-                            <p className="
-                text-2xl
-                font-bold
                 mt-2
-              ">
-                                {
-                                    formData.latitude
-                                    ?? "Sin ubicación"
-                                }
-                            </p>
+            ">
 
-                        </div>
+                                    La ubicación será asociada
+                                    automáticamente al reporte.
 
-                        <div>
+                                </p>
 
-                            <p className="
-                text-gray-500
-              ">
-                                Longitud
-                            </p>
-
-                            <p className="
-                text-2xl
-                font-bold
-                mt-2
-              ">
-                                {
-                                    formData.longitude
-                                    ?? "Sin ubicación"
-                                }
-                            </p>
-
-                        </div>
-
-                    </div>
+                            </div>
+                        )
+                    }
 
                 </div>
 

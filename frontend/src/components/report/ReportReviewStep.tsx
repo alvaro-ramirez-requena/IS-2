@@ -7,9 +7,9 @@ type Props = {
 };
 
 export default function
-ReportReviewStep({
-  formData,
-}: Props) {
+  ReportReviewStep({
+    formData,
+  }: Props) {
 
   return (
 
@@ -110,26 +110,30 @@ ReportReviewStep({
           </h3>
 
           <div className="
-            text-lg
-            space-y-2
-          ">
+    bg-green-50
+    rounded-2xl
+    p-5
+">
 
-            <p>
-              <strong>
-                Latitud:
-              </strong>
+            <p className="
+        text-green-700
+        font-semibold
+        text-lg
+    ">
 
-              {" "}
-              {formData.latitude}
+              ✓ Ubicación capturada correctamente
+
             </p>
 
-            <p>
-              <strong>
-                Longitud:
-              </strong>
+            <p className="
+        text-gray-500
+        mt-2
+    ">
 
-              {" "}
-              {formData.longitude}
+              La dirección exacta será
+              generada automáticamente
+              al registrar el reporte.
+
             </p>
 
           </div>
