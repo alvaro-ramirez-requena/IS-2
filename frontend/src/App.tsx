@@ -27,6 +27,9 @@ import OperatorDashboardPage
 import OperatorReportDetailPage
   from "./pages/OperatorReportDetailPage";
 
+import ProtectedRoute
+  from "./routes/ProtectedRoute";
+
 export default function App() {
 
   return (
@@ -45,35 +48,55 @@ export default function App() {
 
       <Route
         path="/home"
-        element={<HomePage />}
+        element={
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/reports/create"
-        element={<CreateReportPage />}
+        element={
+          <ProtectedRoute>
+            <CreateReportPage />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/reports/problem/:problemType"
-        element={<ReportsByProblemPage />}
+        element={
+          <ProtectedRoute>
+            <ReportsByProblemPage />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/my-reports"
-        element={<MyReportsPage />}
+        element={
+          <ProtectedRoute>
+            <MyReportsPage />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/operator"
         element={
-          <OperatorDashboardPage />
+          <ProtectedRoute>
+            <OperatorDashboardPage />
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/operator/report/:id"
         element={
-          <OperatorReportDetailPage />
+          <ProtectedRoute>
+            <OperatorReportDetailPage />
+          </ProtectedRoute>
         }
       />
 

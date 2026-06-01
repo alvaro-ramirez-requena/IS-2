@@ -18,7 +18,36 @@ import Input
 
 import Button from "../components/ui/Button";
 
+import { useEffect } from "react";
+
+import { useNavigate, Link } from "react-router-dom";
+
 export default function RegisterPage() {
+
+    const navigate =
+        useNavigate();
+
+    useEffect(() => {
+
+        const token =
+            localStorage.getItem("token");
+
+        const role =
+            localStorage.getItem("role");
+
+        if (token) {
+
+            if (role === "OPERATOR") {
+
+                navigate("/operator");
+
+            } else {
+
+                navigate("/home");
+            }
+        }
+
+    }, [navigate]);
 
     const [formData, setFormData] =
         useState<RegisterFormValues>({
@@ -167,6 +196,41 @@ export default function RegisterPage() {
   px-6
   lg:px-0
 ">
+
+                    <div className="
+    flex
+    gap-4
+    mb-8
+">
+
+                        <Link
+                            to="/login"
+                            className="
+            px-6
+            py-2
+            rounded-full
+            border
+            font-semibold
+        "
+                        >
+                            Login
+                        </Link>
+
+                        <Link
+                            to="/register"
+                            className="
+            px-6
+            py-2
+            rounded-full
+            bg-[#03152E]
+            text-white
+            font-semibold
+        "
+                        >
+                            Registrarse
+                        </Link>
+
+                    </div>
 
                     <h2 className="text-4xl font-bold text-gray-800 mb-10">
                         Crear cuenta
