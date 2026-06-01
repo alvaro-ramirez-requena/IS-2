@@ -133,6 +133,11 @@ export default function LoginPage() {
                 response.user.role
             );
 
+            localStorage.setItem(
+                "firstName",
+                response.user.firstName
+            );
+
             setMessage(
                 response.message
             );
