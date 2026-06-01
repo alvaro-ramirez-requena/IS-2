@@ -18,6 +18,8 @@ type CreateReportInput = {
 
   longitude?: number;
 
+  address?: string;
+
   isAnonymous?: boolean;
 
   userId: string;

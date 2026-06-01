@@ -15,6 +15,8 @@ type CreateReportDTO = {
 
   longitude?: number;
 
+  address?: string;
+
   isAnonymous?: boolean;
 
   userId: string;
@@ -42,6 +44,9 @@ export class ReportFactory {
 
       longitude:
         data.longitude,
+
+      address:
+        data.address,
 
       isAnonymous:
         data.isAnonymous ?? false,

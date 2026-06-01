@@ -9,6 +9,9 @@ import {
   Status,
 } from "@prisma/client";
 
+import { GeocodingService }
+  from "./geocoding.service";
+
 export class ReportService {
 
   private reportRepository =
@@ -33,8 +36,32 @@ export class ReportService {
     imageUrls: string[];
   }) {
 
+    let address:
+      string | undefined;
+
+    if (
+      data.latitude !== undefined
+      &&
+      data.longitude !== undefined
+    ) {
+
+      address =
+        await GeocodingService
+          .getAddress(
+
+            data.latitude,
+
+            data.longitude
+          );
+    }
+
     const reportData =
-      ReportFactory.create(data);
+      ReportFactory.create({
+
+        ...data,
+
+        address,
+      });
 
     const report =
       await this
