@@ -37,7 +37,7 @@ import {
 export default function CreateReportPage() {
 
     const navigate =
-    useNavigate();
+        useNavigate();
 
     const [formData, setFormData] =
 
@@ -215,6 +215,26 @@ export default function CreateReportPage() {
         lg:p-10
         shadow-sm
       ">
+                <div className="
+    flex
+    justify-end
+">
+
+                    <button
+                        onClick={() =>
+                            navigate("/home")
+                        }
+                        className="
+            text-3xl
+            font-bold
+            text-gray-400
+            hover:text-black
+        "
+                    >
+                        ×
+                    </button>
+
+                </div>
 
                 <h1 className="
           text-3xl
