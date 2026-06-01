@@ -3,6 +3,10 @@ import {
     useState,
 } from "react";
 
+import {
+    useNavigate,
+} from "react-router-dom";
+
 const API_URL =
     import.meta.env.VITE_API_URL ||
     "http://localhost:3000";
@@ -29,6 +33,9 @@ type Report = {
 };
 
 export default function MyReportsPage() {
+
+    const navigate =
+        useNavigate();
 
     const [reports, setReports] =
         useState<Report[]>([]);
@@ -148,6 +155,21 @@ export default function MyReportsPage() {
                 max-w-7xl
                 mx-auto
             ">
+                <button
+
+                    onClick={() =>
+                        navigate("/home")
+                    }
+
+                    className="
+            mb-8
+            text-blue-700
+            font-semibold
+            hover:underline
+        "
+                >
+                    ← Volver al inicio
+                </button>
 
                 <h1 className="
                     text-5xl

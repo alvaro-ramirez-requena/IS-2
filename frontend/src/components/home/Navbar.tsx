@@ -72,26 +72,7 @@ export default function Navbar() {
                     </span>
                 </h1>
 
-                <div className="
-          bg-white/10
-          px-5
-          py-3
-          rounded-2xl
-          text-white
-          flex
-          items-center
-          gap-3
-        ">
 
-                    <span className="text-xl">
-                        📍
-                    </span>
-
-                    <span className="text-lg">
-                        Miraflores
-                    </span>
-
-                </div>
 
             </div>
 
@@ -105,29 +86,7 @@ export default function Navbar() {
   gap-6
 ">
 
-                <div className="relative">
 
-                    <input
-                        placeholder="Buscar reportes..."
-                        className="
-    w-full
-    lg:w-80
-              bg-white
-              rounded-2xl
-              px-6
-              py-3
-              outline-none
-            "
-                    />
-
-                </div>
-
-                <button className="
-          text-white
-          text-3xl
-        ">
-                    🔔
-                </button>
 
                 <div className="relative">
 
