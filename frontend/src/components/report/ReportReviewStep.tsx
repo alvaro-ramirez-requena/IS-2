@@ -2,6 +2,10 @@ import type {
   ReportFormValues,
 } from "../../types/report.types";
 
+import {
+  categoryLabels,
+} from "../../utils/reportLabels";
+
 type Props = {
   formData: ReportFormValues;
 };
@@ -61,7 +65,11 @@ export default function
               </strong>
 
               {" "}
-              {formData.category}
+              {
+                categoryLabels[
+                formData.category
+                ]
+              }
             </p>
 
             <p>

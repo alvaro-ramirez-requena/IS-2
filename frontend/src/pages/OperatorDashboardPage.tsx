@@ -7,6 +7,12 @@ import {
     useNavigate,
 } from "react-router-dom";
 
+import {
+    statusLabels,
+} from "../utils/reportLabels";
+
+
+
 const API_URL =
     import.meta.env.VITE_API_URL ||
     "http://localhost:3000";
@@ -152,14 +158,17 @@ export default function
         ">
 
             <aside className="
-                w-[320px]
-                bg-[#03152E]
-                text-white
-                p-8
-                flex
-                flex-col
-                justify-between
-            ">
+    w-[320px]
+    h-screen
+    sticky
+    top-0
+    bg-[#03152E]
+    text-white
+    p-8
+    flex
+    flex-col
+    justify-between
+">
 
                 <div>
 
@@ -413,7 +422,9 @@ export default function
                                                         ">
 
                                                             {
+                                                                statusLabels[
                                                                 report.status
+                                                                ]
                                                             }
 
                                                         </span>

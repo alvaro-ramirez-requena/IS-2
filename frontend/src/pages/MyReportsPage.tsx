@@ -7,6 +7,10 @@ import {
     useNavigate,
 } from "react-router-dom";
 
+import {
+    statusLabels,
+} from "../utils/reportLabels";
+
 const API_URL =
     import.meta.env.VITE_API_URL ||
     "http://localhost:3000";
@@ -299,7 +303,9 @@ export default function MyReportsPage() {
                                                         ">
 
                                                             {
+                                                                statusLabels[
                                                                 report.status
+                                                                ]
                                                             }
 
                                                         </span>
