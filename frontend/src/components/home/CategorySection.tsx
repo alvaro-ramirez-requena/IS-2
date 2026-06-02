@@ -272,12 +272,6 @@ export default function CategorySection() {
     gap-4
 ">
 
-                            <button className="
-        text-blue-700
-        font-semibold
-    ">
-                                Ver todos
-                            </button>
 
                             <div className="
         flex

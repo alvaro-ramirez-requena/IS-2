@@ -91,24 +91,30 @@ export default function ProblemBanner() {
 
     }, []);
 
+    if (problems.length === 0) {
+
+        return null;
+    }
+
     return (
 
         <section className="mb-12">
 
             <h2 className="
-        text-5xl
-        font-bold
-        mb-4
-      ">
+    text-5xl
+    font-bold
+    mb-4
+    text-center
+">
                 Los 7 problemas más graves
-                en Miraflores
             </h2>
 
             <p className="
-        text-gray-500
-        text-xl
-        mb-8
-      ">
+    text-gray-500
+    text-xl
+    mb-8
+    text-center
+">
                 Basado en reportes ciudadanos
                 y análisis recientes
             </p>
@@ -171,15 +177,19 @@ export default function ProblemBanner() {
 
                     ref={scrollRef}
 
-                    className="
-            flex
-            gap-4
-            overflow-x-auto
-            snap-x
-            snap-mandatory
-            scroll-smooth
-            pb-2
-        "
+                    className={`
+    flex
+    gap-4
+    overflow-x-auto
+    snap-x
+    snap-mandatory
+    scroll-smooth
+    pb-2
+    ${problems.length < 5
+                            ? "justify-center"
+                            : "justify-start"
+                        }
+`}
                 >
 
                     {problems.map((
