@@ -34,6 +34,15 @@ type Report = {
         imageUrl: string;
 
     }[];
+
+    isAnonymous: boolean;
+
+    user?: {
+
+        firstName: string;
+
+        lastName: string;
+    };
 };
 
 export default function
@@ -397,18 +406,42 @@ export default function
 
                                                             </h3>
 
-                                                            <p className="
-                                                                text-gray-500
-                                                                mt-2
-                                                            ">
+                                                            <div className="
+    mt-2
+    flex
+    items-center
+    gap-3
+    flex-wrap
+">
 
-                                                                {
-                                                                    getRelativeTime(
-                                                                        report.createdAt
-                                                                    )
-                                                                }
+                                                                <p className="
+        font-semibold
+        text-gray-700
+    ">
 
-                                                            </p>
+                                                                    {
+                                                                        report.isAnonymous
+
+                                                                            ? "Anónimo"
+
+                                                                            : `${report.user?.firstName || ""} ${report.user?.lastName || ""}`
+                                                                    }
+
+                                                                </p>
+
+                                                                <p className="
+        text-gray-500
+    ">
+
+                                                                    {
+                                                                        getRelativeTime(
+                                                                            report.createdAt
+                                                                        )
+                                                                    }
+
+                                                                </p>
+
+                                                            </div>
 
                                                         </div>
 

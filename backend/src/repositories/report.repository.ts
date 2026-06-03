@@ -72,7 +72,15 @@ export class ReportRepository {
       where: { userId },
 
       include: {
+
         evidences: true,
+
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
       },
 
       orderBy: {
@@ -108,7 +116,15 @@ export class ReportRepository {
         },
 
         include: {
+
           evidences: true,
+
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
 
         orderBy: {
@@ -152,7 +168,15 @@ export class ReportRepository {
         },
 
         include: {
+
           evidences: true,
+
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
 
         orderBy: {
@@ -189,7 +213,15 @@ export class ReportRepository {
         where: { id },
 
         include: {
+
           evidences: true,
+
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
       });
   }

@@ -34,6 +34,13 @@ type Report = {
         imageUrl: string;
 
     }[];
+
+    user?: {
+
+        firstName: string;
+
+        lastName: string;
+    };
 };
 
 export default function MyReportsPage() {
@@ -279,16 +286,38 @@ export default function MyReportsPage() {
                                                                 }
                                                             </h2>
 
-                                                            <p className="
-                                                                text-gray-500
-                                                                mt-2
-                                                            ">
-                                                                {
-                                                                    getRelativeTime(
-                                                                        report.createdAt
-                                                                    )
-                                                                }
-                                                            </p>
+                                                            <div className="
+    mt-2
+    flex
+    items-center
+    gap-3
+    flex-wrap
+">
+
+                                                                <p className="
+        font-semibold
+        text-gray-700
+    ">
+
+                                                                    {
+                                                                        `${report.user?.firstName || ""} ${report.user?.lastName || ""}`
+                                                                    }
+
+                                                                </p>
+
+                                                                <p className="
+        text-gray-500
+    ">
+
+                                                                    {
+                                                                        getRelativeTime(
+                                                                            report.createdAt
+                                                                        )
+                                                                    }
+
+                                                                </p>
+
+                                                            </div>
 
                                                         </div>
 

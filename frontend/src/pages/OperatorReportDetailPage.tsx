@@ -39,6 +39,15 @@ type Report = {
         imageUrl: string;
 
     }[];
+
+    isAnonymous: boolean;
+
+    user?: {
+
+        firstName: string;
+
+        lastName: string;
+    };
 };
 
 export default function
@@ -216,6 +225,44 @@ export default function
                                 }
 
                             </h1>
+
+                            <div className="
+    mt-3
+    flex
+    items-center
+    gap-3
+    flex-wrap
+">
+
+                                <p className="
+        text-lg
+        font-semibold
+        text-gray-700
+    ">
+
+                                    {
+                                        report.isAnonymous
+
+                                            ? "Anónimo"
+
+                                            : `${report.user?.firstName || ""} ${report.user?.lastName || ""}`
+                                    }
+
+                                </p>
+
+                                <p className="
+        text-gray-500
+    ">
+
+                                    {
+                                        new Date(
+                                            report.createdAt
+                                        ).toLocaleDateString()
+                                    }
+
+                                </p>
+
+                            </div>
 
 
 

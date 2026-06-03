@@ -64,6 +64,13 @@ export type ApiReport = {
 
   userId: string;
 
+  user?: {
+
+    firstName: string;
+
+    lastName: string;
+  };
+
   createdAt: string;
 
   updatedAt: string;

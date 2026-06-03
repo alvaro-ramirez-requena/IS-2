@@ -24,6 +24,8 @@ type Report = {
 
     description: string;
 
+    isAnonymous: boolean;
+
     latitude?: number;
 
     longitude?: number;
@@ -39,6 +41,13 @@ type Report = {
         imageUrl: string;
 
     }[];
+
+    user?: {
+
+        firstName: string;
+
+        lastName: string;
+    };
 };
 
 export default function
@@ -336,6 +345,21 @@ export default function
     text-gray-400
     flex-wrap
 ">
+
+                                            <p className="
+    font-semibold
+    text-gray-700
+">
+
+                                                {
+                                                    report.isAnonymous
+
+                                                        ? "Anónimo"
+
+                                                        : `${report.user?.firstName || ""} ${report.user?.lastName || ""}`
+                                                }
+
+                                            </p>
 
                                             <p>
                                                 {
