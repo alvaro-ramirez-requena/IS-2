@@ -20,7 +20,7 @@ export class AuthService {
     }
 
     if (data.password.length < 8) {
-      throw new Error("La contraseña es débil. Sugerencia: utiliza al menos 8 caracteres, incluyendo una mayúscula y un número.");
+      throw new Error("La contraseña es débil. Sugerencia: utiliza al menos 8 caracteres.");
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
