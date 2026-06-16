@@ -23,6 +23,7 @@ model User {
   updatedAt  DateTime @updatedAt
 
   reports    Report[]
+  fieldWorks FieldWork[]
 }
 
 enum Role {
@@ -54,6 +55,7 @@ model Report {
   user           User @relation(fields: [userId], references: [id])
 
   evidences     ReportEvidence[]
+  fieldWork     FieldWork?
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -74,6 +76,55 @@ model ReportEvidence {
   createdAt  DateTime @default(now())
 
   @@index([reportId])
+}
+
+// US18 - Trazabilidad del trabajo en campo
+model FieldWork {
+
+  id            String   @id @default(uuid())
+
+  reportId      String   @unique
+  report        Report   @relation(fields: [reportId], references: [id])
+
+  technicianId  String
+  technician    User     @relation(fields: [technicianId], references: [id])
+
+  arrivedAt     DateTime?
+  closedAt      DateTime?
+
+  arrivalLat    Float?
+  arrivalLng    Float?
+  distanceMeters Float?
+
+  notes         String?
+
+  evidences     FieldWorkEvidence[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([reportId])
+  @@index([technicianId])
+}
+
+model FieldWorkEvidence {
+
+  id          String   @id @default(uuid())
+
+  fieldWorkId String
+  fieldWork   FieldWork @relation(fields: [fieldWorkId], references: [id])
+
+  imageUrl    String
+  phase       EvidencePhase
+
+  createdAt   DateTime @default(now())
+
+  @@index([fieldWorkId])
+}
+
+enum EvidencePhase {
+  BEFORE
+  AFTER
 }
 
 enum Status {

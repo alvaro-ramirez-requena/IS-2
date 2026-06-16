@@ -383,6 +383,13 @@ export default function MyReportsPage() {
 
                                                     </div>
 
+                                                    <button
+                                                        onClick={() => navigate(`/fieldwork/${report.id}`)}
+                                                        className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
+                                                    >
+                                                        Trabajo en campo →
+                                                    </button>
+
                                                 </div>
 
                                             </div>
