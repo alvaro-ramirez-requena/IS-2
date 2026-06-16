@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  firstName  String
+  lastName   String
+  password   String
+  role       Role     @default(CITIZEN)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  reports    Report[]
+}
+
+enum Role {
+  CITIZEN
+  OPERATOR
+  TECHNICIAN
+}
+
+
+model Report {
+  id             String   @id @default(uuid())
+
+  category       ReportCategory
+
+  problemType    String
+
+  description    String
+
+  latitude      Float?
+  longitude     Float?
+
+  isAnonymous    Boolean @default(false)
+
+  status         Status @default(REGISTERED)
+
+  userId         String
+  user           User @relation(fields: [userId], references: [id])
+
+  evidences     ReportEvidence[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model ReportEvidence {
+
+  id         String   @id @default(uuid())
+
+  imageUrl   String
+
+  reportId   String
+
+  report     Report @relation(fields: [reportId], references: [id])
+
+  createdAt  DateTime @default(now())
+
+  @@index([reportId])
+}
+
+enum Status {
+  REGISTERED
+  VALIDATING
+  APPROVED
+  REJECTED
+  PRIORITIZED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum ReportCategory {
+  SECURITY
+  ENVIRONMENT
+  INFRASTRUCTURE
+  MOBILITY
+}
