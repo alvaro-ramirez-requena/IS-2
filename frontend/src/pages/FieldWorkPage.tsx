@@ -97,8 +97,9 @@ export default function FieldWorkPage() {
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" | "warning" } | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [uploadingPhase, setUploadingPhase] = useState<"BEFORE" | "AFTER" | null>(null);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
 
-  const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const lastSavedNotes = useRef("");
 
   // ── Detectar conexión ───────────────────────────────────────────────────────
@@ -146,17 +147,6 @@ export default function FieldWorkPage() {
     loadFieldWork();
   }, [reportId]);
 
-  // ── Autoguardado de notas cada 30 segundos ───────────────────────────────────
-  useEffect(() => {
-    autoSaveTimer.current = setInterval(() => {
-      if (notes !== lastSavedNotes.current) {
-        saveNotes(notes, true); // true = silencioso
-      }
-    }, 30000);
-    return () => {
-      if (autoSaveTimer.current) clearInterval(autoSaveTimer.current);
-    };
-  }, [notes]);
 
   // ── Iniciar trabajo de campo ─────────────────────────────────────────────────
   async function startFieldWork() {
@@ -374,10 +364,17 @@ await loadFieldWork();
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-xs text-gray-500 mb-1">Duración</p>
             <p className="text-lg font-semibold text-gray-800">
-              {fieldWork?.durationMinutes != null ? `${fieldWork.durationMinutes} min` : "—"}
+              {fieldWork?.durationMinutes != null
+              ? fieldWork.durationMinutes < 60
+              ? `${fieldWork.durationMinutes} min`
+              : `${Math.floor(fieldWork.durationMinutes / 60)} h ${fieldWork.durationMinutes % 60} min`
+              : "—"}
             </p>
           </div>
         </div>
+
+
+      
 
         {/* Distancia al punto */}
         {fieldWork?.distanceMeters != null && (
@@ -415,26 +412,42 @@ await loadFieldWork();
         </div>
       </div>
 
-      {/* ── Notas de trabajo ── */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-5">
-        <h2 className="font-semibold text-gray-700 mb-3">Notas de trabajo</h2>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Describe las acciones realizadas, observaciones y estado del problema..."
-          rows={5}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <div className="flex justify-between items-center mt-2">
-          <p className="text-xs text-gray-400">Autoguardado cada 30 segundos</p>
-          <button
-            onClick={() => saveNotes(notes)}
-            className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Guardar notas
-          </button>
-        </div>
-      </div>
+{/* ── Notas de trabajo ── */}
+<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-5">
+  <h2 className="font-semibold text-gray-700 mb-3">Notas de trabajo</h2>
+  <textarea
+    value={notes}
+    onChange={(e) => setNotes(e.target.value)}
+    placeholder="Describe las acciones realizadas, observaciones y estado del problema..."
+    rows={5}
+    disabled={!isEditingNotes && !!lastSavedNotes.current}
+    className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+      !isEditingNotes && lastSavedNotes.current
+        ? "border-gray-100 bg-gray-50 text-gray-500 cursor-not-allowed"
+        : "border-gray-200"
+    }`}
+  />
+  <div className="flex justify-end gap-2 mt-2">
+    {!isEditingNotes && lastSavedNotes.current ? (
+      <button
+        onClick={() => setIsEditingNotes(true)}
+        className="px-4 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+      >
+        Editar
+      </button>
+    ) : (
+      <button
+        onClick={() => {
+          saveNotes(notes);
+          setIsEditingNotes(false);
+        }}
+        className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        Guardar notas
+      </button>
+    )}
+  </div>
+</div>
 
       {/* ── Fotos antes ── */}
       <EvidenceSection
