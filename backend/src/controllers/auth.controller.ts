@@ -19,6 +19,27 @@ export class AuthController {
       const result = await authService.login({ email, password });
       res.json(result);
     } catch (error: any) {
-       res.status(401).json({ message: error.message });    }
+      res.status(401).json({ message: error.message });
+    }
+  }
+
+  static async verifyEmail(req: Request, res: Response) {
+    try {
+      const token = req.query.token as string;
+
+      if (!token) {
+        return res.status(400).json({
+          message: "Token no proporcionado",
+        });
+      }
+
+      const result = await authService.verifyEmail(token);
+
+      return res.status(200).json(result);
+    } catch (error: any) {
+      return res.status(400).json({
+        message: error.message || "No se pudo verificar el correo",
+      });
+    }
   }
 }

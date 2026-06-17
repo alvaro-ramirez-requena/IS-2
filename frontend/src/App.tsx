@@ -7,6 +7,9 @@ import {
 import RegisterPage
   from "./pages/RegisterPage";
 
+import VerifyEmailPage 
+  from "./pages/VerifyEmailPage";
+
 import LoginPage
   from "./pages/LoginPage";
 
@@ -45,6 +48,10 @@ export default function App() {
         path="/login"
         element={<LoginPage />}
       />
+
+      <Route 
+      path="/verify-email" 
+      element={<VerifyEmailPage />} />
 
       <Route
         path="/home"
