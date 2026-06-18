@@ -172,4 +172,13 @@ export class ReportController {
       });
     }
   }
+  static async prioritize(req: Request, res: Response) {
+  try {
+    const id = req.params.id as string;
+    const updatedReport = await reportService.prioritizeReport(id, req.body);
+    res.json(updatedReport);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+}
 }

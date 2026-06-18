@@ -9,25 +9,15 @@ router.get("/user/:userId", ReportController.getByUser);
 
 router.get("/category/:category", ReportController.getByCategory);
 
-router.get(
-    "/problem/:problemType",
-    ReportController.getByProblemType
-);
+router.patch("/:id/prioritize", ReportController.prioritize);
 
-router.get(
-    "/status/:status",
-    ReportController.getByStatus
-);
+router.get("/problem/:problemType",ReportController.getByProblemType);
 
-router.get(
-  "/top-problems",
-  ReportController.getTopProblems
-);
+router.get("/status/:status",ReportController.getByStatus);
 
-router.patch(
-    "/:id/status",
-    ReportController.updateStatus
-);
+router.get("/top-problems",ReportController.getTopProblems);
+
+router.patch("/:id/status",ReportController.updateStatus);
 
 router.get("/:id", ReportController.getById);
 

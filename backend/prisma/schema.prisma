@@ -11,7 +11,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 model User {
   id         String   @id @default(uuid())
   email      String   @unique
@@ -34,45 +33,34 @@ enum Role {
 
 model Report {
   id             String   @id @default(uuid())
-
   category       ReportCategory
-
   problemType    String
-
   description    String
-
   latitude      Float?
   longitude     Float?
-
   address      String?
-
   isAnonymous    Boolean @default(false)
-
   status         Status @default(REGISTERED)
-
   userId         String
   user           User @relation(fields: [userId], references: [id])
-
   evidences     ReportEvidence[]
-
+  priority       Priority?
+  impact         String?
+  probability    String?
+  operationalType String?
+  targetDate     DateTime?
+  justification  String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-
   @@index([userId])
 }
 
 model ReportEvidence {
-
   id         String   @id @default(uuid())
-
   imageUrl   String
-
   reportId   String
-
   report     Report @relation(fields: [reportId], references: [id])
-
   createdAt  DateTime @default(now())
-
   @@index([reportId])
 }
 
@@ -92,4 +80,9 @@ enum ReportCategory {
   ENVIRONMENT
   INFRASTRUCTURE
   MOBILITY
+}
+enum Priority {
+  BAJO
+  MEDIO
+  ALTO
 }
