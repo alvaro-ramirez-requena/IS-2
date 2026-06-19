@@ -27,6 +27,9 @@ import OperatorDashboardPage
 import OperatorReportDetailPage
   from "./pages/OperatorReportDetailPage";
 
+import TechnicianAttendPage
+  from "./pages/TechnicianAttendPage";
+
 import ProtectedRoute
   from "./routes/ProtectedRoute";
 
@@ -96,6 +99,15 @@ export default function App() {
         element={
           <ProtectedRoute>
             <OperatorReportDetailPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/technician/report/:id/attend"
+        element={
+          <ProtectedRoute>
+            <TechnicianAttendPage />
           </ProtectedRoute>
         }
       />
