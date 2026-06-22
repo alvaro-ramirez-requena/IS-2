@@ -4,6 +4,8 @@ import authRoutes from "./routes/auth.routes"
 import reportRoutes from "./routes/report.routes"
 import uploadRoutes
 from "./routes/upload.routes"
+import assignmentRoutes
+from "./routes/assignment.routes";
 
 const app = express();
 
@@ -11,6 +13,10 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
+app.use(
+  "/api/assignments",
+  assignmentRoutes
+);
 app.use(
   "/api/uploads",
   uploadRoutes

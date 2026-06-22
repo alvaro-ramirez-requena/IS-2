@@ -18,10 +18,19 @@ model User {
   lastName   String
   password   String
   role       Role     @default(CITIZEN)
+
+  availability Boolean @default(true)
+  specialty     String?
+  zone          String?
+  crew          String?
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   reports    Report[]
+
+  technicianAssignments ReportAssignment[] @relation("TechnicianAssignments")
+  operatorAssignments   ReportAssignment[] @relation("OperatorAssignments")
 }
 
 enum Role {
@@ -44,6 +53,8 @@ model Report {
   userId         String
   user           User @relation(fields: [userId], references: [id])
   evidences     ReportEvidence[]
+  assignments ReportAssignment[]
+
   priority       Priority?
   impact         String?
   probability    String?
@@ -62,6 +73,30 @@ model ReportEvidence {
   report     Report @relation(fields: [reportId], references: [id])
   createdAt  DateTime @default(now())
   @@index([reportId])
+}
+
+model ReportAssignment {
+  id             String   @id @default(uuid())
+
+  reportId        String
+  technicianId    String
+  assignedById    String
+
+  assignedAt      DateTime @default(now())
+
+  notes           String?
+
+  active          Boolean @default(true)
+
+  report           Report @relation(fields: [reportId], references: [id])
+
+  technician User @relation("TechnicianAssignments", fields: [technicianId], references: [id])
+
+  assignedBy User @relation("OperatorAssignments", fields: [assignedById], references: [id])
+
+  @@index([reportId])
+  @@index([technicianId])
+  @@index([assignedById])
 }
 
 enum Status {

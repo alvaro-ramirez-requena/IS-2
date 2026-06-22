@@ -27,4 +27,24 @@ export class UserRepository {
       where: { id },
     });
   }
+
+  async findByRole(role: Role) {
+    return await prisma.user.findMany({
+      where: { role },
+    });
+  }
+
+  async updateAvailability(
+    userId: string,
+    availability: boolean
+  ) {
+    return await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        availability,
+      },
+    });
+  }
 }
