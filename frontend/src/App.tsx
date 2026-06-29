@@ -26,6 +26,7 @@ import OperatorDashboardPage
 
 import OperatorReportDetailPage
   from "./pages/OperatorReportDetailPage";
+import TechnicalReportDetailPage from "./pages/TechnicalReportDetailPage";
 import TechnicianDashboardPage from "./pages/TechnicalDashboardPage";
 
 export default function App() {
@@ -84,6 +85,11 @@ export default function App() {
           <TechnicianDashboardPage />
         }
 />
+
+      <Route
+        path="/technician/work/:id"
+        element={<TechnicalReportDetailPage />}
+      />
 
       <Route
         path="*"

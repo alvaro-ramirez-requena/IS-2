@@ -253,11 +253,7 @@ useEffect(() => {
 
                                         <button
                                             onClick={() =>
-                                        
-                                                selectedStatus === "APPROVED"
-
-                                                ? navigate(`/operator/report/${work.id}`)
-                                                : navigate(`/technician/work/${work.id}`)
+                                                navigate(`/technician/work/${work.id}`)
                                             }
                                             className="technician-detail-button"
                                         >
