@@ -81,6 +81,7 @@ export default function ProblemBanner() {
 
                     setProblems(data);
 
+
                 } catch (error) {
 
                     console.error(error);
