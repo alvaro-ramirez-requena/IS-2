@@ -6,6 +6,14 @@ import uploadRoutes
 from "./routes/upload.routes"
 import assignmentRoutes
 from "./routes/assignment.routes";
+import categoryRoutes
+from "./routes/category.routes";
+import problemTypeRoutes
+from "./routes/problem-type.routes";
+import closureReasonRoutes
+from "./routes/closure-reason.routes";
+import slaConfigurationRoutes
+from "./routes/sla-configuration.routes";
 
 const app = express();
 
@@ -17,6 +25,25 @@ app.use(
   "/api/assignments",
   assignmentRoutes
 );
+app.use(
+  "/api/categories",
+  categoryRoutes
+);
+app.use(
+  "/api/problem-types",
+  problemTypeRoutes
+);
+
+app.use(
+  "/api/closure-reasons",
+  closureReasonRoutes
+);
+
+app.use(
+  "/api/sla-configurations",
+  slaConfigurationRoutes
+);
+
 app.use(
   "/api/uploads",
   uploadRoutes

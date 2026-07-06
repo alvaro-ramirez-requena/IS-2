@@ -44,6 +44,13 @@ model Report {
   id             String   @id @default(uuid())
   category       ReportCategory
   problemType    String
+
+  categoryId     String?
+  categoryRef    Category? @relation(fields: [categoryId], references: [id])
+
+  problemTypeId  String?
+  problemTypeRef ProblemType? @relation(fields: [problemTypeId], references: [id])
+
   description    String
   latitude      Float?
   longitude     Float?
@@ -98,6 +105,53 @@ model ReportAssignment {
   @@index([technicianId])
   @@index([assignedById])
 }
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+
+  problemTypes ProblemType[]
+  reports      Report[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProblemType {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  reports Report[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ClosureReason {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SlaConfiguration {
+  id String @id @default(uuid())
+
+  priority Priority @unique
+
+  responseHours Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 
 enum Status {
   REGISTERED
