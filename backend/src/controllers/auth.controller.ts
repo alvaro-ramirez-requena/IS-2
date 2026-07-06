@@ -42,4 +42,43 @@ export class AuthController {
       });
     }
   }
+  static async forgotPassword(req: Request, res: Response) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          message: "Correo no proporcionado",
+        });
+      }
+
+      const result = await authService.forgotPassword(email);
+
+      return res.status(200).json(result);
+    } catch (error: any) {
+      return res.status(400).json({
+        message: error.message || "No se pudo enviar el correo de recuperación",
+      });
+    }
+  }
+
+  static async resetPassword(req: Request, res: Response) {
+    try {
+      const { token, newPassword } = req.body;
+
+      if (!token || !newPassword) {
+        return res.status(400).json({
+          message: "Token o nueva contraseña no proporcionados",
+        });
+      }
+
+      const result = await authService.resetPassword(token, newPassword);
+
+      return res.status(200).json(result);
+    } catch (error: any) {
+      return res.status(400).json({
+        message: error.message || "No se pudo restablecer la contraseña",
+      });
+    }
+  }
 }

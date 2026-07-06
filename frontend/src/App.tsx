@@ -7,7 +7,7 @@ import {
 import RegisterPage
   from "./pages/RegisterPage";
 
-import VerifyEmailPage 
+import VerifyEmailPage
   from "./pages/VerifyEmailPage";
 
 import LoginPage
@@ -22,7 +22,8 @@ import CreateReportPage
 import ReportsByProblemPage
   from "./pages/ReportsByProblemPage";
 
-import MyReportsPage from "./pages/MyReportsPage";
+import MyReportsPage
+  from "./pages/MyReportsPage";
 
 import OperatorDashboardPage
   from "./pages/OperatorDashboardPage";
@@ -33,11 +34,23 @@ import OperatorReportDetailPage
 import ProtectedRoute
   from "./routes/ProtectedRoute";
 
+import ForgotPasswordPage
+  from "./pages/ForgotPasswordPage";
+
+import ResetPasswordPage
+  from "./pages/ResetPasswordPage";
+
 export default function App() {
 
   return (
 
     <Routes>
+
+      {/* Inicio ciudadano público */}
+      <Route
+        path="/"
+        element={<HomePage />}
+      />
 
       <Route
         path="/register"
@@ -49,19 +62,28 @@ export default function App() {
         element={<LoginPage />}
       />
 
-      <Route 
-      path="/verify-email" 
-      element={<VerifyEmailPage />} />
-
       <Route
-        path="/home"
-        element={
-          <ProtectedRoute>
-            <HomePage />
-          </ProtectedRoute>
-        }
+        path="/verify-email"
+        element={<VerifyEmailPage />}
       />
 
+      <Route
+        path="/forgot-password"
+        element={<ForgotPasswordPage />}
+      />
+
+      <Route
+        path="/reset-password"
+        element={<ResetPasswordPage />}
+      />
+
+      {/* También puedes dejar /home como inicio ciudadano */}
+      <Route
+        path="/home"
+        element={<HomePage />}
+      />
+
+      {/* Estas sí deben estar protegidas */}
       <Route
         path="/reports/create"
         element={
@@ -107,12 +129,14 @@ export default function App() {
         }
       />
 
+      {/* Si la ruta no existe, manda al inicio ciudadano, no al login */}
       <Route
         path="*"
         element={
-          <Navigate to="/login" />
+          <Navigate to="/" />
         }
       />
+
     </Routes>
   );
 }

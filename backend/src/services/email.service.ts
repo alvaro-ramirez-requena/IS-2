@@ -27,4 +27,21 @@ export class EmailService {
       `,
     });
   }
+  async sendPasswordResetEmail(email: string, token: string) {
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+
+    await this.transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject: "Restablece tu contraseña en ReportaYa",
+      html: `
+        <h2>Restablecer contraseña</h2>
+        <p>Recibimos una solicitud para restablecer tu contraseña.</p>
+        <p>Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+        <a href="${resetUrl}">Restablecer mi contraseña</a>
+        <p>Este enlace expirará en 1 hora.</p>
+        <p>Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
+      `,
+    });
+  }
 }

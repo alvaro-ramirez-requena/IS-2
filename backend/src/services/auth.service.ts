@@ -132,4 +132,48 @@ export class AuthService {
       message: "Correo verificado correctamente. Ya puedes iniciar sesión.",
     };
   }
+  async forgotPassword(email: string) {
+  const user = await this.userRepository.findByEmail(email);
+
+  if (user) {
+    const { token, hashedToken } = generateEmailToken();
+
+    await this.userRepository.updatePasswordResetToken(
+      user.id,
+      hashedToken,
+      new Date(Date.now() + 60 * 60 * 1000)
+    );
+
+    await this.emailService.sendPasswordResetEmail(user.email, token);
+  }
+
+  return {
+    message:
+      "Si el correo existe, te llegará un enlace para restablecer tu contraseña.",
+  };
+}
+
+async resetPassword(token: string, newPassword: string) {
+    if (newPassword.length < 8) {
+      throw new Error(
+        "La contraseña es débil. Sugerencia: utiliza al menos 8 caracteres."
+      );
+    }
+
+    const hashedToken = hashEmailToken(token);
+
+    const user = await this.userRepository.findByPasswordResetToken(hashedToken);
+
+    if (!user) {
+      throw new Error("El enlace para restablecer contraseña es inválido o ha expirado");
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.userRepository.updatePassword(user.id, hashedPassword);
+
+    return {
+      message: "Contraseña actualizada correctamente. Ya puedes iniciar sesión.",
+    };
+  }
 }

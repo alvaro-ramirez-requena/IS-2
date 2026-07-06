@@ -71,5 +71,44 @@ export class UserRepository {
       },
     });
   }
+  async updatePasswordResetToken(
+  userId: string,
+  hashedToken: string,
+  expiresAt: Date
+) {
+  return await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      passwordResetToken: hashedToken,
+      passwordResetExpires: expiresAt,
+    },
+  });
+}
+
+async findByPasswordResetToken(hashedToken: string) {
+  return await prisma.user.findFirst({
+    where: {
+      passwordResetToken: hashedToken,
+      passwordResetExpires: {
+        gt: new Date(),
+      },
+    },
+  });
+}
+
+async updatePassword(userId: string, hashedPassword: string) {
+    return await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      },
+    });
+  }
 
 }

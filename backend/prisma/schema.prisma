@@ -25,6 +25,8 @@ model User {
   emailVerificationToken   String?
   emailVerificationExpires DateTime?
   reports    Report[]
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
 }
 
 enum Role {

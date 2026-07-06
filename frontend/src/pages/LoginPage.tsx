@@ -227,21 +227,23 @@ export default function LoginPage() {
 
 
                     <div className="
-    flex
-    gap-4
-    mb-8
-">
+                        flex
+                        gap-4
+                        mb-8
+                        items-center
+                        flex-wrap
+                    ">
 
                         <Link
                             to="/login"
                             className="
-            px-6
-            py-2
-            rounded-full
-            bg-[#03152E]
-            text-white
-            font-semibold
-        "
+                                px-6
+                                py-2
+                                rounded-full
+                                bg-[#03152E]
+                                text-white
+                                font-semibold
+                            "
                         >
                             Login
                         </Link>
@@ -249,14 +251,29 @@ export default function LoginPage() {
                         <Link
                             to="/register"
                             className="
-            px-6
-            py-2
-            rounded-full
-            border
-            font-semibold
-        "
+                                px-6
+                                py-2
+                                rounded-full
+                                border
+                                font-semibold
+                            "
                         >
                             Registrarse
+                        </Link>
+
+                        <Link
+                            to="/forgot-password"
+                            className="
+                                px-6
+                                py-2
+                                rounded-full
+                                border
+                                font-semibold
+                                text-sm
+                                hover:bg-gray-100
+                            "
+                        >
+                            ¿Olvidaste tu contraseña?
                         </Link>
 
                     </div>
