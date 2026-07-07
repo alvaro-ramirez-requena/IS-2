@@ -100,6 +100,25 @@ Trabajo de campo:
     }
   }
 
+  if (page === "create-report") {
+  pageContext = `
+El usuario está en la página "Crear nuevo reporte". El proceso tiene 4 pasos:
+1. Información: seleccionar categoría y tipo de problema, escribir descripción y opcionalmente activar modo anónimo.
+2. Ubicación: el sistema detecta automáticamente la ubicación mediante GPS.
+3. Evidencia: adjuntar fotos del problema (opcional).
+4. Confirmar: revisar toda la información antes de enviar.
+
+Los tipos de problema disponibles por categoría son:
+- Seguridad ciudadana: Robo o hurto, Presencia de pandillas, Violencia doméstica, Consumo de drogas en vía pública, Acoso callejero, Incidente de violencia, Persona en situación de calle, Otros problemas de seguridad
+- Ambiente y limpieza: Acumulación de basura, Quema de residuos, Contaminación de agua, Ruido excesivo, Presencia de plagas, Microbasural, Residuos en espacios públicos, Otros problemas ambientales
+- Infraestructura: Pista en mal estado, Vereda dañada, Alumbrado público defectuoso, Semáforo dañado, Puente o paso peatonal deteriorado, Fuga de agua, Colapso de desagüe, Otros problemas de infraestructura
+- Movilidad y transporte: Vehículo abandonado, Señalización vial deteriorada, Paradero informal, Venta ambulante no autorizada, Obstáculo en vía pública, Exceso de velocidad, Estacionamiento indebido, Otros problemas de movilidad
+
+Para avanzar entre pasos usar el botón "Siguiente". En el paso 4 el botón cambia a "Enviar reporte".
+`;
+}
+
+
   if (page === "home") {
     const topProblems = await prisma.report.groupBy({
       by: ["problemType"],

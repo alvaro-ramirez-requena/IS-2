@@ -29,6 +29,7 @@ function getWelcomeMessage(page: string, role: string): string {
     if (page === "fieldwork") return "Estoy aquí para ayudarte con este trabajo en campo. ¿Qué necesitas saber?";
   }
   if (page === "my-reports") return "Puedo ayudarte a entender el estado de tus reportes. ¿Qué quieres saber?";
+  if (page === "create-report") return "Estás creando un reporte. El proceso tiene 4 pasos: Información, Ubicación, Evidencia y Confirmar. ¿Tienes alguna duda sobre algún paso?";
   if (page === "home") return "Hola, soy el asistente de ReportaYa. ¿En qué puedo ayudarte hoy?";
   return "Hola, soy el asistente de ReportaYa. ¿En qué puedo ayudarte?";
 }
