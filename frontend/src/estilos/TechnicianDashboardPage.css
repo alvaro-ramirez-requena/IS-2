@@ -1,0 +1,214 @@
+/* Technician Dashboard page styles */
+
+.technician-loading {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.technician-root {
+    min-height: 100vh;
+    background: #f5f7fa;
+    display: flex;
+}
+
+.technician-sidebar {
+    width: 320px;
+    background: #064e3b;
+    color: white;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.technician-logo {
+    font-size: 40px;
+    font-weight: bold;
+    margin-bottom: 56px;
+}
+
+.technician-logo span {
+    color: #facc15;
+}
+
+.technician-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.technician-menu button {
+    width: 100%;
+    text-align: left;
+    padding: 16px;
+    border-radius: 16px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.technician-menu button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.technician-logout {
+    width: 100%;
+    background: #b91c1c;
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.technician-logout:hover {
+    background: #991b1b;
+}
+
+.technician-main {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+}
+
+.technician-title {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    color: #111827;
+}
+
+.technician-subtitle {
+    color: #6b7280;
+    font-size: 20px;
+    margin-bottom: 40px;
+}
+
+.technician-empty {
+    background: white;
+    border-radius: 24px;
+    padding: 40px;
+    border: 1px solid #e5e7eb;
+}
+
+.technician-work-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.technician-work-card {
+    background: white;
+    border-radius: 24px;
+    border: 1px solid #e5e7eb;
+    padding: 20px;
+    display: flex;
+    gap: 24px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.technician-work-image {
+    width: 260px;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 16px;
+}
+
+.technician-work-content {
+    flex: 1;
+}
+
+.technician-work-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.technician-work-title {
+    font-size: 30px;
+    font-weight: bold;
+    color: #111827;
+}
+
+.technician-work-time {
+    color: #6b7280;
+    margin-top: 8px;
+}
+
+.technician-status {
+    background: #dcfce7;
+    color: #166534;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.technician-work-info {
+    margin-top: 16px;
+    color: #374151;
+    font-size: 16px;
+}
+
+.technician-work-info p {
+    margin: 4px 0;
+}
+
+.technician-work-footer {
+    margin-top: 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.technician-work-description {
+    font-size: 18px;
+    color: #4b5563;
+    flex: 1;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.technician-detail-button {
+    background: transparent;
+    border: none;
+    color: #059669;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.technician-transfer-button {
+    background: transparent;
+    border: none;
+    color: #046446;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.technician-detail-button:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 1024px) {
+    .technician-work-card {
+        flex-direction: column;
+    }
+
+    .technician-work-image {
+        width: 100%;
+    }
+}
