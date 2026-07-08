@@ -237,13 +237,25 @@ export default function TechnicianAttendPage() {
         fetchReport();
     }, [id]);
 
-    const catalogo = report
+    const campoExtra = {
+        label: "Observaciones adicionales",
+        placeholder: "Ej: Detalles relevantes no cubiertos arriba, o N/A si no aplica",
+        descripcion: "Información adicional relevante para el caso, o N/A si no hay nada que agregar",
+    };
+
+    const catalogoBase = report
         ? (catalogoAtencion[report.problemType] ?? catalogoDefault)
         : catalogoDefault;
 
+    const catalogo = {
+        ...catalogoBase,
+        camposObligatorios: [...catalogoBase.camposObligatorios, campoExtra],
+    };
+
     useEffect(() => {
         if (!report) return;
-        const c = catalogoAtencion[report.problemType] ?? catalogoDefault;
+        const cBase = catalogoAtencion[report.problemType] ?? catalogoDefault;
+        const c = { ...cBase, camposObligatorios: [...cBase.camposObligatorios, campoExtra] };
         const storageKey = `technician-attend-${id}`;
         const saved = localStorage.getItem(storageKey);
 
@@ -403,9 +415,9 @@ export default function TechnicianAttendPage() {
                             <h3 className="text-2xl font-bold">Datos requeridos</h3>
                         </div>
                         <p className="text-sm text-gray-400 mb-4">Datos que encontraste en campo para este tipo de problema</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                             {catalogo.camposObligatorios.map((campo) => (
-                                <div key={campo.label}>
+                                <div key={campo.label} className={campo.label === campoExtra.label ? "sm:col-span-2" : ""}>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">{campo.label} *</label>
                                     <p className="text-xs text-gray-400 mb-2">{campo.descripcion}</p>
                                     <input
