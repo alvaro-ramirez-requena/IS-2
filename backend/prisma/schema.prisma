@@ -1,0 +1,203 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  firstName String
+  lastName  String
+  password  String
+  role      Role     @default(CITIZEN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  emailVerified            Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+
+  reports Report[]
+
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+
+  followedReports ReportFollow[]
+  notifications   Notification[]
+
+  technicianProfile TechnicianProfile?
+}
+
+enum Role {
+  CITIZEN
+  OPERATOR
+  TECHNICIAN
+}
+
+model Report {
+  id String @id @default(uuid())
+
+  title String
+
+  category ReportCategory
+
+  problemType String
+
+  description String
+
+  latitude  Float?
+  longitude Float?
+
+  address String?
+
+  isAnonymous Boolean @default(false)
+
+  status Status @default(REGISTERED)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  evidences ReportEvidence[]
+
+  priority        Priority?
+  impact          String?
+  probability     String?
+  operationalType String?
+  targetDate      DateTime?
+  justification   String?
+
+  followers     ReportFollow[]
+  notifications Notification[]
+  resolvedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+
+  
+}
+
+model ReportEvidence {
+  id String @id @default(uuid())
+
+  imageUrl String
+
+  reportId String
+
+  report Report @relation(fields: [reportId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([reportId])
+}
+
+model ReportFollow {
+  id String @id @default(uuid())
+
+  userId   String
+  reportId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  report Report @relation(fields: [reportId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, reportId])
+  @@index([userId])
+  @@index([reportId])
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  userId   String
+  reportId String?
+
+  title   String
+  message String
+  read    Boolean @default(false)
+
+  user   User    @relation(fields: [userId], references: [id])
+  report Report? @relation(fields: [reportId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([reportId])
+}
+
+enum Status {
+  REGISTERED
+  VALIDATING
+  APPROVED
+  REJECTED
+  PRIORITIZED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum ReportCategory {
+  SECURITY
+  ENVIRONMENT
+  INFRASTRUCTURE
+  MOBILITY
+}
+
+enum TechnicianApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model TechnicianApplication {
+  id String @id @default(uuid())
+
+  firstName String
+  lastName  String
+  email     String  @unique
+  phone     String?
+  dni       String?
+
+  district   String?
+  skills     String[]
+  experience String?
+
+  status TechnicianApplicationStatus @default(PENDING)
+
+  reviewedAt   DateTime?
+  reviewedById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TechnicianProfile {
+  id String @id @default(uuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  district  String?
+  skills    String[]
+  available Boolean  @default(true)
+  crewName  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Priority {
+  BAJO
+  MEDIO
+  ALTO
+}
