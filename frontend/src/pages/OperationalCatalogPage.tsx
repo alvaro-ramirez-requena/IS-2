@@ -4,6 +4,12 @@ import CategorySection
 import ProblemTypeSection
     from "../components/operationalCatalog/ProblemTypeSection";
 
+import ClosureReasonSection
+    from "../components/operationalCatalog/ClosureReasonSection";
+
+import SlaConfigurationSection
+    from "../components/operationalCatalog/SlaConfigurationSection";
+
 export default function OperationalCatalogPage() {
 
     return (
@@ -31,6 +37,19 @@ export default function OperationalCatalogPage() {
             <div className="mt-12">
 
                 <ProblemTypeSection />
+
+            </div>
+
+            <div className="mt-12">
+
+                <ClosureReasonSection />
+
+            </div>
+
+
+            <div className="mt-12">
+
+                <SlaConfigurationSection />
 
             </div>
 
