@@ -27,8 +27,12 @@ import OperatorDashboardPage
 import OperatorReportDetailPage
   from "./pages/OperatorReportDetailPage";
 
+import OperationalCatalogPage
+  from "./pages/OperationalCatalogPage";
+
 import ProtectedRoute
   from "./routes/ProtectedRoute";
+
 
 export default function App() {
 
@@ -96,6 +100,15 @@ export default function App() {
         element={
           <ProtectedRoute>
             <OperatorReportDetailPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/operator/catalog"
+        element={
+          <ProtectedRoute>
+            <OperationalCatalogPage />
           </ProtectedRoute>
         }
       />
