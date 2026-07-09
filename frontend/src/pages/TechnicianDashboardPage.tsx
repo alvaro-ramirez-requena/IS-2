@@ -1,19 +1,140 @@
 import {
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+
+import {
     useNavigate,
 } from "react-router-dom";
 
-export default function TechnicianDashboardPage() {
+import {
+    AssignmentService,
+} from "../services/assignment.service";
 
+import {
+    statusLabels,
+} from "../utils/reportLabels";
+
+type Assignment = {
+    id: string;
+    reportId: string;
+    technicianId: string;
+    assignedById: string;
+    assignedAt: string;
+    notes?: string;
+    active: boolean;
+    report: {
+        id: string;
+        title?: string;
+        problemType: string;
+        description: string;
+        status: string;
+        priority?: string;
+        address?: string;
+        createdAt: string;
+        evidences?: {
+            imageUrl: string;
+        }[];
+    };
+};
+
+type TechnicianFilter =
+    | "ALL"
+    | "ASSIGNED"
+    | "IN_TRANSIT"
+    | "IN_PROGRESS";
+
+export default function TechnicianDashboardPage() {
     const navigate =
         useNavigate();
 
-    const firstName =
-        localStorage.getItem("firstName") || "Técnico";
+    const [assignments, setAssignments] =
+        useState<Assignment[]>([]);
 
-    const logout = () => {
-        localStorage.clear();
-        navigate("/login");
-    };
+    const [loading, setLoading] =
+        useState(true);
+
+    const [error, setError] =
+        useState("");
+
+    const [filter, setFilter] =
+        useState<TechnicianFilter>("ALL");
+
+    const userId =
+        localStorage.getItem("userId") || "";
+
+    const firstName =
+        localStorage.getItem("firstName") ||
+        localStorage.getItem("userName") ||
+        "Técnico";
+
+    const fetchAssignments =
+        async () => {
+            try {
+                setLoading(true);
+                setError("");
+
+                if (!userId) {
+                    throw new Error(
+                        "No se encontró el técnico en sesión."
+                    );
+                }
+
+                const data =
+                    await AssignmentService
+                        .getAssignmentsByTechnician(userId);
+
+                setAssignments(data || []);
+
+            } catch (error: any) {
+                setError(
+                    error.message ||
+                    "No se pudieron cargar los trabajos asignados."
+                );
+
+            } finally {
+                setLoading(false);
+            }
+        };
+
+    useEffect(() => {
+        fetchAssignments();
+    }, []);
+
+    const filteredAssignments =
+        useMemo(() => {
+            if (filter === "ALL") {
+                return assignments;
+            }
+
+            return assignments.filter((assignment) =>
+                assignment.report.status === filter
+            );
+        }, [assignments, filter]);
+
+    const buttonClass = (
+        value: TechnicianFilter
+    ) => `
+        w-full
+        text-left
+        rounded-xl
+        px-4
+        py-4
+        font-semibold
+        transition
+        ${
+            filter === value
+                ? "bg-white/25"
+                : "bg-white/10 hover:bg-white/20"
+        }
+    `;
+
+    const logout =
+        () => {
+            localStorage.clear();
+            navigate("/login");
+        };
 
     return (
         <div className="
@@ -22,94 +143,67 @@ export default function TechnicianDashboardPage() {
             flex
         ">
             <aside className="
-                w-[320px]
-                h-screen
-                sticky
-                top-0
-                bg-[#064E3B]
+                w-[280px]
+                bg-[#0B513B]
                 text-white
-                p-8
+                min-h-screen
+                p-7
                 flex
                 flex-col
                 justify-between
             ">
                 <div>
                     <h1 className="
-                        text-4xl
+                        text-3xl
                         font-bold
-                        mb-14
+                        mb-12
                     ">
-                        reporta
-                        <span className="
-                            text-yellow-400
-                        ">
-                            Ya
-                        </span>
+                        reporta<span className="text-yellow-400">Ya</span>
                     </h1>
 
-                    <div className="
+                    <nav className="
                         space-y-4
                     ">
-                        <button className="
-                            w-full
-                            text-left
-                            p-4
-                            rounded-2xl
-                            bg-white/10
-                            hover:bg-white/20
-                            transition
-                        ">
+                        <button
+                            onClick={() => setFilter("ALL")}
+                            className={buttonClass("ALL")}
+                        >
                             Trabajos asignados
                         </button>
 
-                        <button className="
-                            w-full
-                            text-left
-                            p-4
-                            rounded-2xl
-                            bg-white/10
-                            hover:bg-white/20
-                            transition
-                        ">
+                        <button
+                            onClick={() => setFilter("ASSIGNED")}
+                            className={buttonClass("ASSIGNED")}
+                        >
                             Aceptados
                         </button>
 
-                        <button className="
-                            w-full
-                            text-left
-                            p-4
-                            rounded-2xl
-                            bg-white/10
-                            hover:bg-white/20
-                            transition
-                        ">
+                        <button
+                            onClick={() => setFilter("IN_TRANSIT")}
+                            className={buttonClass("IN_TRANSIT")}
+                        >
                             En traslado
                         </button>
 
-                        <button className="
-                            w-full
-                            text-left
-                            p-4
-                            rounded-2xl
-                            bg-white/10
-                            hover:bg-white/20
-                            transition
-                        ">
+                        <button
+                            onClick={() => setFilter("IN_PROGRESS")}
+                            className={buttonClass("IN_PROGRESS")}
+                        >
                             En atención
                         </button>
-                    </div>
+                    </nav>
                 </div>
 
                 <button
                     onClick={logout}
                     className="
                         w-full
-                        bg-red-700
-                        hover:bg-red-800
-                        rounded-2xl
-                        p-4
-                        transition
-                        font-semibold
+                        bg-red-600
+                        hover:bg-red-700
+                        rounded-xl
+                        px-4
+                        py-4
+                        font-bold
                     "
                 >
                     Cerrar sesión
@@ -119,113 +213,222 @@ export default function TechnicianDashboardPage() {
             <main className="
                 flex-1
                 p-10
-                overflow-y-auto
             ">
-                <section className="
+                <p className="
+                    text-green-700
+                    font-bold
+                    mb-2
+                ">
+                    Panel técnico
+                </p>
+
+                <h2 className="
+                    text-5xl
+                    font-bold
+                    text-[#03152E]
+                ">
+                    Bienvenido, {firstName}
+                </h2>
+
+                <p className="
+                    text-gray-500
+                    text-lg
+                    mt-4
                     mb-10
                 ">
-                    <p className="
-                        text-green-700
-                        font-semibold
-                        text-sm
-                    ">
-                        Panel técnico
-                    </p>
+                    Consulta y gestión de trabajos asignados.
+                </p>
 
-                    <h2 className="
-                        text-5xl
-                        font-bold
-                        text-[#03152E]
-                        mt-2
-                    ">
-                        Bienvenido, {firstName}
-                    </h2>
-
-                    <p className="
-                        text-gray-500
-                        text-xl
-                        mt-4
-                    ">
-                        Consulta y gestión de trabajos asignados.
-                    </p>
-                </section>
-
-                <section className="
-                    bg-white
-                    rounded-3xl
-                    border
-                    p-8
-                    shadow-sm
-                ">
+                {loading ? (
                     <div className="
-                        flex
-                        flex-col
-                        lg:flex-row
-                        gap-8
+                        bg-white
+                        border
+                        rounded-3xl
+                        p-8
+                        text-gray-500
                     ">
-                        <img
-                            src="https://placehold.co/600x400"
-                            alt="Reporte asignado"
-                            className="
-                                w-full
-                                lg:w-[300px]
-                                h-[220px]
-                                object-cover
-                                rounded-2xl
-                            "
-                        />
-
-                        <div className="
-                            flex-1
-                        ">
-                            <div className="
-                                flex
-                                items-start
-                                justify-between
-                                gap-4
-                            ">
-                                <div>
-                                    <h3 className="
-                                        text-3xl
-                                        font-bold
-                                        text-[#03152E]
-                                    ">
-                                        Sin trabajos asignados
-                                    </h3>
-
-                                    <p className="
-                                        text-gray-500
-                                        mt-2
-                                    ">
-                                        Cuando el operador te asigne un reporte,
-                                        aparecerá en esta sección.
-                                    </p>
-                                </div>
-
-                                <span className="
-                                    bg-green-100
-                                    text-green-700
-                                    px-4
-                                    py-2
-                                    rounded-full
-                                    font-semibold
-                                ">
-                                    Disponible
-                                </span>
-                            </div>
-
-                            <p className="
-                                text-gray-600
-                                mt-8
-                                leading-relaxed
-                            ">
-                                Este panel permitirá al técnico aceptar trabajos,
-                                cambiar su estado operativo y registrar evidencias
-                                de atención en campo.
-                            </p>
-                        </div>
+                        Cargando trabajos asignados...
                     </div>
-                </section>
+                ) : error ? (
+                    <div className="
+                        bg-red-50
+                        border
+                        border-red-200
+                        text-red-700
+                        rounded-3xl
+                        p-8
+                        font-semibold
+                    ">
+                        {error}
+                    </div>
+                ) : filteredAssignments.length === 0 ? (
+                    <div className="
+                        bg-white
+                        border
+                        rounded-3xl
+                        p-8
+                    ">
+                        <h3 className="
+                            text-3xl
+                            font-bold
+                            text-[#03152E]
+                        ">
+                            Sin trabajos asignados
+                        </h3>
+
+                        <p className="
+                            text-gray-500
+                            mt-2
+                        ">
+                            Cuando el operador te asigne un reporte,
+                            aparecerá en esta sección.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="
+                        space-y-6
+                    ">
+                        {filteredAssignments.map((assignment) => {
+                            const report =
+                                assignment.report;
+
+                            const imageUrl =
+                                report.evidences?.[0]?.imageUrl ||
+                                "https://placehold.co/600x400?text=Sin+evidencia";
+
+                            return (
+                                <div
+                                    key={assignment.id}
+                                    className="
+                                        bg-white
+                                        border
+                                        rounded-3xl
+                                        p-6
+                                        flex
+                                        gap-6
+                                        shadow-sm
+                                    "
+                                >
+                                    <img
+                                        src={imageUrl}
+                                        alt={report.problemType}
+                                        className="
+                                            w-[260px]
+                                            h-[180px]
+                                            object-cover
+                                            rounded-2xl
+                                        "
+                                    />
+
+                                    <div className="
+                                        flex-1
+                                    ">
+                                        <div className="
+                                            flex
+                                            justify-between
+                                            gap-4
+                                            items-start
+                                        ">
+                                            <div>
+                                                <h3 className="
+                                                    text-2xl
+                                                    font-bold
+                                                    text-[#03152E]
+                                                ">
+                                                    {report.title || report.problemType}
+                                                </h3>
+
+                                                <p className="
+                                                    text-gray-500
+                                                    mt-1
+                                                ">
+                                                    {report.problemType}
+                                                </p>
+                                            </div>
+
+                                            <span className="
+                                                bg-blue-100
+                                                text-blue-700
+                                                rounded-full
+                                                px-4
+                                                py-2
+                                                font-bold
+                                            ">
+                                                {statusLabels[report.status] || report.status}
+                                            </span>
+                                        </div>
+
+                                        <p className="
+                                            text-gray-700
+                                            mt-4
+                                        ">
+                                            {report.description}
+                                        </p>
+
+                                        <div className="
+                                            mt-5
+                                            grid
+                                            grid-cols-1
+                                            md:grid-cols-3
+                                            gap-4
+                                            text-sm
+                                            text-gray-600
+                                        ">
+                                            <p>
+                                                <strong>Dirección:</strong>{" "}
+                                                {report.address || "No registrada"}
+                                            </p>
+
+                                            <p>
+                                                <strong>Prioridad:</strong>{" "}
+                                                {report.priority || "No definida"}
+                                            </p>
+
+                                            <p>
+                                                <strong>Asignado:</strong>{" "}
+                                                {new Date(assignment.assignedAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+
+                                        {assignment.notes && (
+                                            <div className="
+                                                bg-gray-50
+                                                border
+                                                rounded-2xl
+                                                p-4
+                                                mt-5
+                                                text-gray-700
+                                            ">
+                                                <strong>Indicaciones:</strong>{" "}
+                                                {assignment.notes}
+                                            </div>
+                                        )}
+
+                                        <button
+                                            onClick={() =>
+                                                navigate(
+                                                    `/technician/reports/${report.id}`
+                                                )
+                                            }
+                                            className="
+                                                mt-6
+                                                bg-blue-700
+                                                hover:bg-blue-800
+                                                text-white
+                                                rounded-xl
+                                                px-5
+                                                py-3
+                                                font-bold
+                                            "
+                                        >
+                                            Ver detalle
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </main>
         </div>
     );

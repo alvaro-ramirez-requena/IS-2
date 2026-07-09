@@ -19,9 +19,9 @@ router.get(
     ReportController.getByStatus
 );
 
-router.patch(
-    "/:id/prioritize",
-    ReportController.prioritize
+router.get(
+    "/operator/:operatorId/status/:status",
+    ReportController.getReportsByStatusForOperator
 );
 
 router.get(
@@ -32,6 +32,11 @@ router.get(
 router.get(
   "/map/locations",
   ReportController.getReportsWithLocation.bind(ReportController)
+);
+
+router.patch(
+    "/:id/prioritize",
+    ReportController.prioritize
 );
 
 router.patch(

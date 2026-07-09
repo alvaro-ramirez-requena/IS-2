@@ -74,10 +74,18 @@ export default function
 
                     setLoading(true);
 
+                    const operatorId =
+                        localStorage.getItem("userId");
+
+                    if (!operatorId) {
+                        throw new Error(
+                            "No se encontró el operador en sesión."
+                        );
+                    }
+
                     const response =
                         await fetch(
-
-                            `${API_URL}/api/reports/status/${selectedStatus}`
+                            `${API_URL}/api/reports/operator/${operatorId}/status/${selectedStatus}`
                         );
 
                     const data =
@@ -270,6 +278,28 @@ export default function
                             Aprobados
 
                         </button>
+                        <button
+
+                            onClick={() =>
+                                setSelectedStatus(
+                                    "REJECTED"
+                                )
+                            }
+
+                            className="
+                                w-full
+                                text-left
+                                p-4
+                                rounded-2xl
+                                bg-white/10
+                                hover:bg-white/20
+                                transition
+                            "
+                        >
+
+                            Rechazados
+
+                        </button>
 
                         <button
 
@@ -295,26 +325,22 @@ export default function
                         </button>
 
                         <button
-
-                            onClick={() =>
-                                setSelectedStatus(
-                                    "REJECTED"
-                                )
-                            }
-
-                            className="
+                            onClick={() => setSelectedStatus("ASSIGNED")}
+                            className={`
                                 w-full
                                 text-left
-                                p-4
-                                rounded-2xl
-                                bg-white/10
-                                hover:bg-white/20
-                                transition
-                            "
+                                rounded-xl
+                                px-4
+                                py-4
+                                font-semibold
+                                ${
+                                    selectedStatus === "ASSIGNED"
+                                        ? "bg-white/20"
+                                        : "bg-white/10 hover:bg-white/20"
+                                }
+                            `}
                         >
-
-                            Rechazados
-
+                            Asignados
                         </button>
                             <button
                                 onClick={() =>
@@ -504,8 +530,8 @@ export default function
                                                                 </p>
 
                                                                 <p className="
-        text-gray-500
-    ">
+                                                                    text-gray-500
+                                                                ">
 
                                                                     {
                                                                         getRelativeTime(

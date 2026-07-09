@@ -3,6 +3,14 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../config/prisma";
 
 export class TechnicianApplicationRepository {
+  
+  async findUserByEmail(email: string) {
+    return await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+  }
 
   async create(data: {
     firstName: string;
@@ -10,7 +18,7 @@ export class TechnicianApplicationRepository {
     email: string;
     phone?: string;
     dni?: string;
-    district?: string;
+    municipalityId?: string;
     skills: string[];
     experience?: string;
   }) {
@@ -21,7 +29,7 @@ export class TechnicianApplicationRepository {
         email: data.email,
         phone: data.phone,
         dni: data.dni,
-        district: data.district,
+        municipalityId: data.municipalityId,
         skills: data.skills,
         experience: data.experience,
         status: TechnicianApplicationStatus.PENDING,
@@ -34,6 +42,30 @@ export class TechnicianApplicationRepository {
       where: {
         status: TechnicianApplicationStatus.PENDING,
       },
+
+      include: {
+        municipality: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
+  async findPendingByMunicipality(
+    municipalityId: string
+  ) {
+    return await prisma.technicianApplication.findMany({
+      where: {
+        status: TechnicianApplicationStatus.PENDING,
+        municipalityId,
+      },
+
+      include: {
+        municipality: true,
+      },
+
       orderBy: {
         createdAt: "desc",
       },
@@ -42,19 +74,41 @@ export class TechnicianApplicationRepository {
 
   async findAll() {
     return await prisma.technicianApplication.findMany({
+      include: {
+        municipality: true,
+      },
+
       orderBy: {
         createdAt: "desc",
       },
     });
   }
 
+  async findOperatorById(
+    operatorId: string
+  ) {
+    return await prisma.user.findUnique({
+      where: {
+        id: operatorId,
+      },
+
+      include: {
+        municipality: true,
+      },
+    });
+  }
+
   async approve(applicationId: string, reviewedById?: string) {
     const application =
-      await prisma.technicianApplication.findUnique({
-        where: {
-          id: applicationId,
-        },
-      });
+    await prisma.technicianApplication.findUnique({
+      where: {
+        id: applicationId,
+      },
+
+      include: {
+        municipality: true,
+      },
+    });
 
     if (!application) {
       throw new Error("La postulación no existe.");
@@ -106,14 +160,14 @@ export class TechnicianApplicationRepository {
         },
 
         update: {
-          district: application.district,
+          municipalityId: application.municipalityId,
           skills: application.skills,
           available: true,
         },
 
         create: {
           userId: technician.id,
-          district: application.district,
+          municipalityId: application.municipalityId,
           skills: application.skills,
           available: true,
         },
@@ -142,11 +196,15 @@ export class TechnicianApplicationRepository {
 
   async reject(applicationId: string, reviewedById?: string) {
     const application =
-      await prisma.technicianApplication.findUnique({
-        where: {
-          id: applicationId,
-        },
-      });
+    await prisma.technicianApplication.findUnique({
+      where: {
+        id: applicationId,
+      },
+
+      include: {
+        municipality: true,
+      },
+    });
 
     if (!application) {
       throw new Error("La postulación no existe.");

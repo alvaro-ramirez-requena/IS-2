@@ -13,8 +13,20 @@ import {
 import { GeocodingService }
   from "./geocoding.service";
 
-import { NotificationService } from "./notification.service";
-import { ReportFollowRepository } from "../repositories/report-follow.repository";
+import { NotificationService }
+  from "./notification.service";
+
+import { ReportFollowRepository }
+  from "../repositories/report-follow.repository";
+
+import { MunicipalityRepository }
+  from "../repositories/municipality.repository";
+
+import { resolveMunicipalityNameFromLocation }
+  from "../utils/municipalityResolver";
+
+import { UserRepository }
+  from "../repositories/user.repository";
 
 export class ReportService {
 
@@ -26,6 +38,12 @@ export class ReportService {
 
   private reportFollowRepository =
     new ReportFollowRepository();
+
+  private municipalityRepository =
+    new MunicipalityRepository();
+
+  private userRepository =
+    new UserRepository();
 
   private getStatusLabel(
     status: Status
@@ -39,13 +57,14 @@ export class ReportService {
         REJECTED: "Rechazado",
         PRIORITIZED: "Priorizado",
         ASSIGNED: "Asignado",
+        IN_TRANSIT: "En traslado",
         IN_PROGRESS: "En proceso",
         RESOLVED: "Resuelto",
       };
 
     return labels[status];
   }
-  
+
   async createReport(data: {
 
     title: string;
@@ -73,22 +92,79 @@ export class ReportService {
       string | undefined =
       data.address;
 
+    let district:
+      string | null =
+      null;
+
+    let province:
+      string | null =
+      null;
+
+    let department:
+      string | null =
+      null;
+
     if (
-      !address
-      &&
-      data.latitude !== undefined
-      &&
+      data.latitude !== undefined &&
       data.longitude !== undefined
     ) {
+      const locationDetails =
+        await GeocodingService
+          .getLocationDetails(
+            data.latitude,
+            data.longitude
+          );
 
+      address =
+        address ||
+        locationDetails.address ||
+        undefined;
+
+      district =
+        locationDetails.district;
+
+      province =
+        locationDetails.province;
+
+      department =
+        locationDetails.department;
+    }
+
+    if (
+      !address &&
+      data.latitude !== undefined &&
+      data.longitude !== undefined
+    ) {
       address =
         await GeocodingService
           .getAddress(
-
             data.latitude,
-
             data.longitude
           );
+    }
+
+    const municipalityName =
+      resolveMunicipalityNameFromLocation({
+        district,
+        province,
+        department,
+        address,
+      });
+
+    let municipalityId:
+      string | undefined =
+      undefined;
+
+    if (municipalityName) {
+      const municipality =
+        await this
+          .municipalityRepository
+          .findOrCreateByName(
+            municipalityName
+          );
+
+      municipalityId =
+        municipality.id;
     }
 
     const reportData =
@@ -97,6 +173,8 @@ export class ReportService {
         ...data,
 
         address,
+
+        municipalityId,
       });
 
     const report =
@@ -118,8 +196,11 @@ export class ReportService {
 
     return report;
   }
+
   async getReportsWithLocation() {
-    return await this.reportRepository.findReportsWithLocation();
+    return await this
+      .reportRepository
+      .findReportsWithLocation();
   }
 
   async getReportsByUser(
@@ -167,73 +248,110 @@ export class ReportService {
       .findByStatus(status);
   }
 
-  async updateReportStatus(
-  id: string,
-  status: Status
-) {
+  async getReportsByStatusForOperator(
+    operatorId: string,
+    status: Status
+  ) {
+    const operator =
+      await this
+        .userRepository
+        .findById(
+          operatorId
+        );
 
-  const previousReport =
-    await this
+    if (!operator) {
+      throw new Error(
+        "Operador no encontrado"
+      );
+    }
+
+    if (operator.role !== "OPERATOR") {
+      throw new Error(
+        "El usuario no es operador municipal"
+      );
+    }
+
+    if (!operator.municipalityId) {
+      throw new Error(
+        "El operador no tiene una municipalidad asignada"
+      );
+    }
+
+    return await this
       .reportRepository
-      .findById(id);
-
-  if (!previousReport) {
-    throw new Error(
-      "Reporte no encontrado"
-    );
+      .findByStatusAndMunicipality(
+        status,
+        operator.municipalityId
+      );
   }
 
-  const updatedReport =
-    await this
-      .reportRepository
-      .updateStatus(
-        id,
-        status
+  async updateReportStatus(
+    id: string,
+    status: Status
+  ) {
+
+    const previousReport =
+      await this
+        .reportRepository
+        .findById(id);
+
+    if (!previousReport) {
+      throw new Error(
+        "Reporte no encontrado"
       );
+    }
 
-  const followers =
-    await this
-      .reportFollowRepository
-      .findFollowersByReport(id);
-
-  const userIdsToNotify =
-    new Set<string>();
-
-  userIdsToNotify.add(
-    previousReport.userId
-  );
-
-  followers.forEach((follower) => {
-    userIdsToNotify.add(
-      follower.userId
-    );
-  });
-
-  const statusText =
-    this.getStatusLabel(status);
-
-  const notifications =
-    Array
-      .from(userIdsToNotify)
-      .map((userId) => ({
-        userId,
-
-        reportId:
+    const updatedReport =
+      await this
+        .reportRepository
+        .updateStatus(
           id,
+          status
+        );
 
-        title:
-          "Cambio de estado en reporte",
+    const followers =
+      await this
+        .reportFollowRepository
+        .findFollowersByReport(id);
 
-        message:
-          `El reporte "${previousReport.title || previousReport.problemType}" cambió a ${statusText}.`,
-      }));
+    const userIdsToNotify =
+      new Set<string>();
 
-  await this
-    .notificationService
-    .createMany(notifications);
+    userIdsToNotify.add(
+      previousReport.userId
+    );
 
-  return updatedReport;
-}
+    followers.forEach((follower) => {
+      userIdsToNotify.add(
+        follower.userId
+      );
+    });
+
+    const statusText =
+      this.getStatusLabel(status);
+
+    const notifications =
+      Array
+        .from(userIdsToNotify)
+        .map((userId) => ({
+          userId,
+
+          reportId:
+            id,
+
+          title:
+            "Cambio de estado en reporte",
+
+          message:
+            `El reporte "${previousReport.title || previousReport.problemType}" cambió a ${statusText}.`,
+        }));
+
+    await this
+      .notificationService
+      .createMany(notifications);
+
+    return updatedReport;
+  }
 
   async getReportById(id: string) {
 
@@ -259,58 +377,111 @@ export class ReportService {
     targetDate: string;
     justification: string;
   }) {
-    const report = await this.reportRepository.findById(id);
+    const report =
+      await this
+        .reportRepository
+        .findById(id);
 
     if (!report) {
-      throw new Error("Reporte no encontrado");
+      throw new Error(
+        "Reporte no encontrado"
+      );
     }
 
-    if (report.status !== Status.APPROVED && report.status !== Status.PRIORITIZED) {
-      throw new Error("Solo se pueden priorizar reportes aprobados.");
+    if (
+      report.status !== Status.APPROVED &&
+      report.status !== Status.PRIORITIZED
+    ) {
+      throw new Error(
+        "Solo se pueden priorizar reportes aprobados."
+      );
     }
 
-    let computedPriority: Priority = Priority.BAJO;
+    let computedPriority:
+      Priority =
+      Priority.BAJO;
 
     if (
       (data.impact === "ALTO" && data.probability === "ALTO") ||
       (data.impact === "ALTO" && data.probability === "MEDIO") ||
       (data.impact === "MEDIO" && data.probability === "ALTO")
     ) {
-      computedPriority = Priority.ALTO;
+      computedPriority =
+        Priority.ALTO;
+
     } else if (
       (data.impact === "MEDIO" && data.probability === "MEDIO") ||
       (data.impact === "ALTO" && data.probability === "BAJO") ||
       (data.impact === "BAJO" && data.probability === "ALTO") ||
       (data.impact === "MEDIO" && data.probability === "BAJO")
     ) {
-      computedPriority = Priority.MEDIO;
+      computedPriority =
+        Priority.MEDIO;
     }
 
-    const updatedReport = await this.reportRepository.updatePrioritization(id, {
-      impact: data.impact,
-      probability: data.probability,
-      priority: computedPriority,
-      operationalType: data.operationalType,
-      targetDate: new Date(data.targetDate),
-      justification: data.justification,
-      status: Status.PRIORITIZED,
-    });
+    const updatedReport =
+      await this
+        .reportRepository
+        .updatePrioritization(id, {
+          impact:
+            data.impact,
 
-    const followers = await this.reportFollowRepository.findFollowersByReport(id);
-    const userIdsToNotify = new Set<string>();
-    userIdsToNotify.add(report.userId);
-    followers.forEach((follower) => userIdsToNotify.add(follower.userId));
+          probability:
+            data.probability,
 
-    await this.notificationService.createMany(
-      Array.from(userIdsToNotify).map((userId) => ({
-        userId,
-        reportId: id,
-        title: "Reporte priorizado",
-        message: `El reporte "${report.title || report.problemType}" fue priorizado como ${computedPriority}.`,
-      }))
+          priority:
+            computedPriority,
+
+          operationalType:
+            data.operationalType,
+
+          targetDate:
+            new Date(data.targetDate),
+
+          justification:
+            data.justification,
+
+          status:
+            Status.PRIORITIZED,
+        });
+
+    const followers =
+      await this
+        .reportFollowRepository
+        .findFollowersByReport(id);
+
+    const userIdsToNotify =
+      new Set<string>();
+
+    userIdsToNotify.add(
+      report.userId
     );
+
+    followers.forEach((follower) =>
+      userIdsToNotify.add(
+        follower.userId
+      )
+    );
+
+    await this
+      .notificationService
+      .createMany(
+        Array
+          .from(userIdsToNotify)
+          .map((userId) => ({
+            userId,
+
+            reportId:
+              id,
+
+            title:
+              "Reporte priorizado",
+
+            message:
+              `El reporte "${report.title || report.problemType}" fue priorizado como ${computedPriority}.`,
+          }))
+      );
 
     return updatedReport;
   }
-
 }

@@ -1,5 +1,5 @@
 const API_URL =
-    import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+    import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export interface TechnicianApplicationDTO {
     firstName: string;
@@ -7,7 +7,7 @@ export interface TechnicianApplicationDTO {
     email: string;
     phone?: string;
     dni?: string;
-    district?: string;
+    municipalityId: string;
     skills: string[];
     experience?: string;
 }
@@ -18,13 +18,16 @@ export class TechnicianApplicationService {
         data: TechnicianApplicationDTO
     ) {
         const response =
-            await fetch(`${API_URL}/technician-applications`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            });
+            await fetch(
+                `${API_URL}/api/technician-applications`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                }
+            );
 
         const result =
             await response.json();
@@ -39,15 +42,27 @@ export class TechnicianApplicationService {
     }
 
     static async getPendingApplications() {
+        const operatorId =
+            localStorage.getItem("userId");
+
+        if (!operatorId) {
+            throw new Error(
+                "No se encontró el operador en sesión."
+            );
+        }
+
         const response =
-            await fetch(`${API_URL}/technician-applications/pending`);
+            await fetch(
+                `${API_URL}/api/technician-applications/pending?operatorId=${operatorId}`
+            );
 
         const result =
             await response.json();
 
         if (!response.ok) {
             throw new Error(
-                result.message || "Error al obtener postulaciones."
+                result.message ||
+                "No se pudieron obtener las postulaciones."
             );
         }
 
@@ -60,7 +75,7 @@ export class TechnicianApplicationService {
     ) {
         const response =
             await fetch(
-                `${API_URL}/technician-applications/${applicationId}/approve`,
+                `${API_URL}/api/technician-applications/${applicationId}/approve`,
                 {
                     method: "PATCH",
                     headers: {
@@ -90,7 +105,7 @@ export class TechnicianApplicationService {
     ) {
         const response =
             await fetch(
-                `${API_URL}/technician-applications/${applicationId}/reject`,
+                `${API_URL}/api/technician-applications/${applicationId}/reject`,
                 {
                     method: "PATCH",
                     headers: {

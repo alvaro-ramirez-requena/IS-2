@@ -15,7 +15,7 @@ export class TechnicianApplicationController {
           email: req.body.email,
           phone: req.body.phone,
           dni: req.body.dni,
-          district: req.body.district,
+          municipalityId: req.body.municipalityId,
           skills: req.body.skills || [],
           experience: req.body.experience,
         });
@@ -31,8 +31,20 @@ export class TechnicianApplicationController {
 
   async getPending(req: Request, res: Response) {
     try {
+      const operatorId =
+        req.query.operatorId as string;
+
+      if (!operatorId) {
+        return res.status(400).json({
+          message: "Falta el operador para filtrar las postulaciones.",
+        });
+      }
+
       const applications =
-        await technicianApplicationService.getPendingApplications();
+        await technicianApplicationService
+          .getPendingApplicationsForOperator(
+            operatorId
+          );
 
       return res.json(applications);
 

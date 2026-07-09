@@ -26,11 +26,20 @@ export class UserRepository {
     });
   }
 
-  async findById(id: string) {
-    return await prisma.user.findUnique({
-      where: { id },
-    });
-  }
+    async findById(
+      id: string
+    ) {
+      return await prisma
+        .user
+        .findUnique({
+          where: {
+            id,
+          },
+          include: {
+            municipality: true,
+          },
+        });
+    }
 
   async findByVerificationToken(hashedToken: string) {
     return await prisma.user.findFirst({
@@ -72,33 +81,33 @@ export class UserRepository {
     });
   }
   async updatePasswordResetToken(
-  userId: string,
-  hashedToken: string,
-  expiresAt: Date
-) {
-  return await prisma.user.update({
-    where: {
-      id: userId,
-    },
-    data: {
-      passwordResetToken: hashedToken,
-      passwordResetExpires: expiresAt,
-    },
-  });
-}
-
-async findByPasswordResetToken(hashedToken: string) {
-  return await prisma.user.findFirst({
-    where: {
-      passwordResetToken: hashedToken,
-      passwordResetExpires: {
-        gt: new Date(),
+    userId: string,
+    hashedToken: string,
+    expiresAt: Date
+  ) {
+    return await prisma.user.update({
+      where: {
+        id: userId,
       },
-    },
-  });
-}
+      data: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: expiresAt,
+      },
+    });
+  }
 
-async updatePassword(userId: string, hashedPassword: string) {
+  async findByPasswordResetToken(hashedToken: string) {
+    return await prisma.user.findFirst({
+      where: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: {
+          gt: new Date(),
+        },
+      },
+    });
+  }
+
+  async updatePassword(userId: string, hashedPassword: string) {
     return await prisma.user.update({
       where: {
         id: userId,
@@ -107,6 +116,33 @@ async updatePassword(userId: string, hashedPassword: string) {
         password: hashedPassword,
         passwordResetToken: null,
         passwordResetExpires: null,
+      },
+    });
+  }
+
+
+
+  async findByRole(role: Role) {
+    return await prisma.user.findMany({
+      where: { role },
+    });
+  }
+
+  async updateAvailability(
+    userId: string,
+    availability: boolean
+  ) {
+    return await prisma.technicianProfile.upsert({
+      where: {
+        userId,
+      },
+      update: {
+        available: availability,
+      },
+      create: {
+        userId,
+        available: availability,
+        skills: [],
       },
     });
   }

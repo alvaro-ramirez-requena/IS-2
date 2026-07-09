@@ -52,6 +52,76 @@ import TechnicianDashboardPage
 import ReportsMapPage
   from "./pages/ReportsMapPage";
 
+import TechnicianReportDetailPage
+    from "./pages/TechnicianReportDetailPage";
+
+import TechnicianAttendPage
+    from "./pages/TechnicianAttendPage";
+
+function getDashboardByRole(
+  role: string | null
+) {
+  if (role === "OPERATOR") {
+    return "/operator";
+  }
+
+  if (role === "TECHNICIAN") {
+    return "/technician";
+  }
+
+  return "/home";
+}
+
+import TechnicianFieldWorkPage
+  from "./pages/TechnicianFieldWorkPage";
+
+function PublicHomeRoute() {
+  const token =
+    localStorage.getItem("token");
+
+  const role =
+    localStorage.getItem("role");
+
+  if (token && role === "OPERATOR") {
+    return (
+      <Navigate
+        to="/operator"
+        replace
+      />
+    );
+  }
+
+  if (token && role === "TECHNICIAN") {
+    return (
+      <Navigate
+        to="/technician"
+        replace
+      />
+    );
+  }
+
+  return <HomePage />;
+}
+
+function LoginRoute() {
+  const token =
+    localStorage.getItem("token");
+
+  const role =
+    localStorage.getItem("role");
+
+  if (token) {
+    return (
+      <Navigate
+        to={getDashboardByRole(role)}
+        replace
+      />
+    );
+  }
+
+  return <LoginPage />;
+}
+
 export default function App() {
 
   return (
@@ -61,14 +131,14 @@ export default function App() {
       {/* Inicio ciudadano público */}
       <Route
         path="/"
-        element={<HomePage />}
+        element={<PublicHomeRoute />}
       />
 
       <Route
         path="/home"
-        element={<HomePage />}
+        element={<PublicHomeRoute />}
       />
-
+      
       <Route
         path="/register"
         element={<RegisterPage />}
@@ -76,7 +146,7 @@ export default function App() {
 
       <Route
         path="/login"
-        element={<LoginPage />}
+        element={<LoginRoute />}
       />
 
       <Route
@@ -155,12 +225,41 @@ export default function App() {
           <ProtectedRoute allowedRoles={["TECHNICIAN"]}>
             <TechnicianDashboardPage />
           </ProtectedRoute>
-        }
-      />
+          }
+        />
+
+        <Route
+          path="/technician/reports/:id"
+          element={
+            <ProtectedRoute allowedRoles={["TECHNICIAN"]}>
+              <TechnicianReportDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/technician/reports/:id/attend"
+          element={
+            <ProtectedRoute allowedRoles={["TECHNICIAN"]}>
+              <TechnicianAttendPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/technician/reports/:id/fieldwork"
+          element={
+            <ProtectedRoute allowedRoles={["TECHNICIAN"]}>
+              <TechnicianFieldWorkPage />
+            </ProtectedRoute>
+          }
+        />
+
       <Route
         path="/reports/map"
         element={<ReportsMapPage />}
       />
+      
       <Route
         path="*"
         element={

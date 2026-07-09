@@ -146,6 +146,34 @@ export class ReportController {
     }
   }
 
+    static async getReportsByStatusForOperator(
+    req: Request,
+    res: Response
+  ) {
+    try {
+      const operatorId =
+        req.params.operatorId as string;
+
+      const status =
+        req.params.status as Status;
+
+      const reports =
+        await reportService
+          .getReportsByStatusForOperator(
+            operatorId,
+            status
+          );
+
+      res.json(reports);
+
+    } catch (error: any) {
+      res.status(400).json({
+        message:
+          error.message,
+      });
+    }
+  }
+
   static async updateStatus(
     req: Request,
     res: Response
@@ -209,4 +237,7 @@ export class ReportController {
       });
     }
   }
+
+  
+
 }

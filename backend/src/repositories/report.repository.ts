@@ -28,6 +28,8 @@ type CreateReportInput = {
   userId: string;
 
   status: Status;
+
+  municipalityId?: string;
 };
 
 const getResolvedVisibilityDate = () => {
@@ -230,6 +232,37 @@ async findByProblemType(problemType: string) {
       });
   }
 
+  async findByStatusAndMunicipality(
+    status: Status,
+    municipalityId: string
+  ) {
+    return await prisma
+      .report
+      .findMany({
+        where: {
+          status,
+          municipalityId,
+        },
+
+        include: {
+          evidences: true,
+
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+
+          municipality: true,
+        },
+
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+  }
+
   async updateStatus(
     id: string,
     status: Status
@@ -336,24 +369,49 @@ async findByProblemType(problemType: string) {
   }
 
   async findById(id: string) {
+    return await prisma.report.findUnique({
+      where: {
+        id,
+      },
 
-    return await prisma
-      .report
-      .findUnique({
+      include: {
+        evidences: true,
 
-        where: { id },
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
 
-        include: {
+        municipality: true,
 
-          evidences: true,
-
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
+        assignments: {
+          include: {
+            technician: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                technicianProfile: {
+                  include: {
+                    municipality: true,
+                  },
+                },
+              },
             },
           },
         },
-      });
+
+        fieldWork: {
+          include: {
+            evidences: true,
+          },
+        },
+
+        technicalAttentions: true,
+      },
+    });
   }
 }

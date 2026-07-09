@@ -18,7 +18,10 @@ interface TechnicianApplication {
     email: string;
     phone?: string;
     dni?: string;
-    district?: string;
+    municipality?: {
+        id: string;
+        name: string;
+    };
     skills: string[];
     experience?: string;
     status: string;
@@ -331,10 +334,10 @@ export default function OperatorTechnicianApplicationsPage() {
                                             </p>
 
                                             <p>
-                                                <strong>Distrito:</strong>{" "}
-                                                {application.district || "No indicado"}
+                                                <strong>Municipalidad:</strong>{" "}
+                                                {application.municipality?.name || "No indicado"}
                                             </p>
-                                        </div>
+                                                                                    </div>
 
                                         <div className="
                                             mt-4

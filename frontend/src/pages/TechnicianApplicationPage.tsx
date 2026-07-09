@@ -1,6 +1,15 @@
 import {
-    useState,
+  useEffect,
+  useState,
 } from "react";
+
+import {
+  MunicipalityService,
+} from "../services/municipality.service";
+
+import type {
+  Municipality,
+} from "../services/municipality.service";
 
 import type {
     FormEvent,
@@ -29,21 +38,32 @@ const skillOptions = [
     "Retiro de vehículos abandonados",
 ];
 
+type TechnicianApplicationFormData = {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    dni: string;
+    municipalityId: string;
+    skills: string[];
+    experience: string;
+};
+
 export default function TechnicianApplicationPage() {
 
     const navigate =
         useNavigate();
 
     const [formData, setFormData] =
-        useState({
+        useState<TechnicianApplicationFormData>({
             firstName: "",
             lastName: "",
             email: "",
             phone: "",
             dni: "",
-            district: "",
+            municipalityId: "",
+            skills: [],
             experience: "",
-            skills: [] as string[],
         });
 
     const [loading, setLoading] =
@@ -55,8 +75,32 @@ export default function TechnicianApplicationPage() {
     const [error, setError] =
         useState("");
 
+    const [municipalities, setMunicipalities] =
+        useState<Municipality[]>([]);
+
+        useEffect(() => {
+            const loadMunicipalities =
+                async () => {
+                try {
+                    const data =
+                    await MunicipalityService.getAll();
+
+                    setMunicipalities(data);
+
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+            loadMunicipalities();
+            }, []);
+
     const handleChange = (
-        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+        event: React.ChangeEvent<
+            HTMLInputElement |
+            HTMLTextAreaElement |
+            HTMLSelectElement
+        >
     ) => {
         const { name, value } =
             event.target;
@@ -100,6 +144,11 @@ export default function TechnicianApplicationPage() {
             return;
         }
 
+        if (!formData.municipalityId) {
+            setError("Debes seleccionar una municipalidad.");
+            return;
+        }
+
         if (formData.skills.length === 0) {
             setError("Debes seleccionar al menos una habilidad.");
             return;
@@ -114,11 +163,10 @@ export default function TechnicianApplicationPage() {
                 email: formData.email.trim(),
                 phone: formData.phone.trim(),
                 dni: formData.dni.trim(),
-                district: formData.district.trim(),
+                municipalityId: formData.municipalityId,
                 experience: formData.experience.trim(),
                 skills: formData.skills,
             });
-
             setMessage(
                 "Tu postulación fue registrada correctamente. Un operador municipal la revisará."
             );
@@ -129,7 +177,7 @@ export default function TechnicianApplicationPage() {
                 email: "",
                 phone: "",
                 dni: "",
-                district: "",
+                municipalityId: "",
                 experience: "",
                 skills: [],
             });
@@ -376,25 +424,34 @@ export default function TechnicianApplicationPage() {
                                 text-gray-700
                                 mb-2
                             ">
-                                Distrito o zona
+                                Municipalidad a la que postula
                             </label>
 
-                            <input
-                                name="district"
-                                value={formData.district}
+                            <select
+                                name="municipalityId"
+                                value={formData.municipalityId}
                                 onChange={handleChange}
                                 className="
                                     w-full
+                                    rounded-2xl
                                     border
-                                    rounded-xl
                                     px-4
-                                    py-3
-                                    outline-none
-                                    focus:ring-2
-                                    focus:ring-blue-500
+                                    py-4
                                 "
-                                placeholder="Santiago de Surco"
-                            />
+                                >
+                                <option value="">
+                                    Selecciona una municipalidad
+                                </option>
+
+                                {municipalities.map((municipality) => (
+                                    <option
+                                    key={municipality.id}
+                                    value={municipality.id}
+                                    >
+                                    {municipality.name}
+                                    </option>
+                                ))}
+                                </select>
                         </div>
                     </div>
 

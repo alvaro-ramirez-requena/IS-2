@@ -31,36 +31,41 @@ import Input
 import Button
     from "../components/ui/Button";
 
-
-
 export default function LoginPage() {
 
     const navigate =
         useNavigate();
 
     useEffect(() => {
-
         const token =
             localStorage.getItem("token");
 
         const role =
             localStorage.getItem("role");
 
-        if (token) {
+        if (!token) {
+            return;
+        }
 
         if (role === "OPERATOR") {
+            navigate("/operator", {
+                replace: true,
+            });
 
-            navigate("/operator");
-
-        } else if (role === "TECHNICIAN") {
-
-            navigate("/technician");
-
-        } else {
-
-            navigate("/home");
+            return;
         }
-    }
+
+        if (role === "TECHNICIAN") {
+            navigate("/technician", {
+                replace: true,
+            });
+
+            return;
+        }
+
+        navigate("/home", {
+            replace: true,
+        });
 
     }, [navigate]);
 
@@ -154,18 +159,24 @@ export default function LoginPage() {
                 "OPERATOR"
             ) {
 
-                navigate("/operator");
+                navigate("/operator", {
+                    replace: true,
+                });
 
             } else if (
                 response.user.role ===
                 "TECHNICIAN"
             ) {
 
-                navigate("/technician");
+                navigate("/technician", {
+                    replace: true,
+                });
 
             } else {
 
-                navigate("/home");
+                navigate("/home", {
+                    replace: true,
+                });
             }
 
         } catch (error: any) {
