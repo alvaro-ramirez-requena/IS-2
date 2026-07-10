@@ -159,6 +159,244 @@ function formatDateTime(
         .toLocaleString();
 }
 
+function CheckIcon() {
+    return (
+        <svg
+            aria-hidden="true"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+        >
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.3}
+                d="M5 12.5l4 4L19 6.5"
+            />
+        </svg>
+    );
+}
+
+function CameraIcon() {
+    return (
+        <svg
+            aria-hidden="true"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+        >
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.8}
+                d="M4 7.5h3l1.5-2h7l1.5 2h3a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2v-8a2 2 0 012-2z"
+            />
+            <circle
+                cx="12"
+                cy="13"
+                r="3.25"
+                strokeWidth={1.8}
+            />
+        </svg>
+    );
+}
+
+function InfoItem({
+    label,
+    value,
+}: {
+    label: string;
+    value: string;
+}) {
+    return (
+        <div className="
+            rounded-2xl
+            border
+            border-slate-200
+            bg-slate-50
+            p-4
+        ">
+            <p className="
+                text-xs
+                font-semibold
+                uppercase
+                tracking-wide
+                text-slate-400
+            ">
+                {label}
+            </p>
+
+            <p className="
+                mt-2
+                break-words
+                text-sm
+                font-semibold
+                leading-relaxed
+                text-slate-800
+            ">
+                {value}
+            </p>
+        </div>
+    );
+}
+
+function RequirementItem({
+    complete,
+    label,
+}: {
+    complete: boolean;
+    label: string;
+}) {
+    return (
+        <div className="
+            flex
+            items-center
+            gap-3
+        ">
+            <span className={`
+                flex
+                h-6
+                w-6
+                shrink-0
+                items-center
+                justify-center
+                rounded-full
+                border
+                ${
+                    complete
+                        ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+                        : "border-slate-200 bg-slate-100 text-slate-400"
+                }
+            `}>
+                {complete && (
+                    <svg
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2.5}
+                            d="M5 12.5l4 4L19 6.5"
+                        />
+                    </svg>
+                )}
+            </span>
+
+            <span className={`
+                text-sm
+                ${
+                    complete
+                        ? "font-medium text-emerald-800"
+                        : "text-slate-500"
+                }
+            `}>
+                {label}
+            </span>
+        </div>
+    );
+}
+
+function EvidenceGroup({
+    title,
+    evidences,
+}: {
+    title: string;
+    evidences: {
+        id: string;
+        imageUrl: string;
+    }[];
+}) {
+    return (
+        <div>
+            <div className="
+                mb-3
+                flex
+                items-center
+                justify-between
+                gap-3
+            ">
+                <p className="
+                    text-sm
+                    font-semibold
+                    text-slate-700
+                ">
+                    {title}
+                </p>
+
+                <span className="
+                    rounded-full
+                    bg-slate-100
+                    px-2.5
+                    py-1
+                    text-xs
+                    font-semibold
+                    text-slate-500
+                ">
+                    {evidences.length}
+                </span>
+            </div>
+
+            {evidences.length > 0 ? (
+                <div className="
+                    grid
+                    grid-cols-2
+                    gap-3
+                ">
+                    {evidences.map((evidence) => (
+                        <a
+                            key={evidence.id}
+                            href={evidence.imageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="
+                                group
+                                overflow-hidden
+                                rounded-xl
+                                border
+                                border-slate-200
+                                bg-slate-100
+                            "
+                        >
+                            <img
+                                src={evidence.imageUrl}
+                                alt={title}
+                                className="
+                                    h-28
+                                    w-full
+                                    object-cover
+                                    transition
+                                    duration-300
+                                    group-hover:scale-105
+                                "
+                            />
+                        </a>
+                    ))}
+                </div>
+            ) : (
+                <div className="
+                    rounded-xl
+                    border
+                    border-dashed
+                    border-slate-200
+                    bg-slate-50
+                    px-4
+                    py-5
+                    text-center
+                    text-xs
+                    text-slate-400
+                ">
+                    No se registraron evidencias.
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function TechnicianClosurePage() {
     const navigate =
@@ -360,6 +598,31 @@ export default function TechnicianClosurePage() {
         ) &&
         !saving;
 
+    const closureRequirements = {
+        reason:
+            Boolean(selectedClosureReasonId),
+
+        observations:
+            Boolean(observations.trim()),
+
+        followUp:
+            !requiresFollowUp ||
+            Boolean(followUpNotes.trim()),
+    };
+
+    const completedRequirements =
+        Object.values(
+            closureRequirements
+        ).filter(Boolean).length;
+
+    const completionPercentage =
+        Math.round(
+            (
+                completedRequirements /
+                3
+            ) * 100
+        );
+
     const handleSubmit =
         async (
             event: React.FormEvent
@@ -442,17 +705,53 @@ export default function TechnicianClosurePage() {
             }
         };
 
-    if (loading) {
+        if (loading) {
         return (
             <div className="
                 min-h-screen
+                bg-slate-50
                 flex
                 items-center
                 justify-center
-                text-3xl
-                font-bold
+                px-6
             ">
-                Cargando...
+                <div className="
+                    rounded-3xl
+                    border
+                    border-slate-200
+                    bg-white
+                    px-10
+                    py-8
+                    text-center
+                    shadow-sm
+                ">
+                    <div className="
+                        mx-auto
+                        mb-4
+                        h-10
+                        w-10
+                        animate-spin
+                        rounded-full
+                        border-4
+                        border-emerald-100
+                        border-t-emerald-600
+                    " />
+
+                    <p className="
+                        font-semibold
+                        text-slate-800
+                    ">
+                        Cargando cierre operativo
+                    </p>
+
+                    <p className="
+                        mt-1
+                        text-sm
+                        text-slate-500
+                    ">
+                        Recuperando la atención y las evidencias registradas.
+                    </p>
+                </div>
             </div>
         );
     }
@@ -461,13 +760,81 @@ export default function TechnicianClosurePage() {
         return (
             <div className="
                 min-h-screen
+                bg-slate-50
                 flex
                 items-center
                 justify-center
-                text-3xl
-                font-bold
+                px-6
             ">
-                Reporte no encontrado
+                <div className="
+                    w-full
+                    max-w-md
+                    rounded-3xl
+                    border
+                    border-red-200
+                    bg-white
+                    p-8
+                    text-center
+                    shadow-sm
+                ">
+                    <div className="
+                        mx-auto
+                        flex
+                        h-14
+                        w-14
+                        items-center
+                        justify-center
+                        rounded-full
+                        bg-red-50
+                        text-xl
+                        font-bold
+                        text-red-600
+                    ">
+                        !
+                    </div>
+
+                    <h1 className="
+                        mt-4
+                        text-xl
+                        font-bold
+                        text-slate-900
+                    ">
+                        Reporte no encontrado
+                    </h1>
+
+                    <p className="
+                        mt-2
+                        text-sm
+                        leading-relaxed
+                        text-slate-500
+                    ">
+                        {error ||
+                            "No se pudo recuperar la información necesaria para realizar el cierre."}
+                    </p>
+
+                    <button
+                        type="button"
+                        onClick={() =>
+                            navigate(
+                                "/technician"
+                            )
+                        }
+                        className="
+                            mt-6
+                            w-full
+                            rounded-xl
+                            bg-emerald-600
+                            px-4
+                            py-3
+                            font-semibold
+                            text-white
+                            transition
+                            hover:bg-emerald-700
+                        "
+                    >
+                        Volver al panel técnico
+                    </button>
+                </div>
             </div>
         );
     }
@@ -475,607 +842,1394 @@ export default function TechnicianClosurePage() {
     return (
         <div className="
             min-h-screen
-            bg-[#F5F7FA]
-            p-6
-            lg:p-8
+            bg-slate-50
         ">
-            <div className="
-                max-w-7xl
-                mx-auto
-                space-y-8
+            {/* Barra superior */}
+            <header className="
+                sticky
+                top-0
+                z-30
+                border-b
+                border-emerald-800
+                bg-[#064E3B]
+                text-white
+                shadow-sm
             ">
-                <button
-                    onClick={() =>
-                        navigate(
-                            `/technician/reports/${report.id}/fieldwork`
-                        )
-                    }
-                    className="
-                        text-blue-700
-                        font-semibold
-                        hover:underline
-                    "
-                >
-                    ← Volver a trazabilidad
-                </button>
+                <div className="
+                    mx-auto
+                    flex
+                    max-w-7xl
+                    items-center
+                    justify-between
+                    gap-4
+                    px-5
+                    py-4
+                    lg:px-8
+                ">
+                    <button
+                        type="button"
+                        onClick={() =>
+                            navigate(
+                                `/technician/reports/${report.id}/fieldwork`
+                            )
+                        }
+                        className="
+                            inline-flex
+                            items-center
+                            gap-2
+                            rounded-xl
+                            px-3
+                            py-2
+                            text-sm
+                            font-semibold
+                            text-white
+                            transition
+                            hover:bg-white/10
+                        "
+                    >
+                        <span aria-hidden="true">
+                            ←
+                        </span>
 
+                        Volver a trazabilidad
+                    </button>
+
+                    <div className="
+                        hidden
+                        items-center
+                        gap-2
+                        sm:flex
+                    ">
+                        <span className="
+                            text-xl
+                            font-bold
+                            tracking-tight
+                            text-white
+                        ">
+                            reporta
+                            <span className="text-[#FACC15]">
+                                Ya
+                            </span>
+                        </span>
+
+
+                        <span className="
+                            rounded-full
+                            bg-emerald-50
+                            px-3
+                            py-1
+                            text-xs
+                            font-semibold
+                            text-emerald-700
+                        ">
+                            Cierre técnico
+                        </span>
+                    </div>
+                </div>
+            </header>
+
+            <main className="
+                mx-auto
+                max-w-7xl
+                px-5
+                py-8
+                lg:px-8
+                lg:py-10
+            ">
+                {/* Encabezado */}
                 <section className="
-                    bg-white
-                    border
+                    overflow-hidden
                     rounded-3xl
+                    border
+                    border-slate-200
+                    bg-white
                     shadow-sm
-                    p-6
-                    lg:p-8
-                    space-y-8
                 ">
                     <div className="
                         grid
                         grid-cols-1
-                        lg:grid-cols-[1fr_360px]
-                        gap-8
-                        items-start
+                        lg:grid-cols-[minmax(0,1fr)_380px]
                     ">
-                        <div>
-                            <p className="
-                                text-green-700
-                                font-semibold
+                        <div className="
+                            p-6
+                            sm:p-8
+                            lg:p-10
+                        ">
+                            <span className="
+                                inline-flex
+                                rounded-full
+                                bg-emerald-50
+                                px-3
+                                py-1
+                                text-xs
+                                font-bold
+                                uppercase
+                                tracking-wide
+                                text-emerald-700
                             ">
-                                US19 - Cierre operativo
-                            </p>
+                                Cierre operativo
+                            </span>
 
                             <h1 className="
-                                text-4xl
-                                lg:text-5xl
+                                mt-5
+                                max-w-4xl
+                                text-3xl
                                 font-bold
-                                text-[#03152E]
-                                mt-2
                                 leading-tight
+                                tracking-tight
+                                text-slate-950
+                                sm:text-4xl
+                                lg:text-5xl
                             ">
                                 Registrar resultado técnico
                             </h1>
 
                             <p className="
-                                text-gray-500
                                 mt-4
                                 max-w-3xl
-                                text-lg
-                                leading-relaxed
+                                text-base
+                                leading-7
+                                text-slate-500
+                                sm:text-lg
                             ">
-                                Selecciona el resultado final de la atención, registra observaciones de cierre y confirma el cierre operativo del reporte.
+                                Selecciona el resultado final, registra las observaciones y confirma el cierre operativo del reporte.
                             </p>
                         </div>
 
                         <div className="
-                            bg-blue-50
-                            border
-                            border-blue-100
-                            rounded-2xl
-                            p-5
-                            space-y-3
+                            border-t
+                            border-slate-200
+                            bg-[#064E3B]
+                            p-6
+                            text-white
+                            lg:border-l
+                            lg:border-t-0
+                            lg:p-8
                         ">
-                            <h2 className="
-                                font-bold
-                                text-[#03152E]
-                                text-lg
+                            <p className="
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-widest
+                                text-emerald-200
                             ">
                                 Reporte a cerrar
-                            </h2>
-
-                            <p>
-                                <strong>Título:</strong>{" "}
-                                {report.title}
                             </p>
 
-                            <p>
-                                <strong>Tipo:</strong>{" "}
+                            <h2 className="
+                                mt-3
+                                text-xl
+                                font-bold
+                                leading-snug
+                            ">
+                                {report.title}
+                            </h2>
+
+                            <p className="
+                                mt-2
+                                text-sm
+                                text-white/65
+                            ">
                                 {report.problemType}
                             </p>
 
-                            <p>
-                                <strong>Estado:</strong>{" "}
-                                {
-                                    statusLabels[report.status] ||
-                                    report.status
-                                }
+                            <div className="
+                                mt-6
+                                grid
+                                grid-cols-2
+                                gap-3
+                            ">
+                                <div className="
+                                    rounded-xl
+                                    bg-white/10
+                                    p-3
+                                ">
+                                    <p className="
+                                        text-xs
+                                        uppercase
+                                        tracking-wide
+                                        text-white/45
+                                    ">
+                                        Estado
+                                    </p>
+
+                                    <p className="
+                                        mt-1
+                                        text-sm
+                                        font-semibold
+                                    ">
+                                        {statusLabels[
+                                            report.status
+                                        ] ||
+                                            report.status}
+                                    </p>
+                                </div>
+
+                                <div className="
+                                    rounded-xl
+                                    bg-white/10
+                                    p-3
+                                ">
+                                    <p className="
+                                        text-xs
+                                        uppercase
+                                        tracking-wide
+                                        text-white/45
+                                    ">
+                                        Prioridad
+                                    </p>
+
+                                    <p className="
+                                        mt-1
+                                        text-sm
+                                        font-semibold
+                                    ">
+                                        {report.priority ||
+                                            "No definida"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="
+                                mt-3
+                                rounded-xl
+                                bg-white/10
+                                p-3
+                            ">
+                                <p className="
+                                    text-xs
+                                    uppercase
+                                    tracking-wide
+                                    text-white/45
+                                ">
+                                    Municipalidad
+                                </p>
+
+                                <p className="
+                                    mt-1
+                                    text-sm
+                                    font-semibold
+                                    leading-relaxed
+                                ">
+                                    {report.municipality
+                                        ?.name ||
+                                        "No definida"}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Progreso */}
+                <section className="
+                    mt-6
+                    rounded-3xl
+                    border
+                    border-slate-200
+                    bg-white
+                    p-5
+                    shadow-sm
+                    sm:p-6
+                ">
+                    <div className="
+                        flex
+                        flex-col
+                        gap-4
+                        sm:flex-row
+                        sm:items-center
+                        sm:justify-between
+                    ">
+                        <div>
+                            <h2 className="
+                                text-lg
+                                font-bold
+                                text-slate-900
+                            ">
+                                Preparación del cierre
+                            </h2>
+
+                            <p className="
+                                mt-1
+                                text-sm
+                                text-slate-500
+                            ">
+                                {completedRequirements} de 3 requisitos completados.
+                            </p>
+                        </div>
+
+                        <span className="
+                            text-2xl
+                            font-bold
+                            text-emerald-700
+                        ">
+                            {completionPercentage}%
+                        </span>
+                    </div>
+
+                    <div className="
+                        mt-4
+                        h-2.5
+                        overflow-hidden
+                        rounded-full
+                        bg-slate-100
+                    ">
+                        <div
+                            className="
+                                h-full
+                                rounded-full
+                                bg-emerald-600
+                                transition-all
+                                duration-500
+                            "
+                            style={{
+                                width:
+                                    `${completionPercentage}%`,
+                            }}
+                        />
+                    </div>
+                </section>
+
+                {error && (
+                    <div
+                        role="alert"
+                        className="
+                            mt-6
+                            flex
+                            items-start
+                            gap-3
+                            rounded-2xl
+                            border
+                            border-red-200
+                            bg-red-50
+                            px-5
+                            py-4
+                            text-sm
+                            text-red-700
+                        "
+                    >
+                        <span className="
+                            flex
+                            h-7
+                            w-7
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded-full
+                            bg-red-100
+                            font-bold
+                        ">
+                            !
+                        </span>
+
+                        <div>
+                            <p className="font-semibold">
+                                No se pudo completar la operación
                             </p>
 
-                            <p>
-                                <strong>Prioridad:</strong>{" "}
-                                {report.priority || "No definida"}
-                            </p>
-
-                            <p>
-                                <strong>Municipalidad:</strong>{" "}
-                                {
-                                    report.municipality?.name ||
-                                    "No definida"
-                                }
+                            <p className="mt-1">
+                                {error}
                             </p>
                         </div>
                     </div>
+                )}
 
-                    {error && (
-                        <div className="
-                            bg-red-50
-                            border
-                            border-red-200
-                            text-red-700
+                {successMessage && (
+                    <div
+                        role="status"
+                        className="
+                            mt-6
+                            flex
+                            items-start
+                            gap-3
                             rounded-2xl
-                            p-4
-                            font-semibold
-                        ">
-                            {error}
-                        </div>
-                    )}
-
-                    {successMessage && (
-                        <div className="
-                            bg-green-50
                             border
-                            border-green-200
-                            text-green-700
-                            rounded-2xl
-                            p-4
-                            font-semibold
+                            border-emerald-200
+                            bg-emerald-50
+                            px-5
+                            py-4
+                            text-sm
+                            text-emerald-700
+                        "
+                    >
+                        <span className="
+                            flex
+                            h-7
+                            w-7
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded-full
+                            bg-emerald-600
+                            text-white
                         ">
-                            {successMessage}
-                        </div>
-                    )}
+                            <CheckIcon />
+                        </span>
 
-                    <div className="
-                        grid
-                        grid-cols-1
-                        lg:grid-cols-[360px_1fr]
-                        gap-8
-                    ">
-                        <aside className="
+                        <div>
+                            <p className="font-semibold">
+                                Cierre registrado
+                            </p>
+
+                            <p className="mt-1">
+                                {successMessage}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                <div className="
+                    mt-6
+                    grid
+                    grid-cols-1
+                    gap-6
+                    xl:grid-cols-[minmax(0,1fr)_340px]
+                ">
+                    {/* Formulario */}
+                    <form
+                        onSubmit={handleSubmit}
+                        className="
+                            min-w-0
                             space-y-6
+                        "
+                    >
+                        {/* Resultado */}
+                        <section className="
+                            rounded-3xl
+                            border
+                            border-slate-200
+                            bg-white
+                            p-6
+                            shadow-sm
+                            sm:p-8
                         ">
                             <div className="
-                                bg-gray-50
-                                border
-                                rounded-2xl
-                                p-5
-                                space-y-3
+                                flex
+                                items-start
+                                gap-4
                             ">
-                                <h2 className="
-                                    text-xl
-                                    font-bold
-                                    text-[#03152E]
-                                ">
-                                    Resumen operativo
-                                </h2>
-
-                                <p>
-                                    <strong>Llegada:</strong>{" "}
-                                    {
-                                        formatDateTime(
-                                            report.fieldWork?.arrivedAt
-                                        )
-                                    }
-                                </p>
-
-                                <p>
-                                    <strong>Cierre de visita:</strong>{" "}
-                                    {
-                                        formatDateTime(
-                                            report.fieldWork?.closedAt
-                                        )
-                                    }
-                                </p>
-
-                                <p>
-                                    <strong>Distancia registrada:</strong>{" "}
-                                    {
-                                        report.fieldWork?.distanceMeters !==
-                                        null &&
-                                        report.fieldWork?.distanceMeters !==
-                                        undefined
-                                            ? `${report.fieldWork.distanceMeters} m`
-                                            : "No calculada"
-                                    }
-                                </p>
-
-                                <p>
-                                    <strong>Notas de campo:</strong>{" "}
-                                    {
-                                        report.fieldWork?.notes ||
-                                        "Sin notas"
-                                    }
-                                </p>
-                            </div>
-
-                            <div className="
-                                bg-gray-50
-                                border
-                                rounded-2xl
-                                p-5
-                                space-y-3
-                            ">
-                                <h2 className="
-                                    text-xl
-                                    font-bold
-                                    text-[#03152E]
-                                ">
-                                    Atención técnica
-                                </h2>
-
-                                {latestAttention ? (
-                                    <>
-                                        <p>
-                                            <strong>Acción:</strong>{" "}
-                                            {latestAttention.actionTaken}
-                                        </p>
-
-                                        <p>
-                                            <strong>Resultado:</strong>{" "}
-                                            {latestAttention.technicalResult}
-                                        </p>
-
-                                        <p>
-                                            <strong>Observaciones:</strong>{" "}
-                                            {
-                                                latestAttention.observations ||
-                                                "Sin observaciones"
-                                            }
-                                        </p>
-                                    </>
-                                ) : (
-                                    <p className="text-gray-500">
-                                        No hay atención técnica registrada.
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="
-                                bg-gray-50
-                                border
-                                rounded-2xl
-                                p-5
-                                space-y-4
-                            ">
-                                <h2 className="
-                                    text-xl
-                                    font-bold
-                                    text-[#03152E]
-                                ">
-                                    Evidencias de campo
-                                </h2>
-
-                                <p className="
+                                <span className={`
+                                    flex
+                                    h-10
+                                    w-10
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-full
                                     text-sm
-                                    font-semibold
-                                    text-gray-600
-                                ">
-                                    Antes
-                                </p>
-
-                                <div className="
-                                    grid
-                                    grid-cols-2
-                                    gap-2
-                                ">
-                                    {beforeEvidences.map((evidence) => (
-                                        <img
-                                            key={evidence.id}
-                                            src={evidence.imageUrl}
-                                            alt="Antes"
-                                            className="
-                                                h-[90px]
-                                                w-full
-                                                object-cover
-                                                rounded-xl
-                                                border
-                                            "
-                                        />
-                                    ))}
-                                </div>
-
-                                <p className="
-                                    text-sm
-                                    font-semibold
-                                    text-gray-600
-                                ">
-                                    Después
-                                </p>
-
-                                <div className="
-                                    grid
-                                    grid-cols-2
-                                    gap-2
-                                ">
-                                    {afterEvidences.map((evidence) => (
-                                        <img
-                                            key={evidence.id}
-                                            src={evidence.imageUrl}
-                                            alt="Después"
-                                            className="
-                                                h-[90px]
-                                                w-full
-                                                object-cover
-                                                rounded-xl
-                                                border
-                                            "
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        </aside>
-
-                        <form
-                            onSubmit={handleSubmit}
-                            className="
-                                space-y-8
-                            "
-                        >
-                            <div className="
-                                bg-gray-50
-                                border
-                                rounded-2xl
-                                p-6
-                                space-y-5
-                            ">
-                                <h2 className="
-                                    text-2xl
                                     font-bold
-                                    text-[#03152E]
-                                ">
-                                    Resultado técnico final
-                                </h2>
+                                    ${
+                                        selectedClosureReasonId
+                                            ? "bg-emerald-600 text-white"
+                                            : "bg-[#064E3B] text-white"
+                                    }
+                                `}>
+                                    {selectedClosureReasonId
+                                        ? "✓"
+                                        : "1"}
+                                </span>
 
-                                <div className="
-                                    grid
-                                    grid-cols-1
-                                    md:grid-cols-2
-                                    gap-4
-                                ">
-                                   {loadingReasons ? (
-                                    <p className="
-                                        text-gray-500
-                                        font-semibold
-                                    ">
-                                        Cargando resultados técnicos...
-                                    </p>
-                                ) : closureReasons.length === 0 ? (
-                                    <p className="
-                                        text-red-600
-                                        font-semibold
-                                    ">
-                                        No existen resultados técnicos activos configurados.
-                                    </p>
-                                ) : (
-                                    closureReasons.map((reason) => (
-                                        <label
-                                            key={reason.id}
-                                            className={`
-                                                border
-                                                rounded-2xl
-                                                p-4
-                                                cursor-pointer
-                                                bg-white
-                                                transition
-                                                ${
-                                                    selectedClosureReasonId === reason.id
-                                                        ? "border-blue-600 ring-2 ring-blue-100"
-                                                        : "hover:bg-gray-50"
-                                                }
-                                            `}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name="result"
-                                                value={reason.id}
-                                                checked={
-                                                    selectedClosureReasonId === reason.id
-                                                }
-                                                onChange={() => {
-                                                    setSelectedClosureReasonId(
-                                                        reason.id
-                                                    );
-
-                                                    setSelectedResult(
-                                                        reason.name
-                                                    );
-                                                }}
-                                                className="mr-2"
-                                            />
-
-                                            <span className="
-                                                font-bold
-                                                text-[#03152E]
-                                            ">
-                                                {reason.name}
-                                            </span>
-
-                                            <p className="
-                                                text-sm
-                                                text-gray-500
-                                                mt-2
-                                            ">
-                                                {reason.description || "Sin descripción."}
-                                            </p>
-                                        </label>
-                                    ))
-                                )}
-                                </div>
-                            </div>
-
-                            {requiresFollowUp && (
-                                <div className="
-                                    bg-yellow-50
-                                    border
-                                    border-yellow-200
-                                    rounded-2xl
-                                    p-6
-                                    space-y-3
-                                ">
+                                <div>
                                     <h2 className="
-                                        text-2xl
+                                        text-xl
                                         font-bold
-                                        text-[#03152E]
+                                        text-slate-900
+                                        sm:text-2xl
                                     ">
-                                        Seguimiento requerido
+                                        Resultado técnico final
                                     </h2>
 
-                                    <textarea
-                                        value={followUpNotes}
-                                        onChange={(event) =>
-                                            setFollowUpNotes(
-                                                event.target.value
-                                            )
-                                        }
-                                        placeholder="Describe la tarea complementaria, nueva visita o seguimiento requerido."
-                                        className="
-                                            w-full
-                                            border
-                                            rounded-xl
-                                            p-4
-                                            bg-white
-                                            min-h-[130px]
-                                            resize-none
-                                        "
-                                    />
+                                    <p className="
+                                        mt-1
+                                        text-sm
+                                        leading-relaxed
+                                        text-slate-500
+                                    ">
+                                        Selecciona el motivo que representa el resultado final de la intervención.
+                                    </p>
                                 </div>
-                            )}
+                            </div>
 
                             <div className="
-                                bg-gray-50
-                                border
-                                rounded-2xl
-                                p-6
-                                space-y-4
+                                mt-6
+                                grid
+                                grid-cols-1
+                                gap-4
+                                md:grid-cols-2
                             ">
-                                <h2 className="
-                                    text-2xl
-                                    font-bold
-                                    text-[#03152E]
+                                {loadingReasons ? (
+                                    <div className="
+                                        md:col-span-2
+                                        flex
+                                        items-center
+                                        gap-3
+                                        rounded-2xl
+                                        border
+                                        border-slate-200
+                                        bg-slate-50
+                                        p-5
+                                        text-sm
+                                        text-slate-500
+                                    ">
+                                        <div className="
+                                            h-5
+                                            w-5
+                                            animate-spin
+                                            rounded-full
+                                            border-2
+                                            border-slate-200
+                                            border-t-emerald-600
+                                        " />
+
+                                        Cargando resultados técnicos...
+                                    </div>
+                                ) : closureReasons.length === 0 ? (
+                                    <div className="
+                                        md:col-span-2
+                                        rounded-2xl
+                                        border
+                                        border-red-200
+                                        bg-red-50
+                                        p-5
+                                        text-sm
+                                        font-semibold
+                                        text-red-700
+                                    ">
+                                        No existen resultados técnicos activos configurados.
+                                    </div>
+                                ) : (
+                                    closureReasons.map(
+                                        (reason) => {
+                                            const selected =
+                                                selectedClosureReasonId ===
+                                                reason.id;
+
+                                            return (
+                                                <label
+                                                    key={
+                                                        reason.id
+                                                    }
+                                                    className={`
+                                                        relative
+                                                        cursor-pointer
+                                                        rounded-2xl
+                                                        border-2
+                                                        p-5
+                                                        transition
+                                                        ${
+                                                            selected
+                                                                ? "border-emerald-600 bg-emerald-50 shadow-sm"
+                                                                : "border-slate-200 bg-slate-50 hover:border-emerald-300 hover:bg-emerald-50/50"
+                                                        }
+                                                    `}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="result"
+                                                        value={
+                                                            reason.id
+                                                        }
+                                                        checked={
+                                                            selected
+                                                        }
+                                                        onChange={() => {
+                                                            setSelectedClosureReasonId(
+                                                                reason.id
+                                                            );
+
+                                                            setSelectedResult(
+                                                                reason.name
+                                                            );
+                                                        }}
+                                                        className="
+                                                            sr-only
+                                                        "
+                                                    />
+
+                                                    <div className="
+                                                        flex
+                                                        items-start
+                                                        gap-3
+                                                    ">
+                                                        <span className={`
+                                                            mt-0.5
+                                                            flex
+                                                            h-6
+                                                            w-6
+                                                            shrink-0
+                                                            items-center
+                                                            justify-center
+                                                            rounded-full
+                                                            border-2
+                                                            ${
+                                                                selected
+                                                                    ? "border-emerald-600 bg-emerald-600"
+                                                                    : "border-slate-300 bg-white"
+                                                            }
+                                                        `}>
+                                                            {selected && (
+                                                                <span className="
+                                                                    h-2.5
+                                                                    w-2.5
+                                                                    rounded-full
+                                                                    bg-white
+                                                                " />
+                                                            )}
+                                                        </span>
+
+                                                        <div className="min-w-0">
+                                                            <p className={`
+                                                                font-semibold
+                                                                leading-snug
+                                                                ${
+                                                                    selected
+                                                                        ? "text-emerald-900"
+                                                                        : "text-slate-900"
+                                                                }
+                                                            `}>
+                                                                {reason.name}
+                                                            </p>
+
+                                                            <p className="
+                                                                mt-2
+                                                                text-sm
+                                                                leading-relaxed
+                                                                text-slate-500
+                                                            ">
+                                                                {reason.description ||
+                                                                    "Sin descripción."}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            );
+                                        }
+                                    )
+                                )}
+                            </div>
+                        </section>
+
+                        {/* Seguimiento */}
+                        {requiresFollowUp && (
+                            <section className="
+                                rounded-3xl
+                                border
+                                border-amber-200
+                                bg-amber-50
+                                p-6
+                                shadow-sm
+                                sm:p-8
+                            ">
+                                <div className="
+                                    flex
+                                    items-start
+                                    gap-4
                                 ">
-                                    Observaciones de cierre
-                                </h2>
+                                    <span className={`
+                                        flex
+                                        h-10
+                                        w-10
+                                        shrink-0
+                                        items-center
+                                        justify-center
+                                        rounded-full
+                                        text-sm
+                                        font-bold
+                                        ${
+                                            followUpNotes.trim()
+                                                ? "bg-emerald-600 text-white"
+                                                : "bg-amber-500 text-white"
+                                        }
+                                    `}>
+                                        {followUpNotes.trim()
+                                            ? "✓"
+                                            : "!"}
+                                    </span>
+
+                                    <div>
+                                        <h2 className="
+                                            text-xl
+                                            font-bold
+                                            text-slate-900
+                                        ">
+                                            Seguimiento requerido
+                                        </h2>
+
+                                        <p className="
+                                            mt-1
+                                            text-sm
+                                            leading-relaxed
+                                            text-amber-800
+                                        ">
+                                            El motivo seleccionado requiere indicar la actividad pendiente o una nueva visita.
+                                        </p>
+                                    </div>
+                                </div>
 
                                 <textarea
-                                    value={observations}
+                                    value={
+                                        followUpNotes
+                                    }
                                     onChange={(event) =>
-                                        setObservations(
+                                        setFollowUpNotes(
                                             event.target.value
                                         )
                                     }
-                                    placeholder="Registra el motivo del cierre, acciones finales, condiciones observadas y cualquier detalle relevante."
+                                    placeholder="Describe la tarea complementaria, nueva visita o seguimiento requerido."
                                     className="
+                                        mt-6
+                                        min-h-36
                                         w-full
+                                        resize-y
+                                        rounded-2xl
                                         border
-                                        rounded-xl
-                                        p-4
+                                        border-amber-300
                                         bg-white
-                                        min-h-[160px]
-                                        resize-none
+                                        p-4
+                                        text-sm
+                                        leading-7
+                                        text-slate-700
+                                        outline-none
+                                        transition
+                                        placeholder:text-slate-400
+                                        focus:border-amber-500
+                                        focus:ring-2
+                                        focus:ring-amber-100
                                     "
                                 />
-                            </div>
-
-                            <div className="
-                                bg-gray-50
-                                border
-                                rounded-2xl
-                                p-6
-                                space-y-4
-                            ">
-                                <h2 className="
-                                    text-2xl
-                                    font-bold
-                                    text-[#03152E]
-                                ">
-                                    Evidencia de cierre
-                                </h2>
 
                                 <p className="
-                                    text-gray-500
-                                    text-sm
+                                    mt-2
+                                    text-xs
+                                    text-amber-700
                                 ">
-                                    Opcionalmente adjunta una imagen adicional que sustente el cierre operativo.
+                                    {followUpNotes.trim().length} caracteres
                                 </p>
+                            </section>
+                        )}
 
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleEvidenceChange}
-                                    className="
-                                        w-full
-                                        border
-                                        rounded-xl
-                                        p-3
-                                        bg-white
-                                    "
-                                />
+                        {/* Observaciones */}
+                        <section className="
+                            rounded-3xl
+                            border
+                            border-slate-200
+                            bg-white
+                            p-6
+                            shadow-sm
+                            sm:p-8
+                        ">
+                            <div className="
+                                flex
+                                items-start
+                                gap-4
+                            ">
+                                <span className={`
+                                    flex
+                                    h-10
+                                    w-10
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-full
+                                    text-sm
+                                    font-bold
+                                    ${
+                                        observations.trim()
+                                            ? "bg-emerald-600 text-white"
+                                            : "bg-[#064E3B] text-white"
+                                    }
+                                `}>
+                                    {observations.trim()
+                                        ? "✓"
+                                        : "2"}
+                                </span>
 
-                                {closureEvidenceUrl && (
+                                <div>
+                                    <h2 className="
+                                        text-xl
+                                        font-bold
+                                        text-slate-900
+                                        sm:text-2xl
+                                    ">
+                                        Observaciones de cierre
+                                    </h2>
+
+                                    <p className="
+                                        mt-1
+                                        text-sm
+                                        leading-relaxed
+                                        text-slate-500
+                                    ">
+                                        Explica el motivo del cierre, las condiciones encontradas y las acciones finales.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <textarea
+                                value={observations}
+                                onChange={(event) =>
+                                    setObservations(
+                                        event.target.value
+                                    )
+                                }
+                                placeholder="Ejemplo: Se verificó la incidencia, se realizó la intervención correspondiente y se dejó el área en condiciones adecuadas..."
+                                className="
+                                    mt-6
+                                    min-h-48
+                                    w-full
+                                    resize-y
+                                    rounded-2xl
+                                    border
+                                    border-slate-300
+                                    bg-white
+                                    p-4
+                                    text-sm
+                                    leading-7
+                                    text-slate-700
+                                    outline-none
+                                    transition
+                                    placeholder:text-slate-400
+                                    focus:border-emerald-500
+                                    focus:ring-2
+                                    focus:ring-emerald-100
+                                "
+                            />
+
+                            <div className="
+                                mt-2
+                                flex
+                                items-center
+                                justify-between
+                                gap-3
+                            ">
+                                <span className="
+                                    text-xs
+                                    text-slate-400
+                                ">
+                                    Campo obligatorio
+                                </span>
+
+                                <span className="
+                                    text-xs
+                                    text-slate-400
+                                ">
+                                    {observations.trim().length} caracteres
+                                </span>
+                            </div>
+                        </section>
+
+                        {/* Evidencia */}
+                        <section className="
+                            rounded-3xl
+                            border
+                            border-slate-200
+                            bg-white
+                            p-6
+                            shadow-sm
+                            sm:p-8
+                        ">
+                            <div className="
+                                flex
+                                items-start
+                                gap-4
+                            ">
+                                <span className="
+                                    flex
+                                    h-10
+                                    w-10
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-full
+                                    bg-[#064E3B]
+                                    text-sm
+                                    font-bold
+                                    text-white
+                                ">
+                                    3
+                                </span>
+
+                                <div>
+                                    <h2 className="
+                                        text-xl
+                                        font-bold
+                                        text-slate-900
+                                        sm:text-2xl
+                                    ">
+                                        Evidencia de cierre
+                                    </h2>
+
+                                    <p className="
+                                        mt-1
+                                        text-sm
+                                        leading-relaxed
+                                        text-slate-500
+                                    ">
+                                        Puedes adjuntar una fotografía adicional que sustente el cierre operativo.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {!closureEvidenceUrl ? (
+                                <>
+                                    <label
+                                        htmlFor="closure-evidence"
+                                        className="
+                                            mt-6
+                                            flex
+                                            min-h-40
+                                            cursor-pointer
+                                            flex-col
+                                            items-center
+                                            justify-center
+                                            rounded-2xl
+                                            border-2
+                                            border-dashed
+                                            border-emerald-200
+                                            bg-emerald-50/50
+                                            px-5
+                                            text-center
+                                            text-emerald-700
+                                            transition
+                                            hover:border-emerald-400
+                                            hover:bg-emerald-50
+                                        "
+                                    >
+                                        <CameraIcon />
+
+                                        <p className="
+                                            mt-3
+                                            text-sm
+                                            font-semibold
+                                        ">
+                                            Seleccionar fotografía
+                                        </p>
+
+                                        <p className="
+                                            mt-1
+                                            text-xs
+                                            text-emerald-700/70
+                                        ">
+                                            JPG, PNG o fotografía tomada desde el dispositivo
+                                        </p>
+                                    </label>
+
+                                    <input
+                                        id="closure-evidence"
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onChange={
+                                            handleEvidenceChange
+                                        }
+                                        className="sr-only"
+                                    />
+                                </>
+                            ) : (
+                                <div className="
+                                    mt-6
+                                    overflow-hidden
+                                    rounded-2xl
+                                    border
+                                    border-slate-200
+                                    bg-slate-50
+                                ">
                                     <div className="
                                         relative
-                                        w-full
-                                        max-w-sm
                                     ">
                                         <img
-                                            src={closureEvidenceUrl}
+                                            src={
+                                                closureEvidenceUrl
+                                            }
                                             alt="Evidencia de cierre"
                                             className="
+                                                h-72
                                                 w-full
-                                                h-[180px]
                                                 object-cover
-                                                rounded-2xl
-                                                border
                                             "
                                         />
 
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                setClosureEvidenceUrl("")
+                                                setClosureEvidenceUrl(
+                                                    ""
+                                                )
                                             }
                                             className="
                                                 absolute
-                                                top-2
-                                                right-2
-                                                bg-red-600
-                                                text-white
+                                                right-3
+                                                top-3
+                                                flex
+                                                h-9
+                                                w-9
+                                                items-center
+                                                justify-center
                                                 rounded-full
-                                                w-8
-                                                h-8
+                                                bg-red-600
                                                 font-bold
+                                                text-white
+                                                shadow
+                                                transition
+                                                hover:bg-red-700
                                             "
+                                            aria-label="Eliminar evidencia de cierre"
+                                            title="Eliminar evidencia"
                                         >
                                             ×
                                         </button>
                                     </div>
-                                )}
+
+                                    <div className="
+                                        flex
+                                        items-center
+                                        justify-between
+                                        gap-4
+                                        px-5
+                                        py-4
+                                    ">
+                                        <span className="
+                                            text-sm
+                                            font-semibold
+                                            text-slate-700
+                                        ">
+                                            Evidencia preparada
+                                        </span>
+
+                                        <span className="
+                                            rounded-full
+                                            bg-emerald-100
+                                            px-3
+                                            py-1
+                                            text-xs
+                                            font-semibold
+                                            text-emerald-700
+                                        ">
+                                            Lista para enviar
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                        </section>
+
+                        {/* Acción final */}
+                        <section className="
+                            rounded-3xl
+                            border
+                            border-slate-200
+                            bg-white
+                            p-6
+                            shadow-sm
+                            sm:p-8
+                        ">
+                            <div className="
+                                flex
+                                flex-col
+                                gap-3
+                                sm:flex-row
+                                sm:items-center
+                                sm:justify-between
+                            ">
+                                <div>
+                                    <h2 className="
+                                        text-xl
+                                        font-bold
+                                        text-slate-900
+                                    ">
+                                        Confirmar cierre operativo
+                                    </h2>
+
+                                    <p className="
+                                        mt-1
+                                        text-sm
+                                        leading-relaxed
+                                        text-slate-500
+                                    ">
+                                        Al confirmar, el reporte cambiará al estado Resuelto.
+                                    </p>
+                                </div>
+
+                                <span className={`
+                                    rounded-full
+                                    px-3
+                                    py-1.5
+                                    text-xs
+                                    font-semibold
+                                    ${
+                                        canSubmit
+                                            ? "bg-emerald-100 text-emerald-700"
+                                            : "bg-slate-100 text-slate-500"
+                                    }
+                                `}>
+                                    {canSubmit
+                                        ? "Listo para cerrar"
+                                        : "Faltan datos"}
+                                </span>
                             </div>
 
                             <button
                                 type="submit"
                                 disabled={!canSubmit}
                                 className="
+                                    mt-6
                                     w-full
-                                    bg-green-700
-                                    text-white
-                                    font-bold
-                                    text-lg
                                     rounded-2xl
+                                    bg-[#064E3B]
+                                    px-5
                                     py-4
-                                    hover:bg-green-800
+                                    text-base
+                                    font-semibold
+                                    text-white
+                                    shadow-sm
                                     transition
-                                    disabled:bg-gray-300
+                                    hover:bg-[#033D2E]
                                     disabled:cursor-not-allowed
+                                    disabled:bg-slate-300
+                                    disabled:text-white
                                 "
                             >
-                                {
-                                    saving
-                                        ? "Registrando cierre..."
-                                        : "Registrar cierre operativo"
-                                }
+                                {saving
+                                    ? "Registrando cierre..."
+                                    : "Registrar cierre operativo"}
                             </button>
-                        </form>
-                    </div>
-                </section>
-            </div>
+                        </section>
+                    </form>
+
+                    {/* Resumen lateral */}
+                    <aside className="
+                        space-y-6
+                        xl:sticky
+                        xl:top-24
+                        xl:self-start
+                    ">
+                        <section className="
+                            rounded-3xl
+                            border
+                            border-slate-200
+                            bg-white
+                            p-5
+                            shadow-sm
+                        ">
+                            <h2 className="
+                                text-lg
+                                font-bold
+                                text-slate-900
+                            ">
+                                Requisitos del cierre
+                            </h2>
+
+                            <p className="
+                                mt-1
+                                text-sm
+                                leading-relaxed
+                                text-slate-500
+                            ">
+                                Completa los datos requeridos antes de confirmar.
+                            </p>
+
+                            <div className="
+                                mt-5
+                                space-y-4
+                            ">
+                                <RequirementItem
+                                    complete={
+                                        closureRequirements.reason
+                                    }
+                                    label="Resultado técnico seleccionado"
+                                />
+
+                                <RequirementItem
+                                    complete={
+                                        closureRequirements.observations
+                                    }
+                                    label="Observaciones registradas"
+                                />
+
+                                <RequirementItem
+                                    complete={
+                                        closureRequirements.followUp
+                                    }
+                                    label={
+                                        requiresFollowUp
+                                            ? "Notas de seguimiento registradas"
+                                            : "No requiere seguimiento"
+                                    }
+                                />
+                            </div>
+                        </section>
+
+                        <section className="
+                            rounded-3xl
+                            border
+                            border-slate-200
+                            bg-white
+                            p-5
+                            shadow-sm
+                        ">
+                            <h2 className="
+                                text-lg
+                                font-bold
+                                text-slate-900
+                            ">
+                                Resumen operativo
+                            </h2>
+
+                            <div className="
+                                mt-5
+                                grid
+                                grid-cols-1
+                                gap-3
+                            ">
+                                <InfoItem
+                                    label="Llegada"
+                                    value={formatDateTime(
+                                        report.fieldWork
+                                            ?.arrivedAt
+                                    )}
+                                />
+
+                                <InfoItem
+                                    label="Cierre de visita"
+                                    value={formatDateTime(
+                                        report.fieldWork
+                                            ?.closedAt
+                                    )}
+                                />
+
+                                <InfoItem
+                                    label="Distancia"
+                                    value={
+                                        report.fieldWork
+                                            ?.distanceMeters !==
+                                            null &&
+                                        report.fieldWork
+                                            ?.distanceMeters !==
+                                            undefined
+                                            ? `${report.fieldWork.distanceMeters.toFixed(
+                                                0
+                                            )} metros`
+                                            : "No calculada"
+                                    }
+                                />
+
+                                <InfoItem
+                                    label="Notas de campo"
+                                    value={
+                                        report.fieldWork
+                                            ?.notes ||
+                                        "Sin notas registradas"
+                                    }
+                                />
+                            </div>
+                        </section>
+
+                        <section className="
+                            rounded-3xl
+                            border
+                            border-slate-200
+                            bg-white
+                            p-5
+                            shadow-sm
+                        ">
+                            <h2 className="
+                                text-lg
+                                font-bold
+                                text-slate-900
+                            ">
+                                Atención técnica previa
+                            </h2>
+
+                            {latestAttention ? (
+                                <div className="
+                                    mt-5
+                                    space-y-4
+                                ">
+                                    <InfoItem
+                                        label="Acción"
+                                        value={
+                                            latestAttention.actionTaken
+                                        }
+                                    />
+
+                                    <InfoItem
+                                        label="Resultado preliminar"
+                                        value={
+                                            latestAttention.technicalResult
+                                        }
+                                    />
+
+                                    <InfoItem
+                                        label="Observaciones"
+                                        value={
+                                            latestAttention.observations ||
+                                            "Sin observaciones"
+                                        }
+                                    />
+                                </div>
+                            ) : (
+                                <div className="
+                                    mt-4
+                                    rounded-2xl
+                                    border
+                                    border-dashed
+                                    border-slate-200
+                                    bg-slate-50
+                                    p-5
+                                    text-center
+                                    text-sm
+                                    text-slate-500
+                                ">
+                                    No hay atención técnica previa registrada.
+                                </div>
+                            )}
+                        </section>
+
+                        <section className="
+                            rounded-3xl
+                            border
+                            border-slate-200
+                            bg-white
+                            p-5
+                            shadow-sm
+                        ">
+                            <h2 className="
+                                text-lg
+                                font-bold
+                                text-slate-900
+                            ">
+                                Evidencias de campo
+                            </h2>
+
+                            <p className="
+                                mt-1
+                                text-sm
+                                leading-relaxed
+                                text-slate-500
+                            ">
+                                Fotografías registradas durante la trazabilidad.
+                            </p>
+
+                            <div className="
+                                mt-5
+                                space-y-6
+                            ">
+                                <EvidenceGroup
+                                    title="Antes"
+                                    evidences={
+                                        beforeEvidences
+                                    }
+                                />
+
+                                <EvidenceGroup
+                                    title="Después"
+                                    evidences={
+                                        afterEvidences
+                                    }
+                                />
+                            </div>
+                        </section>
+                    </aside>
+                </div>
+            </main>
         </div>
     );
 }

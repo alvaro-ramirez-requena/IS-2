@@ -978,47 +978,33 @@ export default function TechnicianAttendPage() {
             localStorage.removeItem(storageKey);
         };
 
-    const guardarYSalir =
-        async () => {
+        const guardarYSalir = () => {
             if (!report) {
                 return;
             }
 
-            const nuevosErrores =
-                validar();
+            setErrores({});
+            setErrorMessage("");
 
-            if (Object.keys(nuevosErrores).length > 0) {
-                setErrores(nuevosErrores);
-                return;
-            }
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify({
+                    checklistCompletado,
+                    campos,
+                    accionSeleccionada,
+                    resultadoSeleccionado,
+                })
+            );
 
-            try {
-                setSaving(true);
-                setErrores({});
-                setErrorMessage("");
-                setSavedMessage("");
+            setSavedMessage(
+                "El avance fue guardado como borrador."
+            );
 
-                await saveTechnicalAttention();
-
-                setSavedMessage(
-                    "Atención guardada correctamente."
+            setTimeout(() => {
+                navigate(
+                    `/technician/reports/${report.id}`
                 );
-
-                setTimeout(() => {
-                    navigate(
-                        `/technician/reports/${report.id}`
-                    );
-                }, 800);
-
-            } catch (error: any) {
-                setErrorMessage(
-                    error.message ||
-                    "No se pudo guardar la atención."
-                );
-
-            } finally {
-                setSaving(false);
-            }
+            }, 600);
         };
 
     const guardarYContinuar =
@@ -1064,17 +1050,84 @@ export default function TechnicianAttendPage() {
             }
         };
 
+        const checklistMarcados =
+            catalogo.checklist.filter(
+                (item) =>
+                    checklistCompletado[item]
+            ).length;
+
+        const camposCompletados =
+            catalogo.camposObligatorios.filter(
+                (campo) =>
+                    Boolean(
+                        campos[campo.label]
+                            ?.trim()
+                    )
+            ).length;
+
+        const seccionesCompletadas = [
+            checklistMarcados > 0,
+            camposCompletados ===
+                catalogo.camposObligatorios.length,
+            Boolean(accionSeleccionada),
+            Boolean(resultadoSeleccionado),
+        ].filter(Boolean).length;
+
+        const porcentajeCompletado =
+            Math.round(
+                (
+                    seccionesCompletadas /
+                    4
+                ) * 100
+            );
+
     if (loading) {
         return (
             <div className="
                 min-h-screen
+                bg-slate-50
                 flex
                 items-center
                 justify-center
-                text-3xl
-                font-bold
+                px-6
             ">
-                Cargando...
+                <div className="
+                    rounded-3xl
+                    border
+                    border-slate-200
+                    bg-white
+                    px-10
+                    py-8
+                    text-center
+                    shadow-sm
+                ">
+                    <div className="
+                        mx-auto
+                        mb-4
+                        h-10
+                        w-10
+                        animate-spin
+                        rounded-full
+                        border-4
+                        border-emerald-100
+                        border-t-emerald-600
+                    " />
+
+                    <p className="
+                        font-semibold
+                        text-slate-800
+                    ">
+                        Cargando atención técnica
+                    </p>
+
+                    <p className="
+                        mt-1
+                        text-sm
+                        text-slate-500
+                    ">
+                        Recuperando la información del reporte.
+                    </p>
+                </div>
             </div>
         );
     }
@@ -1083,13 +1136,81 @@ export default function TechnicianAttendPage() {
         return (
             <div className="
                 min-h-screen
+                bg-slate-50
                 flex
                 items-center
                 justify-center
-                text-3xl
-                font-bold
+                px-6
             ">
-                Reporte no encontrado
+                <div className="
+                    w-full
+                    max-w-md
+                    rounded-3xl
+                    border
+                    border-red-200
+                    bg-white
+                    p-8
+                    text-center
+                    shadow-sm
+                ">
+                    <div className="
+                        mx-auto
+                        flex
+                        h-14
+                        w-14
+                        items-center
+                        justify-center
+                        rounded-full
+                        bg-red-50
+                        text-xl
+                        font-bold
+                        text-red-600
+                    ">
+                        !
+                    </div>
+
+                    <h1 className="
+                        mt-4
+                        text-xl
+                        font-bold
+                        text-slate-900
+                    ">
+                        Reporte no encontrado
+                    </h1>
+
+                    <p className="
+                        mt-2
+                        text-sm
+                        leading-relaxed
+                        text-slate-500
+                    ">
+                        {errorMessage ||
+                            "No se pudo recuperar el reporte solicitado."}
+                    </p>
+
+                    <button
+                        type="button"
+                        onClick={() =>
+                            navigate(
+                                "/technician"
+                            )
+                        }
+                        className="
+                            mt-6
+                            w-full
+                            rounded-xl
+                            bg-emerald-600
+                            px-4
+                            py-3
+                            font-semibold
+                            text-white
+                            transition
+                            hover:bg-emerald-700
+                        "
+                    >
+                        Volver al panel técnico
+                    </button>
+                </div>
             </div>
         );
     }
@@ -1097,811 +1218,1561 @@ export default function TechnicianAttendPage() {
     return (
         <div className="
             min-h-screen
-            bg-[#F5F7FA]
-            flex
+            bg-slate-50
+            lg:flex
         ">
+            {/* Sidebar */}
             <aside className="
-                w-[260px]
-                min-h-screen
-                bg-[#03152E]
+                border-b
+                border-emerald-800
+                bg-[#064E3B]
                 text-white
-                p-6
-                flex
-                flex-col
-                justify-between
-                sticky
-                top-0
+                lg:sticky
+                lg:top-0
+                lg:h-screen
+                lg:w-[290px]
+                lg:shrink-0
+                lg:border-b-0
+                lg:border-r
             ">
-                <div>
-                    <h1 className="
-                        text-4xl
-                        font-bold
-                        mb-10
-                    ">
-                        reporta
-                        <span className="text-yellow-400">
-                            Ya
-                        </span>
-                    </h1>
-
-                    <p className="
-                        text-white/50
-                        text-xs
-                        uppercase
-                        tracking-wide
-                        mb-3
-                    ">
-                        Trabajo actual
-                    </p>
-
+                <div className="
+                    flex
+                    h-full
+                    flex-col
+                    px-5
+                    py-5
+                    lg:px-6
+                    lg:py-7
+                ">
                     <div className="
-                        bg-white/10
-                        rounded-2xl
-                        p-4
-                        space-y-2
-                        mb-8
+                        flex
+                        items-center
+                        justify-between
+                        gap-4
+                        lg:block
                     ">
-                        <p className="
-                            font-semibold
-                            text-lg
+                        <h1 className="
+                            text-3xl
+                            font-bold
+                            tracking-tight
                         ">
-                            {report.problemType}
-                        </p>
+                            <span className="text-white">
+                                reporta
+                            </span>
 
-                        <p className="
-                            text-white/60
-                            text-sm
-                        ">
-                            {report.address || "Ubicación no disponible"}
-                        </p>
+                            <span className="text-[#FACC15]">
+                                Ya
+                            </span>
+                        </h1>
 
                         <span className="
-                            inline-block
-                            bg-blue-400
-                            text-black
-                            text-xs
-                            font-bold
-                            px-3
-                            py-1
                             rounded-full
+                            bg-white/10
+                            px-3
+                            py-1.5
+                            text-xs
+                            font-semibold
+                            text-emerald-100
+                            lg:hidden
                         ">
-                            {statusLabels[report.status] || report.status}
+                            Módulo técnico
                         </span>
                     </div>
 
-                    <p className="
-                        text-white/50
-                        text-xs
-                        uppercase
-                        tracking-wide
-                        mb-4
+                    <div className="
+                        mt-6
+                        hidden
+                        lg:block
                     ">
-                        Progreso de atención
-                    </p>
+                        <p className="
+                            text-xs
+                            font-semibold
+                            uppercase
+                            tracking-widest
+                            text-emerald-200/70
+                        ">
+                            Trabajo actual
+                        </p>
 
-                    <div className="space-y-4">
-                        {pasosSidebar.map((paso, index) => (
-                            <div
-                                key={paso}
-                                className="
-                                    flex
-                                    items-center
-                                    gap-3
-                                "
-                            >
-                                <div className="
-                                    w-7
-                                    h-7
-                                    rounded-full
-                                    bg-white/20
-                                    flex
-                                    items-center
-                                    justify-center
-                                    text-xs
-                                    font-bold
-                                ">
-                                    {index + 1}
-                                </div>
+                        <div className="
+                            mt-3
+                            rounded-2xl
+                            border
+                            border-white/10
+                            bg-white/10
+                            p-4
+                        ">
+                            <p className="
+                                text-base
+                                font-semibold
+                                leading-snug
+                            ">
+                                {report.problemType}
+                            </p>
 
-                                <span className="
-                                    text-white/70
-                                    text-sm
-                                ">
-                                    {paso}
-                                </span>
-                            </div>
-                        ))}
+                            <p className="
+                                mt-2
+                                text-sm
+                                leading-relaxed
+                                text-white/60
+                            ">
+                                {report.address ||
+                                    "Ubicación no disponible"}
+                            </p>
+
+                            <span className="
+                                mt-4
+                                inline-flex
+                                rounded-full
+                                border
+                                border-emerald-300/20
+                                bg-emerald-300
+                                px-3
+                                py-1
+                                text-xs
+                                font-bold
+                                text-emerald-950
+                            ">
+                                {statusLabels[
+                                    report.status
+                                ] ||
+                                    report.status}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="
-                        mt-8
-                        bg-white/5
+                        mt-7
+                        hidden
+                        lg:block
+                    ">
+                        <div className="
+                            flex
+                            items-center
+                            justify-between
+                            gap-3
+                        ">
+                            <p className="
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-widest
+                                text-emerald-200/70
+                            ">
+                                Progreso
+                            </p>
+
+                            <span className="
+                                text-sm
+                                font-bold
+                                text-emerald-200
+                            ">
+                                {porcentajeCompletado}%
+                            </span>
+                        </div>
+
+                        <div className="
+                            mt-3
+                            h-2
+                            overflow-hidden
+                            rounded-full
+                            bg-white/10
+                        ">
+                            <div
+                                className="
+                                    h-full
+                                    rounded-full
+                                    bg-[#FACC15]
+                                    transition-all
+                                    duration-500
+                                "
+                                style={{
+                                    width:
+                                        `${porcentajeCompletado}%`,
+                                }}
+                            />
+                        </div>
+
+                        <div className="
+                            mt-5
+                            space-y-3
+                        ">
+                            {pasosSidebar.map(
+                                (paso, index) => {
+                                    const completed = [
+                                        checklistMarcados > 0,
+                                        camposCompletados ===
+                                            catalogo
+                                                .camposObligatorios
+                                                .length,
+                                        Boolean(
+                                            accionSeleccionada
+                                        ),
+                                        Boolean(
+                                            resultadoSeleccionado
+                                        ),
+                                    ][index];
+
+                                    return (
+                                        <a
+                                            key={paso}
+                                            href={`#paso-${
+                                                index + 1
+                                            }`}
+                                            className={`
+                                                flex
+                                                items-center
+                                                gap-3
+                                                rounded-xl
+                                                px-2
+                                                py-2
+                                                transition
+                                                hover:bg-white/5
+                                                ${
+                                                    completed
+                                                        ? "text-white"
+                                                        : "text-white/65"
+                                                }
+                                            `}
+                                        >
+                                            <span className={`
+                                                flex
+                                                h-8
+                                                w-8
+                                                shrink-0
+                                                items-center
+                                                justify-center
+                                                rounded-full
+                                                text-xs
+                                                font-bold
+                                                ${
+                                                    completed
+                                                        ? "bg-emerald-400 text-emerald-950"
+                                                        : "bg-white/10 text-white"
+                                                }
+                                            `}>
+                                                {completed
+                                                    ? "✓"
+                                                    : index + 1}
+                                            </span>
+
+                                            <span className="
+                                                text-sm
+                                                font-medium
+                                            ">
+                                                {paso}
+                                            </span>
+                                        </a>
+                                    );
+                                }
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="
+                        mt-auto
+                        hidden
+                        rounded-2xl
                         border
                         border-white/10
-                        rounded-2xl
+                        bg-white/5
                         p-4
+                        lg:block
                     ">
                         <p className="
-                            text-white/50
                             text-xs
                             leading-relaxed
+                            text-white/55
                         ">
-                            Este registro es preliminar. El checklist es una guía operativa y no es obligatorio marcar todos los puntos.
+                            Este registro es preliminar.
+                            El checklist funciona como
+                            guía operativa y no es
+                            obligatorio seleccionar todos
+                            los puntos.
                         </p>
                     </div>
                 </div>
             </aside>
 
+            {/* Contenido */}
             <main className="
+                min-w-0
                 flex-1
-                p-10
-                overflow-y-auto
             ">
-                <button
-                    onClick={() =>
-                        navigate(
-                            `/technician/reports/${report.id}`
-                        )
-                    }
-                    className="
-                        text-blue-600
-                        font-semibold
-                        mb-8
-                        hover:underline
-                        block
-                    "
-                >
-                    ← Volver al detalle del reporte
-                </button>
-
-                <h2 className="
-                    text-5xl
-                    font-bold
-                    mb-2
-                    text-[#03152E]
+                {/* Barra superior */}
+                <header className="
+                    sticky
+                    top-0
+                    z-30
+                    border-b
+                    border-slate-200
+                    bg-white/95
+                    backdrop-blur
                 ">
-                    Atender reporte
-                </h2>
+                    <div className="
+                        mx-auto
+                        flex
+                        max-w-7xl
+                        items-center
+                        justify-between
+                        gap-4
+                        px-5
+                        py-4
+                        lg:px-8
+                    ">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                navigate(
+                                    `/technician/reports/${report.id}`
+                                )
+                            }
+                            className="
+                                inline-flex
+                                items-center
+                                gap-2
+                                rounded-xl
+                                px-3
+                                py-2
+                                text-sm
+                                font-semibold
+                                text-emerald-700
+                                transition
+                                hover:bg-emerald-50
+                                hover:text-emerald-800
+                            "
+                        >
+                            <span aria-hidden="true">
+                                ←
+                            </span>
 
-                <p className="
-                    text-gray-500
-                    text-xl
-                    mb-10
+                            Volver al detalle del reporte
+                        </button>
+
+                        <span className="
+                            hidden
+                            rounded-full
+                            bg-emerald-50
+                            px-3
+                            py-1.5
+                            text-xs
+                            font-semibold
+                            text-emerald-700
+                            sm:inline-flex
+                        ">
+                            Registro preliminar
+                        </span>
+                    </div>
+                </header>
+
+                <div className="
+                    mx-auto
+                    max-w-7xl
+                    px-5
+                    py-8
+                    lg:px-8
+                    lg:py-10
                 ">
-                    Documenta lo que encontraste y realizaste en el lugar. Este registro es preliminar y continuará en la trazabilidad de campo.
-                </p>
-
-                {errorMessage && (
-                    <div className="
-                        bg-red-50
-                        border
-                        border-red-200
-                        text-red-700
-                        rounded-2xl
-                        px-6
-                        py-4
-                        mb-6
-                        font-semibold
-                    ">
-                        {errorMessage}
-                    </div>
-                )}
-
-                {savedMessage && (
-                    <div className="
-                        bg-green-50
-                        border
-                        border-green-200
-                        text-green-700
-                        rounded-2xl
-                        px-6
-                        py-4
-                        mb-6
-                        font-semibold
-                    ">
-                        ✓ {savedMessage}
-                    </div>
-                )}
-
-                <div className="space-y-6">
-                    <div className="
-                        bg-white
+                    {/* Cabecera */}
+                    <section className="
+                        overflow-hidden
                         rounded-3xl
                         border
+                        border-slate-200
+                        bg-white
                         shadow-sm
-                        p-8
                     ">
                         <div className="
-                            flex
-                            items-start
-                            justify-between
-                            gap-4
-                            mb-4
+                            grid
+                            grid-cols-1
+                            lg:grid-cols-[minmax(0,1fr)_360px]
                         ">
-                            <div>
-                                <h3 className="
+                            <div className="
+                                p-6
+                                sm:p-8
+                                lg:p-10
+                            ">
+                                <span className="
+                                    inline-flex
+                                    rounded-full
+                                    bg-emerald-50
+                                    px-3
+                                    py-1
+                                    text-xs
+                                    font-bold
+                                    uppercase
+                                    tracking-wide
+                                    text-emerald-700
+                                ">
+                                    Atención técnica
+                                </span>
+
+                                <h2 className="
+                                    mt-5
                                     text-3xl
                                     font-bold
-                                    text-[#03152E]
+                                    leading-tight
+                                    tracking-tight
+                                    text-slate-950
+                                    sm:text-4xl
+                                    lg:text-5xl
                                 ">
-                                    {report.title || report.problemType}
-                                </h3>
+                                    Atender reporte
+                                </h2>
 
                                 <p className="
-                                    text-gray-500
-                                    mt-1
+                                    mt-4
+                                    max-w-3xl
+                                    text-base
+                                    leading-7
+                                    text-slate-500
+                                    sm:text-lg
                                 ">
-                                    {report.address || "Ubicación no disponible"}
+                                    Documenta lo que
+                                    encontraste y realizaste
+                                    en el lugar. Este registro
+                                    continuará posteriormente
+                                    en la trazabilidad de
+                                    campo.
                                 </p>
                             </div>
 
-                            <span className="
-                                bg-blue-100
-                                text-blue-700
-                                px-4
-                                py-2
-                                rounded-full
-                                font-semibold
-                                whitespace-nowrap
-                            ">
-                                {statusLabels[report.status] || report.status}
-                            </span>
-                        </div>
-
-                        <p className="
-                            text-gray-600
-                            text-lg
-                            leading-relaxed
-                        ">
-                            {report.description}
-                        </p>
-                    </div>
-
-                    <div className="
-                        bg-white
-                        rounded-3xl
-                        border
-                        shadow-sm
-                        p-8
-                    ">
-                        <div className="
-                            flex
-                            items-center
-                            gap-3
-                            mb-6
-                        ">
                             <div className="
-                                w-8
-                                h-8
-                                rounded-full
-                                bg-[#03152E]
+                                border-t
+                                border-slate-200
+                                bg-[#064E3B]
+                                p-6
                                 text-white
-                                flex
-                                items-center
-                                justify-center
-                                font-bold
-                                text-sm
+                                lg:border-l
+                                lg:border-t-0
+                                lg:p-8
                             ">
-                                1
-                            </div>
+                                <p className="
+                                    text-xs
+                                    font-semibold
+                                    uppercase
+                                    tracking-widest
+                                    text-emerald-200
+                                ">
+                                    Reporte actual
+                                </p>
 
-                            <h3 className="
-                                text-2xl
-                                font-bold
-                                text-[#03152E]
-                            ">
-                                Verificación en sitio
-                            </h3>
-                        </div>
+                                <h3 className="
+                                    mt-3
+                                    text-xl
+                                    font-bold
+                                    leading-snug
+                                ">
+                                    {report.title ||
+                                        report.problemType}
+                                </h3>
 
-                        <p className="
-                            text-sm
-                            text-gray-500
-                            mb-4
-                        ">
-                            Marca solo lo que pudiste verificar. No es obligatorio completar todos los puntos.
-                        </p>
+                                <p className="
+                                    mt-2
+                                    text-sm
+                                    text-white/65
+                                ">
+                                    {report.problemType}
+                                </p>
 
-                        <div className="space-y-3">
-                            {catalogo.checklist.map((item) => (
-                                <button
-                                    key={item}
-                                    type="button"
-                                    onClick={() =>
-                                        toggleChecklist(item)
-                                    }
-                                    className="
-                                        flex
-                                        items-center
-                                        gap-3
-                                        cursor-pointer
-                                        w-full
-                                        text-left
-                                        group
-                                    "
-                                >
-                                    <span className={`
-                                        w-6
-                                        h-6
-                                        rounded-lg
-                                        border-2
-                                        flex
-                                        items-center
-                                        justify-center
-                                        transition
-                                        flex-shrink-0
-                                        ${
-                                            checklistCompletado[item]
-                                                ? "bg-[#03152E] border-[#03152E]"
-                                                : "border-gray-300 group-hover:border-gray-400"
-                                        }
-                                    `}>
-                                        {checklistCompletado[item] && (
-                                            <span className="
-                                                text-white
-                                                text-xs
-                                                font-bold
-                                            ">
-                                                ✓
-                                            </span>
-                                        )}
-                                    </span>
-
-                                    <span className={
-                                        checklistCompletado[item]
-                                            ? "line-through text-gray-400"
-                                            : "text-gray-700"
-                                    }>
-                                        {item}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="
-                        bg-white
-                        rounded-3xl
-                        border
-                        shadow-sm
-                        p-8
-                    ">
-                        <div className="
-                            flex
-                            items-center
-                            gap-3
-                            mb-6
-                        ">
-                            <div className="
-                                w-8
-                                h-8
-                                rounded-full
-                                bg-[#03152E]
-                                text-white
-                                flex
-                                items-center
-                                justify-center
-                                font-bold
-                                text-sm
-                            ">
-                                2
-                            </div>
-
-                            <h3 className="
-                                text-2xl
-                                font-bold
-                                text-[#03152E]
-                            ">
-                                Datos requeridos
-                            </h3>
-                        </div>
-
-                        <p className="
-                            text-sm
-                            text-gray-500
-                            mb-4
-                        ">
-                            Registra los datos mínimos encontrados en campo para este tipo de problema.
-                        </p>
-
-                        <div className="
-                            grid
-                            grid-cols-1
-                            sm:grid-cols-2
-                            xl:grid-cols-4
-                            gap-4
-                        ">
-                            {catalogo.camposObligatorios.map((campo) => (
-                                <div
-                                    key={campo.label}
-                                    className={
-                                        campo.label === campoExtra.label
-                                            ? "sm:col-span-2"
-                                            : ""
-                                    }
-                                >
-                                    <label className="
-                                        block
-                                        text-sm
-                                        font-medium
-                                        text-gray-700
-                                        mb-1
-                                    ">
-                                        {campo.label} *
-                                    </label>
-
+                                <div className="
+                                    mt-5
+                                    rounded-2xl
+                                    bg-white/10
+                                    p-4
+                                ">
                                     <p className="
                                         text-xs
-                                        text-gray-400
-                                        mb-2
+                                        font-semibold
+                                        uppercase
+                                        tracking-wide
+                                        text-white/45
                                     ">
-                                        {campo.descripcion}
+                                        Ubicación
                                     </p>
 
-                                    <input
-                                        type="text"
-                                        value={
-                                            campos[campo.label] || ""
-                                        }
-                                        onChange={(event) => {
-                                            setCampos((prev) => ({
-                                                ...prev,
-                                                [campo.label]:
-                                                    event.target.value,
-                                            }));
-
-                                            if (errores[campo.label]) {
-                                                setErrores((prev) => {
-                                                    const err = {
-                                                        ...prev,
-                                                    };
-
-                                                    delete err[campo.label];
-
-                                                    return err;
-                                                });
-                                            }
-                                        }}
-                                        placeholder={campo.placeholder}
-                                        className={`
-                                            w-full
-                                            border
-                                            rounded-xl
-                                            px-4
-                                            py-3
-                                            outline-none
-                                            focus:ring-2
-                                            text-gray-700
-                                            ${
-                                                errores[campo.label]
-                                                    ? "border-red-400 focus:ring-red-300"
-                                                    : "focus:ring-[#03152E]"
-                                            }
-                                        `}
-                                    />
-
-                                    {errores[campo.label] && (
-                                        <p className="
-                                            text-red-500
-                                            text-xs
-                                            mt-1
-                                        ">
-                                            {errores[campo.label]}
-                                        </p>
-                                    )}
+                                    <p className="
+                                        mt-2
+                                        text-sm
+                                        leading-relaxed
+                                        text-white/80
+                                    ">
+                                        {report.address ||
+                                            "Ubicación no disponible"}
+                                    </p>
                                 </div>
-                            ))}
+                            </div>
                         </div>
-                    </div>
+                    </section>
 
-                    <div className="
-                        bg-white
-                        rounded-3xl
-                        border
-                        shadow-sm
-                        p-8
-                    ">
-                        <div className="
-                            flex
-                            items-center
-                            gap-3
-                            mb-6
-                        ">
-                            <div className="
-                                w-8
-                                h-8
-                                rounded-full
-                                bg-[#03152E]
-                                text-white
+                    {errorMessage && (
+                        <div
+                            role="alert"
+                            className="
+                                mt-6
                                 flex
+                                items-start
+                                gap-3
+                                rounded-2xl
+                                border
+                                border-red-200
+                                bg-red-50
+                                px-5
+                                py-4
+                                text-sm
+                                text-red-700
+                            "
+                        >
+                            <span className="
+                                flex
+                                h-7
+                                w-7
+                                shrink-0
                                 items-center
                                 justify-center
+                                rounded-full
+                                bg-red-100
                                 font-bold
-                                text-sm
                             ">
-                                3
+                                !
+                            </span>
+
+                            <div>
+                                <p className="font-semibold">
+                                    No se pudo completar la operación
+                                </p>
+
+                                <p className="mt-1">
+                                    {errorMessage}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {savedMessage && (
+                        <div
+                            role="status"
+                            className="
+                                mt-6
+                                flex
+                                items-start
+                                gap-3
+                                rounded-2xl
+                                border
+                                border-emerald-200
+                                bg-emerald-50
+                                px-5
+                                py-4
+                                text-sm
+                                text-emerald-700
+                            "
+                        >
+                            <span className="
+                                flex
+                                h-7
+                                w-7
+                                shrink-0
+                                items-center
+                                justify-center
+                                rounded-full
+                                bg-emerald-600
+                                font-bold
+                                text-white
+                            ">
+                                ✓
+                            </span>
+
+                            <div>
+                                <p className="font-semibold">
+                                    Atención guardada
+                                </p>
+
+                                <p className="mt-1">
+                                    {savedMessage}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="
+                        mt-6
+                        space-y-6
+                    ">
+                        {/* Paso 1 */}
+                        <section
+                            id="paso-1"
+                            className="
+                                scroll-mt-24
+                                rounded-3xl
+                                border
+                                border-slate-200
+                                bg-white
+                                p-6
+                                shadow-sm
+                                sm:p-8
+                            "
+                        >
+                            <div className="
+                                flex
+                                items-start
+                                gap-4
+                            ">
+                                <span className={`
+                                    flex
+                                    h-10
+                                    w-10
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-full
+                                    text-sm
+                                    font-bold
+                                    ${
+                                        checklistMarcados > 0
+                                            ? "bg-emerald-600 text-white"
+                                            : "bg-[#064E3B] text-white"
+                                    }
+                                `}>
+                                    {checklistMarcados > 0
+                                        ? "✓"
+                                        : "1"}
+                                </span>
+
+                                <div>
+                                    <h3 className="
+                                        text-xl
+                                        font-bold
+                                        text-slate-900
+                                        sm:text-2xl
+                                    ">
+                                        Verificación en sitio
+                                    </h3>
+
+                                    <p className="
+                                        mt-1
+                                        text-sm
+                                        leading-relaxed
+                                        text-slate-500
+                                    ">
+                                        Marca únicamente los
+                                        aspectos que pudiste
+                                        comprobar en el lugar.
+                                    </p>
+                                </div>
                             </div>
 
-                            <h3 className="
-                                text-2xl
-                                font-bold
-                                text-[#03152E]
+                            <div className="
+                                mt-6
+                                grid
+                                grid-cols-1
+                                gap-3
+                                lg:grid-cols-3
                             ">
-                                Acción técnica realizada
-                            </h3>
-                        </div>
+                                {catalogo.checklist.map(
+                                    (item) => {
+                                        const checked =
+                                            Boolean(
+                                                checklistCompletado[
+                                                    item
+                                                ]
+                                            );
 
-                        <p className="
-                            text-sm
-                            text-gray-500
-                            mb-4
-                        ">
-                            ¿Qué intervención realizaste o gestionaste en el lugar?
-                        </p>
+                                        return (
+                                            <button
+                                                key={item}
+                                                type="button"
+                                                onClick={() =>
+                                                    toggleChecklist(
+                                                        item
+                                                    )
+                                                }
+                                                className={`
+                                                    flex
+                                                    min-h-20
+                                                    items-start
+                                                    gap-3
+                                                    rounded-2xl
+                                                    border
+                                                    p-4
+                                                    text-left
+                                                    transition
+                                                    ${
+                                                        checked
+                                                            ? "border-emerald-300 bg-emerald-50"
+                                                            : "border-slate-200 bg-slate-50 hover:border-emerald-300 hover:bg-emerald-50/50"
+                                                    }
+                                                `}
+                                            >
+                                                <span className={`
+                                                    mt-0.5
+                                                    flex
+                                                    h-6
+                                                    w-6
+                                                    shrink-0
+                                                    items-center
+                                                    justify-center
+                                                    rounded-lg
+                                                    border-2
+                                                    transition
+                                                    ${
+                                                        checked
+                                                            ? "border-emerald-600 bg-emerald-600 text-white"
+                                                            : "border-slate-300 bg-white"
+                                                    }
+                                                `}>
+                                                    {checked && (
+                                                        <span className="
+                                                            text-xs
+                                                            font-bold
+                                                        ">
+                                                            ✓
+                                                        </span>
+                                                    )}
+                                                </span>
 
-                        <div className="
-                            grid
-                            grid-cols-1
-                            md:grid-cols-3
-                            gap-3
+                                                <span className={`
+                                                    text-sm
+                                                    font-medium
+                                                    leading-relaxed
+                                                    ${
+                                                        checked
+                                                            ? "text-emerald-800"
+                                                            : "text-slate-700"
+                                                    }
+                                                `}>
+                                                    {item}
+                                                </span>
+                                            </button>
+                                        );
+                                    }
+                                )}
+                            </div>
+
+                            <p className="
+                                mt-4
+                                text-xs
+                                text-slate-400
+                            ">
+                                {checklistMarcados} de{" "}
+                                {catalogo.checklist.length} verificaciones marcadas.
+                            </p>
+                        </section>
+
+                        {/* Paso 2 */}
+                        <section
+                            id="paso-2"
+                            className="
+                                scroll-mt-24
+                                rounded-3xl
+                                border
+                                border-slate-200
+                                bg-white
+                                p-6
+                                shadow-sm
+                                sm:p-8
+                            "
+                        >
+                            <div className="
+                                flex
+                                items-start
+                                gap-4
+                            ">
+                                <span className={`
+                                    flex
+                                    h-10
+                                    w-10
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-full
+                                    text-sm
+                                    font-bold
+                                    ${
+                                        camposCompletados ===
+                                        catalogo
+                                            .camposObligatorios
+                                            .length
+                                            ? "bg-emerald-600 text-white"
+                                            : "bg-[#064E3B] text-white"
+                                    }
+                                `}>
+                                    {camposCompletados ===
+                                    catalogo
+                                        .camposObligatorios
+                                        .length
+                                        ? "✓"
+                                        : "2"}
+                                </span>
+
+                                <div>
+                                    <h3 className="
+                                        text-xl
+                                        font-bold
+                                        text-slate-900
+                                        sm:text-2xl
+                                    ">
+                                        Datos requeridos
+                                    </h3>
+
+                                    <p className="
+                                        mt-1
+                                        text-sm
+                                        leading-relaxed
+                                        text-slate-500
+                                    ">
+                                        Registra los datos
+                                        mínimos encontrados en
+                                        campo para este tipo de
+                                        incidencia.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="
+                                mt-6
+                                grid
+                                grid-cols-1
+                                gap-5
+                                md:grid-cols-2
+                            ">
+                                {catalogo.camposObligatorios.map(
+                                    (campo) => {
+                                        const isExtra =
+                                            campo.label ===
+                                            campoExtra.label;
+
+                                        return (
+                                            <div
+                                                key={
+                                                    campo.label
+                                                }
+                                                className={
+                                                    isExtra
+                                                        ? "md:col-span-2"
+                                                        : ""
+                                                }
+                                            >
+                                                <label className="
+                                                    text-sm
+                                                    font-semibold
+                                                    text-slate-800
+                                                ">
+                                                    {campo.label}
+
+                                                    <span className="
+                                                        ml-1
+                                                        text-red-500
+                                                    ">
+                                                        *
+                                                    </span>
+                                                </label>
+
+                                                <p className="
+                                                    mt-1
+                                                    text-xs
+                                                    leading-relaxed
+                                                    text-slate-400
+                                                ">
+                                                    {
+                                                        campo.descripcion
+                                                    }
+                                                </p>
+
+                                                {isExtra ? (
+                                                    <textarea
+                                                        value={
+                                                            campos[
+                                                                campo
+                                                                    .label
+                                                            ] ||
+                                                            ""
+                                                        }
+                                                        onChange={(
+                                                            event
+                                                        ) => {
+                                                            setCampos(
+                                                                (
+                                                                    prev
+                                                                ) => ({
+                                                                    ...prev,
+                                                                    [campo.label]:
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                })
+                                                            );
+
+                                                            if (
+                                                                errores[
+                                                                    campo
+                                                                        .label
+                                                                ]
+                                                            ) {
+                                                                setErrores(
+                                                                    (
+                                                                        prev
+                                                                    ) => {
+                                                                        const next =
+                                                                            {
+                                                                                ...prev,
+                                                                            };
+
+                                                                        delete next[
+                                                                            campo
+                                                                                .label
+                                                                        ];
+
+                                                                        return next;
+                                                                    }
+                                                                );
+                                                            }
+                                                        }}
+                                                        placeholder={
+                                                            campo.placeholder
+                                                        }
+                                                        className={`
+                                                            mt-3
+                                                            min-h-32
+                                                            w-full
+                                                            resize-y
+                                                            rounded-2xl
+                                                            border
+                                                            bg-white
+                                                            px-4
+                                                            py-3
+                                                            text-sm
+                                                            leading-6
+                                                            text-slate-700
+                                                            outline-none
+                                                            transition
+                                                            placeholder:text-slate-400
+                                                            focus:ring-2
+                                                            ${
+                                                                errores[
+                                                                    campo
+                                                                        .label
+                                                                ]
+                                                                    ? "border-red-400 focus:border-red-400 focus:ring-red-100"
+                                                                    : "border-slate-300 focus:border-emerald-500 focus:ring-emerald-100"
+                                                            }
+                                                        `}
+                                                    />
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        value={
+                                                            campos[
+                                                                campo
+                                                                    .label
+                                                            ] ||
+                                                            ""
+                                                        }
+                                                        onChange={(
+                                                            event
+                                                        ) => {
+                                                            setCampos(
+                                                                (
+                                                                    prev
+                                                                ) => ({
+                                                                    ...prev,
+                                                                    [campo.label]:
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                })
+                                                            );
+
+                                                            if (
+                                                                errores[
+                                                                    campo
+                                                                        .label
+                                                                ]
+                                                            ) {
+                                                                setErrores(
+                                                                    (
+                                                                        prev
+                                                                    ) => {
+                                                                        const next =
+                                                                            {
+                                                                                ...prev,
+                                                                            };
+
+                                                                        delete next[
+                                                                            campo
+                                                                                .label
+                                                                        ];
+
+                                                                        return next;
+                                                                    }
+                                                                );
+                                                            }
+                                                        }}
+                                                        placeholder={
+                                                            campo.placeholder
+                                                        }
+                                                        className={`
+                                                            mt-3
+                                                            w-full
+                                                            rounded-xl
+                                                            border
+                                                            bg-white
+                                                            px-4
+                                                            py-3
+                                                            text-sm
+                                                            text-slate-700
+                                                            outline-none
+                                                            transition
+                                                            placeholder:text-slate-400
+                                                            focus:ring-2
+                                                            ${
+                                                                errores[
+                                                                    campo
+                                                                        .label
+                                                                ]
+                                                                    ? "border-red-400 focus:border-red-400 focus:ring-red-100"
+                                                                    : "border-slate-300 focus:border-emerald-500 focus:ring-emerald-100"
+                                                            }
+                                                        `}
+                                                    />
+                                                )}
+
+                                                {errores[
+                                                    campo.label
+                                                ] && (
+                                                    <p className="
+                                                        mt-2
+                                                        text-xs
+                                                        font-medium
+                                                        text-red-500
+                                                    ">
+                                                        {
+                                                            errores[
+                                                                campo
+                                                                    .label
+                                                            ]
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    }
+                                )}
+                            </div>
+                        </section>
+
+                        {/* Paso 3 */}
+                        <section
+                            id="paso-3"
+                            className="
+                                scroll-mt-24
+                                rounded-3xl
+                                border
+                                border-slate-200
+                                bg-white
+                                p-6
+                                shadow-sm
+                                sm:p-8
+                            "
+                        >
+                            <div className="
+                                flex
+                                items-start
+                                gap-4
+                            ">
+                                <span className={`
+                                    flex
+                                    h-10
+                                    w-10
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-full
+                                    text-sm
+                                    font-bold
+                                    ${
+                                        accionSeleccionada
+                                            ? "bg-emerald-600 text-white"
+                                            : "bg-[#064E3B] text-white"
+                                    }
+                                `}>
+                                    {accionSeleccionada
+                                        ? "✓"
+                                        : "3"}
+                                </span>
+
+                                <div>
+                                    <h3 className="
+                                        text-xl
+                                        font-bold
+                                        text-slate-900
+                                        sm:text-2xl
+                                    ">
+                                        Acción técnica realizada
+                                    </h3>
+
+                                    <p className="
+                                        mt-1
+                                        text-sm
+                                        leading-relaxed
+                                        text-slate-500
+                                    ">
+                                        Selecciona la intervención
+                                        realizada o gestionada en
+                                        el lugar.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="
+                                mt-6
+                                grid
+                                grid-cols-1
+                                gap-4
+                                lg:grid-cols-3
+                            ">
+                                {catalogo.acciones.map(
+                                    (accion) => {
+                                        const selected =
+                                            accionSeleccionada ===
+                                            accion;
+
+                                        const [
+                                            tipo,
+                                            detalle,
+                                        ] =
+                                            accion.split(
+                                                " — "
+                                            );
+
+                                        return (
+                                            <button
+                                                key={accion}
+                                                type="button"
+                                                onClick={() => {
+                                                    setAccionSeleccionada(
+                                                        accion
+                                                    );
+
+                                                    if (
+                                                        errores[
+                                                            "accion"
+                                                        ]
+                                                    ) {
+                                                        setErrores(
+                                                            (
+                                                                prev
+                                                            ) => {
+                                                                const next =
+                                                                    {
+                                                                        ...prev,
+                                                                    };
+
+                                                                delete next[
+                                                                    "accion"
+                                                                ];
+
+                                                                return next;
+                                                            }
+                                                        );
+                                                    }
+                                                }}
+                                                className={`
+                                                    min-h-32
+                                                    rounded-2xl
+                                                    border-2
+                                                    p-5
+                                                    text-left
+                                                    transition
+                                                    ${
+                                                        selected
+                                                            ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
+                                                            : errores[
+                                                                "accion"
+                                                            ]
+                                                                ? "border-red-300 bg-white text-slate-700"
+                                                                : "border-slate-200 bg-slate-50 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50"
+                                                    }
+                                                `}
+                                            >
+                                                <div className="
+                                                    flex
+                                                    items-start
+                                                    justify-between
+                                                    gap-3
+                                                ">
+                                                    <div>
+                                                        <p className="
+                                                            text-xs
+                                                            font-bold
+                                                            uppercase
+                                                            tracking-wide
+                                                            opacity-70
+                                                        ">
+                                                            {tipo}
+                                                        </p>
+
+                                                        <p className="
+                                                            mt-2
+                                                            text-sm
+                                                            font-semibold
+                                                            leading-relaxed
+                                                        ">
+                                                            {detalle ||
+                                                                accion}
+                                                        </p>
+                                                    </div>
+
+                                                    <span className={`
+                                                        flex
+                                                        h-6
+                                                        w-6
+                                                        shrink-0
+                                                        items-center
+                                                        justify-center
+                                                        rounded-full
+                                                        border-2
+                                                        ${
+                                                            selected
+                                                                ? "border-white bg-white text-emerald-700"
+                                                                : "border-slate-300 bg-white"
+                                                        }
+                                                    `}>
+                                                        {selected &&
+                                                            "✓"}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        );
+                                    }
+                                )}
+                            </div>
+
+                            {errores["accion"] && (
+                                <p className="
+                                    mt-3
+                                    text-xs
+                                    font-medium
+                                    text-red-500
+                                ">
+                                    {errores["accion"]}
+                                </p>
+                            )}
+                        </section>
+
+                        {/* Paso 4 */}
+                        <section
+                            id="paso-4"
+                            className="
+                                scroll-mt-24
+                                rounded-3xl
+                                border
+                                border-slate-200
+                                bg-white
+                                p-6
+                                shadow-sm
+                                sm:p-8
+                            "
+                        >
+                            <div className="
+                                flex
+                                items-start
+                                gap-4
+                            ">
+                                <span className={`
+                                    flex
+                                    h-10
+                                    w-10
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-full
+                                    text-sm
+                                    font-bold
+                                    ${
+                                        resultadoSeleccionado
+                                            ? "bg-emerald-600 text-white"
+                                            : "bg-[#064E3B] text-white"
+                                    }
+                                `}>
+                                    {resultadoSeleccionado
+                                        ? "✓"
+                                        : "4"}
+                                </span>
+
+                                <div>
+                                    <h3 className="
+                                        text-xl
+                                        font-bold
+                                        text-slate-900
+                                        sm:text-2xl
+                                    ">
+                                        Evaluación preliminar
+                                    </h3>
+
+                                    <p className="
+                                        mt-1
+                                        text-sm
+                                        leading-relaxed
+                                        text-slate-500
+                                    ">
+                                        Indica cómo quedó el caso.
+                                        Esta evaluación será
+                                        complementada en el cierre
+                                        formal.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="
+                                mt-6
+                                grid
+                                grid-cols-1
+                                gap-3
+                                md:grid-cols-2
+                            ">
+                                {resultadosTecnicos.map(
+                                    (resultado) => {
+                                        const selected =
+                                            resultadoSeleccionado ===
+                                            resultado.valor;
+
+                                        return (
+                                            <button
+                                                key={
+                                                    resultado.valor
+                                                }
+                                                type="button"
+                                                onClick={() => {
+                                                    setResultadoSeleccionado(
+                                                        resultado.valor
+                                                    );
+
+                                                    if (
+                                                        errores[
+                                                            "resultado"
+                                                        ]
+                                                    ) {
+                                                        setErrores(
+                                                            (
+                                                                prev
+                                                            ) => {
+                                                                const next =
+                                                                    {
+                                                                        ...prev,
+                                                                    };
+
+                                                                delete next[
+                                                                    "resultado"
+                                                                ];
+
+                                                                return next;
+                                                            }
+                                                        );
+                                                    }
+                                                }}
+                                                className={`
+                                                    flex
+                                                    min-h-16
+                                                    items-center
+                                                    gap-3
+                                                    rounded-2xl
+                                                    border
+                                                    px-4
+                                                    py-3
+                                                    text-left
+                                                    transition
+                                                    ${
+                                                        selected
+                                                            ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                                                            : errores[
+                                                                "resultado"
+                                                            ]
+                                                                ? "border-red-300 bg-white text-slate-700"
+                                                                : "border-slate-200 bg-slate-50 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/50"
+                                                    }
+                                                `}
+                                            >
+                                                <span className={`
+                                                    flex
+                                                    h-6
+                                                    w-6
+                                                    shrink-0
+                                                    items-center
+                                                    justify-center
+                                                    rounded-full
+                                                    border-2
+                                                    ${
+                                                        selected
+                                                            ? "border-emerald-600 bg-emerald-600"
+                                                            : "border-slate-300 bg-white"
+                                                    }
+                                                `}>
+                                                    {selected && (
+                                                        <span className="
+                                                            h-2.5
+                                                            w-2.5
+                                                            rounded-full
+                                                            bg-white
+                                                        " />
+                                                    )}
+                                                </span>
+
+                                                <span className={`
+                                                    text-sm
+                                                    ${
+                                                        selected
+                                                            ? "font-semibold"
+                                                            : "font-medium"
+                                                    }
+                                                `}>
+                                                    {
+                                                        resultado.etiqueta
+                                                    }
+                                                </span>
+                                            </button>
+                                        );
+                                    }
+                                )}
+                            </div>
+
+                            {errores["resultado"] && (
+                                <p className="
+                                    mt-3
+                                    text-xs
+                                    font-medium
+                                    text-red-500
+                                ">
+                                    {errores["resultado"]}
+                                </p>
+                            )}
+                        </section>
+
+                        {/* Acciones finales */}
+                        <section className="
+                            rounded-3xl
+                            border
+                            border-slate-200
+                            bg-white
+                            p-6
+                            shadow-sm
+                            sm:p-8
                         ">
-                            {catalogo.acciones.map((accion) => (
+                            <div className="
+                                flex
+                                flex-col
+                                gap-2
+                                sm:flex-row
+                                sm:items-center
+                                sm:justify-between
+                            ">
+                                <div>
+                                    <h3 className="
+                                        text-xl
+                                        font-bold
+                                        text-slate-900
+                                    ">
+                                        Guardar atención
+                                    </h3>
+
+                                    <p className="
+                                        mt-1
+                                        text-sm
+                                        text-slate-500
+                                    ">
+                                        Puedes volver al detalle o
+                                        continuar directamente a la
+                                        trazabilidad.
+                                    </p>
+                                </div>
+
+                                <span className="
+                                    rounded-full
+                                    bg-slate-100
+                                    px-3
+                                    py-1.5
+                                    text-xs
+                                    font-semibold
+                                    text-slate-600
+                                ">
+                                    {seccionesCompletadas}/4
+                                    secciones completas
+                                </span>
+                            </div>
+
+                            <div className="
+                                mt-6
+                                grid
+                                grid-cols-1
+                                gap-4
+                                md:grid-cols-2
+                            ">
                                 <button
-                                    key={accion}
                                     type="button"
-                                    onClick={() => {
-                                        setAccionSeleccionada(accion);
-
-                                        if (errores["accion"]) {
-                                            setErrores((prev) => {
-                                                const err = {
-                                                    ...prev,
-                                                };
-
-                                                delete err["accion"];
-
-                                                return err;
-                                            });
-                                        }
-                                    }}
-                                    className={`
-                                        p-4
+                                    onClick={
+                                        guardarYSalir
+                                    }
+                                    disabled={saving}
+                                    className="
                                         rounded-2xl
                                         border-2
-                                        text-left
-                                        text-sm
-                                        font-medium
+                                        border-emerald-600
+                                        bg-white
+                                        px-5
+                                        py-4
+                                        text-base
+                                        font-semibold
+                                        text-emerald-700
                                         transition
-                                        ${
-                                            accionSeleccionada === accion
-                                                ? "border-[#03152E] bg-[#03152E] text-white"
-                                                : errores["accion"]
-                                                    ? "border-red-300 text-gray-700"
-                                                    : "border-gray-200 hover:border-gray-400 text-gray-700"
-                                        }
-                                    `}
+                                        hover:bg-emerald-50
+                                        disabled:cursor-not-allowed
+                                        disabled:border-slate-200
+                                        disabled:text-slate-400
+                                    "
                                 >
-                                    {accion}
+                                    {saving
+                                        ? "Guardando..."
+                                        : "Guardar y salir"}
                                 </button>
-                            ))}
-                        </div>
 
-                        {errores["accion"] && (
-                            <p className="
-                                text-red-500
-                                text-xs
-                                mt-3
-                            ">
-                                {errores["accion"]}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="
-                        bg-white
-                        rounded-3xl
-                        border
-                        shadow-sm
-                        p-8
-                    ">
-                        <div className="
-                            flex
-                            items-center
-                            gap-3
-                            mb-6
-                        ">
-                            <div className="
-                                w-8
-                                h-8
-                                rounded-full
-                                bg-[#03152E]
-                                text-white
-                                flex
-                                items-center
-                                justify-center
-                                font-bold
-                                text-sm
-                            ">
-                                4
+                                <button
+                                    type="button"
+                                    onClick={
+                                        guardarYContinuar
+                                    }
+                                    disabled={saving}
+                                    className="
+                                        rounded-2xl
+                                        bg-[#064E3B]
+                                        px-5
+                                        py-4
+                                        text-base
+                                        font-semibold
+                                        text-white
+                                        shadow-sm
+                                        transition
+                                        hover:bg-[#033D2E]
+                                        disabled:cursor-not-allowed
+                                        disabled:bg-slate-300
+                                    "
+                                >
+                                    {saving
+                                        ? "Guardando..."
+                                        : "Guardar y continuar a trazabilidad →"}
+                                </button>
                             </div>
 
-                            <h3 className="
-                                text-2xl
-                                font-bold
-                                text-[#03152E]
-                            ">
-                                Evaluación preliminar del resultado
-                            </h3>
-                        </div>
-
-                        <p className="
-                            text-sm
-                            text-gray-500
-                            mb-4
-                        ">
-                            Indica cómo quedó el caso. Esta evaluación será complementada en el cierre formal.
-                        </p>
-
-                        <div className="space-y-2">
-                            {resultadosTecnicos.map((resultado) => (
-                                <button
-                                    key={resultado.valor}
-                                    type="button"
-                                    onClick={() => {
-                                        setResultadoSeleccionado(
-                                            resultado.valor
-                                        );
-
-                                        if (errores["resultado"]) {
-                                            setErrores((prev) => {
-                                                const err = {
-                                                    ...prev,
-                                                };
-
-                                                delete err["resultado"];
-
-                                                return err;
-                                            });
-                                        }
-                                    }}
-                                    className={`
-                                        flex
-                                        items-center
-                                        gap-3
-                                        cursor-pointer
-                                        w-full
-                                        text-left
-                                        p-3
-                                        rounded-xl
-                                        transition
-                                        ${
-                                            resultadoSeleccionado === resultado.valor
-                                                ? "bg-[#03152E]/5"
-                                                : "hover:bg-gray-50"
-                                        }
-                                    `}
-                                >
-                                    <span className={`
-                                        w-6
-                                        h-6
-                                        rounded-full
-                                        border-2
-                                        flex
-                                        items-center
-                                        justify-center
-                                        transition
-                                        flex-shrink-0
-                                        ${
-                                            resultadoSeleccionado === resultado.valor
-                                                ? "border-[#03152E] bg-[#03152E]"
-                                                : errores["resultado"]
-                                                    ? "border-red-300"
-                                                    : "border-gray-300"
-                                        }
-                                    `}>
-                                        {resultadoSeleccionado === resultado.valor && (
-                                            <span className="
-                                                w-2.5
-                                                h-2.5
-                                                rounded-full
-                                                bg-white
-                                                block
-                                            " />
-                                        )}
-                                    </span>
-
-                                    <span className={
-                                        resultadoSeleccionado === resultado.valor
-                                            ? "text-[#03152E] font-semibold"
-                                            : "text-gray-700"
-                                    }>
-                                        {resultado.etiqueta}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-
-                        {errores["resultado"] && (
                             <p className="
-                                text-red-500
+                                mt-4
+                                text-center
                                 text-xs
-                                mt-3
+                                leading-relaxed
+                                text-slate-400
                             ">
-                                {errores["resultado"]}
+                                Este registro es preliminar.
+                                El cierre formal se realizará
+                                posteriormente.
                             </p>
-                        )}
-                    </div>
-
-                    <div className="
-                        pb-10
-                        space-y-3
-                    ">
-                        <div className="
-                            flex
-                            flex-col
-                            md:flex-row
-                            gap-4
-                        ">
-                            <button
-                                onClick={guardarYSalir}
-                                disabled={saving}
-                                className="
-                                    flex-1
-                                    rounded-2xl
-                                    p-5
-                                    text-lg
-                                    font-semibold
-                                    transition
-                                    border-2
-                                    border-[#03152E]
-                                    text-[#03152E]
-                                    hover:bg-[#03152E]
-                                    hover:text-white
-                                    disabled:border-gray-200
-                                    disabled:text-gray-400
-                                    disabled:cursor-not-allowed
-                                "
-                            >
-                                {
-                                    saving
-                                        ? "Guardando..."
-                                        : "Guardar y salir"
-                                }
-                            </button>
-
-                            <button
-                                onClick={guardarYContinuar}
-                                disabled={saving}
-                                className="
-                                    flex-1
-                                    rounded-2xl
-                                    p-5
-                                    text-lg
-                                    font-semibold
-                                    transition
-                                    bg-[#03152E]
-                                    hover:bg-[#052444]
-                                    text-white
-                                    disabled:bg-gray-200
-                                    disabled:text-gray-400
-                                    disabled:cursor-not-allowed
-                                "
-                            >
-                                {
-                                    saving
-                                        ? "Guardando..."
-                                        : "Guardar y continuar a trazabilidad →"
-                                }
-                            </button>
-                        </div>
-
-                        <p className="
-                            text-center
-                            text-gray-400
-                            text-sm
-                        ">
-                            Este registro es preliminar. El cierre formal se realizará en US19.
-                        </p>
+                        </section>
                     </div>
                 </div>
             </main>

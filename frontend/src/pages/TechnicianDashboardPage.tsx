@@ -47,10 +47,10 @@ type Assignment = {
 };
 
 type TechnicianFilter =
-    | "ALL"
-    | "ASSIGNED"
+    | "ACTIVE"
     | "IN_TRANSIT"
-    | "IN_PROGRESS";
+    | "IN_PROGRESS"
+    | "RESOLVED";
 
 export default function TechnicianDashboardPage() {
     const navigate =
@@ -66,7 +66,7 @@ export default function TechnicianDashboardPage() {
         useState("");
 
     const [filter, setFilter] =
-        useState<TechnicianFilter>("ALL");
+        useState<TechnicianFilter>("ACTIVE");
 
     const userId =
         localStorage.getItem("userId") || "";
@@ -105,18 +105,60 @@ export default function TechnicianDashboardPage() {
             }
         };
 
+    const emptyStateText =
+        useMemo(() => {
+            switch (filter) {
+                case "IN_TRANSIT":
+                    return {
+                        title: "Sin trabajos en traslado",
+                        description:
+                            "No tienes trabajos actualmente en camino.",
+                    };
+
+                case "IN_PROGRESS":
+                    return {
+                        title: "Sin trabajos en atención",
+                        description:
+                            "No tienes intervenciones activas en este momento.",
+                    };
+
+                case "RESOLVED":
+                    return {
+                        title: "Sin trabajos resueltos",
+                        description:
+                            "Los reportes que cierres aparecerán en esta sección.",
+                    };
+
+                default:
+                    return {
+                        title: "Sin trabajos asignados",
+                        description:
+                            "Cuando el operador te asigne un reporte, aparecerá aquí.",
+                    };
+            }
+        }, [filter]);
+
     useEffect(() => {
         fetchAssignments();
     }, []);
 
     const filteredAssignments =
         useMemo(() => {
-            if (filter === "ALL") {
-                return assignments;
-            }
+            return assignments.filter(
+                (assignment) => {
+                    const status =
+                        assignment.report.status;
 
-            return assignments.filter((assignment) =>
-                assignment.report.status === filter
+                    if (filter === "ACTIVE") {
+                        return [
+                            "ASSIGNED",
+                            "IN_TRANSIT",
+                            "IN_PROGRESS",
+                        ].includes(status);
+                    }
+
+                    return status === filter;
+                }
             );
         }, [assignments, filter]);
 
@@ -172,31 +214,39 @@ export default function TechnicianDashboardPage() {
                         space-y-4
                     ">
                         <button
-                            onClick={() => setFilter("ALL")}
-                            className={buttonClass("ALL")}
+                            onClick={() =>
+                                setFilter("ACTIVE")
+                            }
+                            className={buttonClass("ACTIVE")}
                         >
                             Trabajos asignados
                         </button>
 
                         <button
-                            onClick={() => setFilter("ASSIGNED")}
-                            className={buttonClass("ASSIGNED")}
-                        >
-                            Aceptados
-                        </button>
-
-                        <button
-                            onClick={() => setFilter("IN_TRANSIT")}
+                            onClick={() =>
+                                setFilter("IN_TRANSIT")
+                            }
                             className={buttonClass("IN_TRANSIT")}
                         >
                             En traslado
                         </button>
 
                         <button
-                            onClick={() => setFilter("IN_PROGRESS")}
+                            onClick={() =>
+                                setFilter("IN_PROGRESS")
+                            }
                             className={buttonClass("IN_PROGRESS")}
                         >
                             En atención
+                        </button>
+
+                        <button
+                            onClick={() =>
+                                setFilter("RESOLVED")
+                            }
+                            className={buttonClass("RESOLVED")}
+                        >
+                            Resueltos
                         </button>
                     </nav>
                 </div>
@@ -280,15 +330,14 @@ export default function TechnicianDashboardPage() {
                             font-bold
                             text-[#03152E]
                         ">
-                            Sin trabajos asignados
+                            {emptyStateText.title}
                         </h3>
 
                         <p className="
                             text-gray-500
                             mt-2
                         ">
-                            Cuando el operador te asigne un reporte,
-                            aparecerá en esta sección.
+                            {emptyStateText.description}
                         </p>
                     </div>
                 ) : (
