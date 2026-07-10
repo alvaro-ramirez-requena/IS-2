@@ -11,6 +11,10 @@ import {
     statusLabels,
 } from "../utils/reportLabels";
 
+// US22 - IA (Leonardo Ttito)
+import DelayAlertsPanel
+    from "../components/DelayAlertsPanel";
+
 
 
 const API_URL =
@@ -21,11 +25,15 @@ type Report = {
 
     id: string;
 
+    title: string;
+
     problemType: string;
 
     description: string;
 
     status: string;
+
+    priority?: "ALTO" | "MEDIO" | "BAJO";
 
     createdAt: string;
 
@@ -68,20 +76,44 @@ export default function
 
                 try {
 
+                    setLoading(true);
+
+                    const operatorId =
+                        localStorage.getItem("userId");
+
+                    if (!operatorId) {
+                        throw new Error(
+                            "No se encontró el operador en sesión."
+                        );
+                    }
+
                     const response =
                         await fetch(
-
-                            `${API_URL}/api/reports/status/${selectedStatus}`
+                            `${API_URL}/api/reports/operator/${operatorId}/status/${selectedStatus}`
                         );
 
                     const data =
                         await response.json();
 
-                    setReports(data);
+                    if (!response.ok) {
+
+                        throw new Error(
+                            data?.message ||
+                            "No se pudieron obtener los reportes."
+                        );
+                    }
+
+                    setReports(
+                        Array.isArray(data)
+                            ? data
+                            : []
+                    );
 
                 } catch (error) {
 
                     console.error(error);
+
+                    setReports([]);
 
                 } finally {
 
@@ -141,6 +173,13 @@ export default function
         return `Hace ${days} días`;
     };
 
+    const getPriorityColor = (priority?: string) => {
+        if (priority === "ALTO") return "bg-red-100 text-red-800 border-red-200";
+        if (priority === "MEDIO") return "bg-orange-100 text-orange-800 border-orange-200";
+        if (priority === "BAJO") return "bg-green-100 text-green-800 border-green-200";
+        return "bg-gray-100 text-gray-700 border-gray-200";
+    };
+
     if (loading) {
 
         return (
@@ -167,17 +206,17 @@ export default function
         ">
 
             <aside className="
-    w-[320px]
-    h-screen
-    sticky
-    top-0
-    bg-[#03152E]
-    text-white
-    p-8
-    flex
-    flex-col
-    justify-between
-">
+                w-[320px]
+                h-screen
+                sticky
+                top-0
+                bg-[#03152E]
+                text-white
+                p-8
+                flex
+                flex-col
+                justify-between
+            ">
 
                 <div>
 
@@ -243,7 +282,6 @@ export default function
                             Aprobados
 
                         </button>
-
                         <button
 
                             onClick={() =>
@@ -267,6 +305,106 @@ export default function
 
                         </button>
 
+                        <button
+
+                            onClick={() =>
+                                setSelectedStatus(
+                                    "PRIORITIZED"
+                                )
+                            }
+
+                            className="
+                                w-full
+                                text-left
+                                p-4
+                                rounded-2xl
+                                bg-white/10
+                                hover:bg-white/20
+                                transition
+                            "
+                        >
+
+                            Priorizados
+
+                        </button>
+
+                        <button
+                            onClick={() => setSelectedStatus("ASSIGNED")}
+                            className={`
+                                w-full
+                                text-left
+                                rounded-xl
+                                px-4
+                                py-4
+                                font-semibold
+                                ${
+                                    selectedStatus === "ASSIGNED"
+                                        ? "bg-white/20"
+                                        : "bg-white/10 hover:bg-white/20"
+                                }
+                            `}
+                        >
+                            Asignados
+                        </button>
+
+                                <button
+                                    onClick={() =>
+                                        navigate("/operator/monitoring")
+                                    }
+                                    className="
+                                        w-full
+                                        px-4
+                                        py-3
+                                        rounded-xl
+                                        bg-yellow-400
+                                        text-black
+                                        font-bold
+                                        text-left
+                                        hover:bg-yellow-300
+                                        transition
+                                    "
+                                >
+                                    Monitoreo técnico
+                                </button>
+
+                            <button
+                                onClick={() =>
+                                    navigate("/operator/technician-applications")
+                                }
+                                className="
+                                    w-full
+                                    text-left
+                                    p-4
+                                    rounded-2xl
+                                    bg-yellow-400
+                                    text-[#03152E]
+                                    font-semibold
+                                    hover:bg-yellow-300
+                                    transition
+                                "
+                            >
+                                Postulaciones de técnicos
+                            </button>
+
+                        <button
+                            onClick={() =>
+                                navigate("/operator/catalog")
+                            }
+                            className="
+                                w-full
+                                px-4
+                                py-3
+                                rounded-xl
+                                bg-yellow-400
+                                text-black
+                                font-bold
+                                text-left
+                                hover:bg-yellow-300
+                                transition
+                            "
+                        >
+                            Catálogo operativo
+                        </button>
                     </div>
 
                 </div>
@@ -316,6 +454,11 @@ export default function
                     Supervisión municipal
 
                 </p>
+
+                {/* US22 - Alertas por retraso */}
+                <div className="mb-8">
+                    <DelayAlertsPanel />
+                </div>
 
                 {
                     reports.length === 0
@@ -395,29 +538,36 @@ export default function
 
                                                         <div>
 
-                                                            <h3 className="
-                                                                text-3xl
-                                                                font-bold
-                                                            ">
-
-                                                                {
-                                                                    report.problemType
-                                                                }
-
-                                                            </h3>
-
-                                                            <div className="
-    mt-2
-    flex
-    items-center
-    gap-3
-    flex-wrap
-">
+                                                            <div>
+                                                                <h3 className="
+                                                                    text-3xl
+                                                                    font-bold
+                                                                    text-[#03152E]
+                                                                ">
+                                                                    {report.title || report.problemType}
+                                                                </h3>
 
                                                                 <p className="
-        font-semibold
-        text-gray-700
-    ">
+                                                                    text-sm
+                                                                    text-gray-500
+                                                                    mt-1
+                                                                ">
+                                                                    {report.problemType}
+                                                                </p>
+                                                            </div>
+
+                                                            <div className="
+                                                                mt-2
+                                                                flex
+                                                                items-center
+                                                                gap-3
+                                                                flex-wrap
+                                                            ">
+
+                                                                <p className="
+                                                                    font-semibold
+                                                                    text-gray-700
+                                                                ">
 
                                                                     {
                                                                         report.isAnonymous
@@ -430,8 +580,8 @@ export default function
                                                                 </p>
 
                                                                 <p className="
-        text-gray-500
-    ">
+                                                                    text-gray-500
+                                                                ">
 
                                                                     {
                                                                         getRelativeTime(
@@ -462,22 +612,35 @@ export default function
 
                                                         </span>
 
+                                                        {report.status === "PRIORITIZED" && report.priority && (
+                                                            <span className={`
+                                                                px-4
+                                                                py-2
+                                                                rounded-full
+                                                                font-semibold
+                                                                border
+                                                                ${getPriorityColor(report.priority)}
+                                                            `}>
+                                                                Prioridad: {report.priority}
+                                                            </span>
+                                                        )}
+
                                                     </div>
 
                                                     <div className="
-    mt-6
-    flex
-    items-end
-    justify-between
-    gap-6
-">
+                                                        mt-6
+                                                        flex
+                                                        items-end
+                                                        justify-between
+                                                        gap-6
+                                                    ">
 
                                                         <p className="
-        text-lg
-        text-gray-600
-        line-clamp-3
-        flex-1
-    ">
+                                                            text-lg
+                                                            text-gray-600
+                                                            line-clamp-3
+                                                            flex-1
+                                                        ">
 
                                                             {
                                                                 report.description
@@ -496,11 +659,11 @@ export default function
                                                             }
 
                                                             className="
-            text-blue-600
-            font-semibold
-            hover:underline
-            whitespace-nowrap
-        "
+                                                                text-blue-600
+                                                                font-semibold
+                                                                hover:underline
+                                                                whitespace-nowrap
+                                                            "
                                                         >
 
                                                             Ver detalle →

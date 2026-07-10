@@ -1,144 +1,231 @@
-import { Request, Response } from "express";
-import { FieldWorkService } from "../services/fieldwork.service";
-import { EvidencePhase } from "@prisma/client";
-import fs from "fs";
+import {
+  Request,
+  Response,
+} from "express";
 
-const fieldWorkService = new FieldWorkService();
+import {
+  EvidencePhase,
+} from "@prisma/client";
+
+import {
+  FieldWorkService,
+} from "../services/fieldwork.service";
+
+const fieldWorkService =
+  new FieldWorkService();
 
 export class FieldWorkController {
-
-  // POST /api/fieldwork/:reportId/start
-  // Inicia el registro de trabajo de campo
-  static async start(req: Request, res: Response) {
+  static async getByReport(
+    req: Request,
+    res: Response
+  ) {
     try {
-      const { reportId } = req.params;
-      const { technicianId } = req.body;
+      const reportId =
+        String(req.params.reportId);
 
-      if (!technicianId) {
-        return res.status(400).json({ message: "technicianId es requerido" });
-      }
+      const fieldWork =
+        await fieldWorkService
+          .getByReport(reportId);
 
-      const fieldWork = await fieldWorkService.startFieldWork(reportId, technicianId);
+      return res.json(fieldWork);
+
+    } catch (error: any) {
+      return res.status(400).json({
+        message:
+          error.message ||
+          "Error al obtener trazabilidad.",
+      });
+    }
+  }
+
+  static async start(
+    req: Request,
+    res: Response
+  ) {
+    try {
+      const reportId =
+        String(req.params.reportId);
+
+      const technicianId =
+        String(req.body.technicianId || "");
+
+      const fieldWork =
+        await fieldWorkService
+          .startFieldWork({
+            reportId,
+            technicianId,
+          });
+
       return res.status(201).json(fieldWork);
+
     } catch (error: any) {
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({
+        message:
+          error.message ||
+          "Error al iniciar trazabilidad.",
+      });
     }
   }
 
-  // PATCH /api/fieldwork/:reportId/arrive
-  // Registra hora de llegada y valida ubicación del técnico
-  static async registerArrival(req: Request, res: Response) {
+  static async arrive(
+    req: Request,
+    res: Response
+  ) {
     try {
-      const { reportId } = req.params;
-      const { latitude, longitude } = req.body;
+      const reportId =
+        String(req.params.reportId);
 
-      const result = await fieldWorkService.registerArrival(
-        reportId,
-        latitude,
-        longitude
-      );
+      const technicianId =
+        String(req.body.technicianId || "");
 
-      // Informa si el técnico está lejos del punto reportado
-      const response: any = { ...result };
-      if (result.distanceMeters !== null && result.distanceMeters !== undefined) {
-        response.locationWarning =
-          result.distanceMeters > 200
-            ? `Estás a ${Math.round(result.distanceMeters)} metros del punto reportado`
-            : null;
+      const arrivalLat =
+        Number(req.body.arrivalLat);
+
+      const arrivalLng =
+        Number(req.body.arrivalLng);
+
+      if (
+        Number.isNaN(arrivalLat) ||
+        Number.isNaN(arrivalLng)
+      ) {
+        return res.status(400).json({
+          message:
+            "La latitud y longitud de llegada son obligatorias.",
+        });
       }
 
-      return res.json(response);
+      const fieldWork =
+        await fieldWorkService
+          .registerArrival({
+            reportId,
+            technicianId,
+            arrivalLat,
+            arrivalLng,
+          });
+
+      return res.json(fieldWork);
+
     } catch (error: any) {
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({
+        message:
+          error.message ||
+          "Error al registrar llegada.",
+      });
     }
   }
 
-  // PATCH /api/fieldwork/:reportId/notes
-  // Guarda o actualiza las notas del técnico
-  static async saveNotes(req: Request, res: Response) {
+  static async saveNotes(
+    req: Request,
+    res: Response
+  ) {
     try {
-      const { reportId } = req.params;
-      const { notes } = req.body;
+      const reportId =
+        String(req.params.reportId);
 
-      if (!notes || notes.trim() === "") {
-        return res.status(400).json({ message: "Las notas no pueden estar vacías" });
-      }
+      const notes =
+        String(req.body.notes || "");
 
-      const result = await fieldWorkService.saveNotes(reportId, notes);
-      return res.json(result);
+      const fieldWork =
+        await fieldWorkService
+          .saveNotes({
+            reportId,
+            notes,
+          });
+
+      return res.json(fieldWork);
+
     } catch (error: any) {
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({
+        message:
+          error.message ||
+          "Error al guardar notas.",
+      });
     }
   }
 
-  // PATCH /api/fieldwork/:reportId/close
-  // Registra hora de cierre del trabajo
-  static async registerClosure(req: Request, res: Response) {
+  static async addEvidence(
+    req: Request,
+    res: Response
+  ) {
     try {
-      const { reportId } = req.params;
-      const result = await fieldWorkService.registerClosure(reportId);
-      return res.json(result);
+      const reportId =
+        String(req.params.reportId);
+
+      const technicianId =
+        String(req.body.technicianId || "");
+
+      const imageUrl =
+        String(req.body.imageUrl || "");
+
+      const phase =
+        req.body.phase as EvidencePhase;
+
+      const fieldWork =
+        await fieldWorkService
+          .addEvidence({
+            reportId,
+            technicianId,
+            imageUrl,
+            phase,
+          });
+
+      return res.status(201).json(fieldWork);
+
     } catch (error: any) {
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({
+        message:
+          error.message ||
+          "Error al registrar evidencia.",
+      });
     }
   }
 
-  // POST /api/fieldwork/:reportId/evidence
-  // Sube foto antes o después (reutiliza Cloudinary de US07)
-  static async addEvidence(req: Request, res: Response) {
+  static async close(
+    req: Request,
+    res: Response
+  ) {
     try {
-      const { reportId } = req.params;
-      const { phase } = req.body; // "BEFORE" | "AFTER"
-      const file = req.file;
+      const reportId =
+        String(req.params.reportId);
 
-      if (!file) {
-        return res.status(400).json({ message: "Imagen requerida" });
-      }
+      const fieldWork =
+        await fieldWorkService
+          .closeFieldWork(reportId);
 
-      if (!phase || !["BEFORE", "AFTER"].includes(phase)) {
-        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-        return res.status(400).json({ message: "phase debe ser BEFORE o AFTER" });
-      }
+      return res.json({
+        message:
+          "Trabajo de campo cerrado correctamente.",
+        fieldWork,
+      });
 
-      const result = await fieldWorkService.addEvidence(
-        reportId,
-        file.path,
-        phase as EvidencePhase
-      );
-
-      // Limpia el archivo temporal igual que en US07
-      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-
-      return res.status(201).json(result);
     } catch (error: any) {
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({
+        message:
+          error.message ||
+          "Error al cerrar trabajo de campo.",
+      });
     }
   }
-
-  // DELETE /api/fieldwork/evidence/:evidenceId
-  // Elimina una evidencia específica
-  static async removeEvidence(req: Request, res: Response) {
+  static async deleteEvidence(
+    req: Request,
+    res: Response
+    ) {
     try {
-      const { evidenceId } = req.params;
-      await fieldWorkService.removeEvidence(evidenceId);
-      return res.json({ message: "Evidencia eliminada correctamente" });
-    } catch (error: any) {
-      return res.status(400).json({ message: error.message });
-    }
-  }
+        const evidenceId =
+        String(req.params.evidenceId);
 
-  // GET /api/fieldwork/:reportId
-  // Obtiene el estado completo del trabajo de campo
-  static async getFieldWork(req: Request, res: Response) {
-    try {
-      const { reportId } = req.params;
-      const result = await fieldWorkService.getFieldWork(reportId);
-      return res.json(result);
+        const fieldWork =
+        await fieldWorkService
+            .deleteEvidence(evidenceId);
+
+        return res.json(fieldWork);
+
     } catch (error: any) {
-      return res.status(404).json({ message: error.message });
+        return res.status(400).json({
+        message:
+            error.message ||
+            "Error al eliminar evidencia.",
+        });
     }
-  }
+    }
 }

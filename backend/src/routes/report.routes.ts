@@ -20,8 +20,23 @@ router.get(
 );
 
 router.get(
+    "/operator/:operatorId/status/:status",
+    ReportController.getReportsByStatusForOperator
+);
+
+router.get(
   "/top-problems",
   ReportController.getTopProblems
+);
+
+router.get(
+  "/map/locations",
+  ReportController.getReportsWithLocation.bind(ReportController)
+);
+
+router.patch(
+    "/:id/prioritize",
+    ReportController.prioritize
 );
 
 router.patch(

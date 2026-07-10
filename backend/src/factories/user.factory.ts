@@ -6,6 +6,10 @@ type CreateUserDTO = {
   lastName: string;
   password: string;
   role?: Role;
+
+  emailVerified?: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
 };
 
 export class UserFactory {
@@ -16,6 +20,10 @@ export class UserFactory {
       lastName: data.lastName,
       password: data.password,
       role: data.role ?? Role.CITIZEN,
+
+      emailVerified: data.emailVerified ?? false,
+      emailVerificationToken: data.emailVerificationToken,
+      emailVerificationExpires: data.emailVerificationExpires,
     };
   }
 }

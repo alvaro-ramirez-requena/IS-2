@@ -1,14 +1,17 @@
 import {
+    useEffect,
     useState,
 } from "react";
 
-import {
-    useNavigate, Link
-} from "react-router-dom";
+import type {
+    ChangeEvent,
+    FormEvent,
+} from "react";
 
 import {
-    useEffect,
-} from "react";
+    Link,
+    useNavigate,
+} from "react-router-dom";
 
 import type {
     LoginFormValues,
@@ -28,32 +31,41 @@ import Input
 import Button
     from "../components/ui/Button";
 
-
-
 export default function LoginPage() {
 
     const navigate =
         useNavigate();
 
     useEffect(() => {
-
         const token =
             localStorage.getItem("token");
 
         const role =
             localStorage.getItem("role");
 
-        if (token) {
-
-            if (role === "OPERATOR") {
-
-                navigate("/operator");
-
-            } else {
-
-                navigate("/home");
-            }
+        if (!token) {
+            return;
         }
+
+        if (role === "OPERATOR") {
+            navigate("/operator", {
+                replace: true,
+            });
+
+            return;
+        }
+
+        if (role === "TECHNICIAN") {
+            navigate("/technician", {
+                replace: true,
+            });
+
+            return;
+        }
+
+        navigate("/home", {
+            replace: true,
+        });
 
     }, [navigate]);
 
@@ -80,7 +92,7 @@ export default function LoginPage() {
         useState(false);
 
     const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement>
+        e: ChangeEvent<HTMLInputElement>
     ) => {
 
         const { name, value } = e.target;
@@ -92,7 +104,7 @@ export default function LoginPage() {
     };
 
     const handleSubmit = async (
-        e: React.FormEvent
+        e: FormEvent<HTMLFormElement>
     ) => {
 
         e.preventDefault();
@@ -147,11 +159,24 @@ export default function LoginPage() {
                 "OPERATOR"
             ) {
 
-                navigate("/operator");
+                navigate("/operator", {
+                    replace: true,
+                });
+
+            } else if (
+                response.user.role ===
+                "TECHNICIAN"
+            ) {
+
+                navigate("/technician", {
+                    replace: true,
+                });
 
             } else {
 
-                navigate("/home");
+                navigate("/home", {
+                    replace: true,
+                });
             }
 
         } catch (error: any) {
@@ -169,20 +194,20 @@ export default function LoginPage() {
 
     return (
         <div className="
-  min-h-screen
-  grid
-  lg:grid-cols-2
-">
+            min-h-screen
+            grid
+            lg:grid-cols-2
+        ">
 
             <div className="
-  bg-[#03152E]
-  text-white
-  p-8
-  lg:p-16
-  flex
-  flex-col
-  justify-center
-">
+                bg-[#03152E]
+                text-white
+                p-8
+                lg:p-16
+                flex
+                flex-col
+                justify-center
+            ">
 
                 <h1 className="text-5xl font-bold">
                     reporta
@@ -194,11 +219,11 @@ export default function LoginPage() {
                 <div className="mt-16">
 
                     <h2 className="
-  text-3xl
-  lg:text-5xl
-  font-bold
-  leading-tight
-">
+                        text-3xl
+                        lg:text-5xl
+                        font-bold
+                        leading-tight
+                    ">
                         Bienvenido nuevamente
                     </h2>
 
@@ -227,21 +252,23 @@ export default function LoginPage() {
 
 
                     <div className="
-    flex
-    gap-4
-    mb-8
-">
+                        flex
+                        gap-4
+                        mb-8
+                        items-center
+                        flex-wrap
+                    ">
 
                         <Link
                             to="/login"
                             className="
-            px-6
-            py-2
-            rounded-full
-            bg-[#03152E]
-            text-white
-            font-semibold
-        "
+                                px-6
+                                py-2
+                                rounded-full
+                                bg-[#03152E]
+                                text-white
+                                font-semibold
+                            "
                         >
                             Login
                         </Link>
@@ -249,16 +276,45 @@ export default function LoginPage() {
                         <Link
                             to="/register"
                             className="
-            px-6
-            py-2
-            rounded-full
-            border
-            font-semibold
-        "
+                                px-6
+                                py-2
+                                rounded-full
+                                border
+                                font-semibold
+                            "
                         >
                             Registrarse
                         </Link>
 
+                        <Link
+                            to="/forgot-password"
+                            className="
+                                px-6
+                                py-2
+                                rounded-full
+                                border
+                                font-semibold
+                                text-sm
+                                hover:bg-gray-100
+                            "
+                        >
+                            ¿Olvidaste tu contraseña?
+                        </Link>
+
+                        <Link
+                            to="/technician/apply"
+                            className="
+                                px-6
+                                py-2
+                                rounded-full
+                                border
+                                font-semibold
+                                text-sm
+                                hover:bg-gray-100
+                            "
+                        >
+                            Postular como técnico
+                        </Link>
                     </div>
 
                     <h2 className="text-4xl font-bold text-gray-800 mb-10">

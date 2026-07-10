@@ -1,32 +1,49 @@
-import { Router } from "express";
-import { FieldWorkController } from "../controllers/fieldwork.controller";
-import { upload } from "../middlewares/upload.middleware";
+import {
+  Router,
+} from "express";
 
-const router = Router();
+import {
+  FieldWorkController,
+} from "../controllers/fieldwork.controller";
 
-// Iniciar trabajo de campo para un reporte
-router.post("/:reportId/start", FieldWorkController.start);
+const router =
+  Router();
 
-// Registrar llegada + validar ubicación GPS
-router.patch("/:reportId/arrive", FieldWorkController.registerArrival);
+router.get(
+  "/:reportId",
+  FieldWorkController.getByReport
+);
 
-// Guardar notas del técnico
-router.patch("/:reportId/notes", FieldWorkController.saveNotes);
+router.post(
+  "/:reportId/start",
+  FieldWorkController.start
+);
 
-// Registrar hora de cierre
-router.patch("/:reportId/close", FieldWorkController.registerClosure);
+router.patch(
+  "/:reportId/arrive",
+  FieldWorkController.arrive
+);
 
-// Subir foto antes o después (reutiliza el middleware de multer de US07)
+router.patch(
+  "/:reportId/notes",
+  FieldWorkController.saveNotes
+);
+
 router.post(
   "/:reportId/evidence",
-  upload.single("image"),
   FieldWorkController.addEvidence
 );
 
-// Eliminar una evidencia
-router.delete("/evidence/:evidenceId", FieldWorkController.removeEvidence);
+router.delete(
+  "/evidence/:evidenceId",
+  FieldWorkController.deleteEvidence
+);
 
-// Obtener estado completo del trabajo de campo
-router.get("/:reportId", FieldWorkController.getFieldWork);
+router.patch(
+  "/:reportId/close",
+  FieldWorkController.close
+);
+
+
 
 export default router;

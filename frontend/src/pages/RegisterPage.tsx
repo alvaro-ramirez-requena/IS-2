@@ -297,6 +297,16 @@ export default function RegisterPage() {
                                 error={errors.password}
                             />
 
+                            <p className="
+                                mt-2
+                                text-sm
+                                text-gray-500
+                                leading-relaxed
+                            ">
+                                La contraseña debe tener mínimo 8 caracteres, una mayúscula,
+                                una minúscula, un número y un carácter especial.
+                            </p>
+
                         </div>
 
                         <Button

@@ -56,6 +56,6 @@
     "ignoreDeprecations": "6.0",
     "types": ["node"]
   },
-  "include": ["src"],
+  "include": ["src", "src/services/municipality.service.ts"],
   "exclude": ["node_modules"]
 }

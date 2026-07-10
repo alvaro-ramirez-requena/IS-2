@@ -9,8 +9,11 @@ export class ReportFactory {
     formData: ReportFormValues,
     userId: string
   ): CreateReportDTO {
+  console.log("formData antes de crear DTO:", formData);
 
     return {
+      title:
+        formData.title.trim(),
 
       category:
         formData.category,
@@ -29,6 +32,9 @@ export class ReportFactory {
 
       longitude:
         formData.longitude,
+
+      address:
+        formData.address,
 
       imageUrls:
         formData.imageUrls,

@@ -1,5 +1,7 @@
 export type ReportFormValues = {
 
+  title: string;
+
   category: string;
 
   problemType: string;
@@ -11,13 +13,21 @@ export type ReportFormValues = {
   latitude?: number;
 
   longitude?: number;
+
+  address?: string;
 
   images: File[];
 
   imageUrls: string[];
+
+  categoryId?: string;
+  
+  problemTypeId?: string;
 };
 
 export type CreateReportDTO = {
+
+  title: string;
 
   category: string;
 
@@ -30,6 +40,8 @@ export type CreateReportDTO = {
   latitude?: number;
 
   longitude?: number;
+
+  address?: string;
 
   imageUrls: string[];
 
@@ -40,6 +52,8 @@ export type ApiReport = {
 
   id: string;
 
+  title: string;
+
   category: string;
 
   problemType: string;
@@ -51,6 +65,20 @@ export type ApiReport = {
   latitude?: number;
 
   longitude?: number;
+
+  address?: string;
+
+  priority?: "ALTO" | "MEDIO" | "BAJO";
+
+  impact?: string;
+
+  probability?: string;
+
+  operationalType?: string;
+
+  targetDate?: string;
+
+  justification?: string;
 
   status:
   | "REGISTERED"

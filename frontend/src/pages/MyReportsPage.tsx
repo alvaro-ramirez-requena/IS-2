@@ -5,19 +5,23 @@ import {
 
 import {
     useNavigate,
+    useSearchParams,
 } from "react-router-dom";
 
 import {
     statusLabels,
 } from "../utils/reportLabels";
 
-const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:3000";
+    const API_URL =
+        import.meta.env.VITE_API_URL ||
+        "http://localhost:3000";
+
 
 type Report = {
 
     id: string;
+
+    title: string;
 
     problemType: string;
 
@@ -47,6 +51,12 @@ export default function MyReportsPage() {
 
     const navigate =
         useNavigate();
+
+    const [searchParams] =
+        useSearchParams();
+
+    const highlightedReportId =
+        searchParams.get("highlight");
 
     const [reports, setReports] =
         useState<Report[]>([]);
@@ -173,11 +183,11 @@ export default function MyReportsPage() {
                     }
 
                     className="
-            mb-8
-            text-blue-700
-            font-semibold
-            hover:underline
-        "
+                        mb-8
+                        text-blue-700
+                        font-semibold
+                        hover:underline
+                    "
                 >
                     ← Volver al inicio
                 </button>
@@ -223,13 +233,16 @@ export default function MyReportsPage() {
                             ">
 
                                 {
-                                    reports.map(
-                                        (report) => (
+                                    reports.map((report) => {
+
+                                        const isHighlighted =
+                                            report.id === highlightedReportId;
+
+                                        return (
 
                                             <div
                                                 key={report.id}
-
-                                                className="
+                                                className={`
                                                     bg-white
                                                     rounded-3xl
                                                     border
@@ -239,22 +252,24 @@ export default function MyReportsPage() {
                                                     md:flex-row
                                                     gap-6
                                                     shadow-sm
-                                                "
+                                                    transition
+                                                    ${isHighlighted
+                                                        ? "ring-4 ring-blue-500 border-blue-500 bg-blue-50"
+                                                        : ""
+                                                    }
+                                                `}
                                             >
 
                                                 <img
-
                                                     src={
                                                         report.evidences?.[0]
                                                             ?.imageUrl ||
 
                                                         "https://placehold.co/600x400"
                                                     }
-
                                                     alt={
                                                         report.problemType
                                                     }
-
                                                     className="
                                                         w-full
                                                         md:w-[220px]
@@ -267,6 +282,27 @@ export default function MyReportsPage() {
                                                 <div className="
                                                     flex-1
                                                 ">
+
+                                                    {
+                                                        isHighlighted && (
+
+                                                            <div className="
+                                                                mb-4
+                                                                bg-blue-100
+                                                                text-blue-700
+                                                                px-4
+                                                                py-3
+                                                                rounded-xl
+                                                                font-semibold
+                                                            ">
+                                                                Cambio reciente: este reporte ahora está como {
+                                                                    statusLabels[
+                                                                        report.status
+                                                                    ]
+                                                                }.
+                                                            </div>
+                                                        )
+                                                    }
 
                                                     <div className="
                                                         flex
@@ -281,23 +317,21 @@ export default function MyReportsPage() {
                                                                 text-3xl
                                                                 font-bold
                                                             ">
-                                                                {
-                                                                    report.problemType
-                                                                }
+                                                                {report.title || report.problemType}
                                                             </h2>
 
                                                             <div className="
-    mt-2
-    flex
-    items-center
-    gap-3
-    flex-wrap
-">
+                                                                mt-2
+                                                                flex
+                                                                items-center
+                                                                gap-3
+                                                                flex-wrap
+                                                            ">
 
                                                                 <p className="
-        font-semibold
-        text-gray-700
-    ">
+                                                                    font-semibold
+                                                                    text-gray-700
+                                                                ">
 
                                                                     {
                                                                         `${report.user?.firstName || ""} ${report.user?.lastName || ""}`
@@ -306,8 +340,8 @@ export default function MyReportsPage() {
                                                                 </p>
 
                                                                 <p className="
-        text-gray-500
-    ">
+                                                                    text-gray-500
+                                                                ">
 
                                                                     {
                                                                         getRelativeTime(
@@ -333,7 +367,7 @@ export default function MyReportsPage() {
 
                                                             {
                                                                 statusLabels[
-                                                                report.status
+                                                                    report.status
                                                                 ]
                                                             }
 
@@ -355,24 +389,24 @@ export default function MyReportsPage() {
                                                     </p>
 
                                                     <div className="
-    mt-5
-    bg-gray-50
-    rounded-2xl
-    p-4
-">
+                                                        mt-5
+                                                        bg-gray-50
+                                                        rounded-2xl
+                                                        p-4
+                                                    ">
 
                                                         <p className="
-        text-sm
-        text-gray-500
-        mb-1
-    ">
+                                                            text-sm
+                                                            text-gray-500
+                                                            mb-1
+                                                        ">
                                                             Ubicación
                                                         </p>
 
                                                         <p className="
-        text-gray-700
-        font-medium
-    ">
+                                                            text-gray-700
+                                                            font-medium
+                                                        ">
 
                                                             {
                                                                 report.address
@@ -383,18 +417,11 @@ export default function MyReportsPage() {
 
                                                     </div>
 
-                                                    <button
-                                                        onClick={() => navigate(`/fieldwork/${report.id}`)}
-                                                        className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
-                                                    >
-                                                        Trabajo en campo →
-                                                    </button>
-
                                                 </div>
 
                                             </div>
-                                        )
-                                    )
+                                        );
+                                    })
                                 }
 
                             </div>

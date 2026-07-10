@@ -13,17 +13,40 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  firstName  String
-  lastName   String
-  password   String
-  role       Role     @default(CITIZEN)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(uuid())
+  email     String   @unique
+  firstName String
+  lastName  String
+  password  String
+  role      Role     @default(CITIZEN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  reports    Report[]
+  emailVerified            Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+
+  reports Report[]
+
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+
+  followedReports ReportFollow[]
+  notifications   Notification[]
+
+  technicianProfile TechnicianProfile?
+
+  technicianAssignments ReportAssignment[] @relation("TechnicianAssignments")
+  operatorAssignments   ReportAssignment[] @relation("OperatorAssignments")
+
+  technicalAttentions TechnicalAttention[]
+
   fieldWorks FieldWork[]
+
+  municipalityId String?
+  municipality   Municipality? @relation(fields: [municipalityId], references: [id])
+
+  technicalClosures TechnicalClosure[]
 }
 
 enum Role {
@@ -32,99 +55,187 @@ enum Role {
   TECHNICIAN
 }
 
-
 model Report {
-  id             String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  category       ReportCategory
+  title String
 
-  problemType    String
+  category ReportCategory
 
-  description    String
+  problemType String
 
-  latitude      Float?
-  longitude     Float?
+  categoryId  String?
+  categoryRef Category? @relation(fields: [categoryId], references: [id])
 
-  address      String?
+  problemTypeId  String?
+  problemTypeRef ProblemType? @relation(fields: [problemTypeId], references: [id])
 
-  isAnonymous    Boolean @default(false)
+  description String
 
-  status         Status @default(REGISTERED)
+  latitude  Float?
+  longitude Float?
 
-  userId         String
-  user           User @relation(fields: [userId], references: [id])
+  address String?
 
-  evidences     ReportEvidence[]
-  fieldWork     FieldWork?
+  isAnonymous Boolean @default(false)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  status Status @default(REGISTERED)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  evidences ReportEvidence[]
+
+  assignments ReportAssignment[]
+
+  technicalAttentions TechnicalAttention[]
+
+  priority        Priority?
+  impact          String?
+  probability     String?
+  operationalType String?
+  targetDate      DateTime?
+  justification   String?
+
+  followers     ReportFollow[]
+  notifications Notification[]
+  resolvedAt    DateTime?
+
+  fieldWork FieldWork?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  municipalityId String?
+  municipality   Municipality? @relation(fields: [municipalityId], references: [id])
+
+  technicalClosure TechnicalClosure?
 
   @@index([userId])
 }
 
 model ReportEvidence {
+  id String @id @default(uuid())
 
-  id         String   @id @default(uuid())
+  imageUrl String
 
-  imageUrl   String
+  reportId String
 
-  reportId   String
+  report Report @relation(fields: [reportId], references: [id])
 
-  report     Report @relation(fields: [reportId], references: [id])
-
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([reportId])
 }
 
-// US18 - Trazabilidad del trabajo en campo
-model FieldWork {
+model ReportAssignment {
+  id String @id @default(uuid())
 
-  id            String   @id @default(uuid())
+  reportId     String
+  technicianId String
+  assignedById String
 
-  reportId      String   @unique
-  report        Report   @relation(fields: [reportId], references: [id])
+  assignedAt DateTime @default(now())
 
-  technicianId  String
-  technician    User     @relation(fields: [technicianId], references: [id])
+  notes String?
 
-  arrivedAt     DateTime?
-  closedAt      DateTime?
+  active Boolean @default(true)
 
-  arrivalLat    Float?
-  arrivalLng    Float?
-  distanceMeters Float?
+  report Report @relation(fields: [reportId], references: [id])
 
-  notes         String?
+  technician User @relation("TechnicianAssignments", fields: [technicianId], references: [id])
 
-  evidences     FieldWorkEvidence[]
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  assignedBy User @relation("OperatorAssignments", fields: [assignedById], references: [id])
 
   @@index([reportId])
   @@index([technicianId])
+  @@index([assignedById])
 }
 
-model FieldWorkEvidence {
+model Category {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  active      Boolean @default(true)
 
-  id          String   @id @default(uuid())
+  problemTypes ProblemType[]
+  reports      Report[]
 
-  fieldWorkId String
-  fieldWork   FieldWork @relation(fields: [fieldWorkId], references: [id])
-
-  imageUrl    String
-  phase       EvidencePhase
-
-  createdAt   DateTime @default(now())
-
-  @@index([fieldWorkId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-enum EvidencePhase {
-  BEFORE
-  AFTER
+model ProblemType {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  active      Boolean @default(true)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  reports Report[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ClosureReason {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  active      Boolean @default(true)
+
+  technicalClosures TechnicalClosure[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SlaConfiguration {
+  id String @id @default(uuid())
+
+  priority Priority @unique
+
+  responseHours Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ReportFollow {
+  id String @id @default(uuid())
+
+  userId   String
+  reportId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  report Report @relation(fields: [reportId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, reportId])
+  @@index([userId])
+  @@index([reportId])
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  userId   String
+  reportId String?
+
+  title   String
+  message String
+  read    Boolean @default(false)
+
+  user   User    @relation(fields: [userId], references: [id])
+  report Report? @relation(fields: [reportId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([reportId])
 }
 
 enum Status {
@@ -134,6 +245,7 @@ enum Status {
   REJECTED
   PRIORITIZED
   ASSIGNED
+  IN_TRANSIT
   IN_PROGRESS
   RESOLVED
 }
@@ -143,4 +255,192 @@ enum ReportCategory {
   ENVIRONMENT
   INFRASTRUCTURE
   MOBILITY
+}
+
+enum TechnicianApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model TechnicianApplication {
+  id String @id @default(uuid())
+
+  firstName String
+  lastName  String
+  email     String  @unique
+  phone     String?
+  dni       String?
+
+  municipalityId String?
+  municipality   Municipality? @relation(fields: [municipalityId], references: [id])
+
+  skills     String[]
+  experience String?
+
+  emailVerified Boolean @default(false)
+
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+
+  status TechnicianApplicationStatus @default(PENDING)
+
+  reviewedAt   DateTime?
+  reviewedById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TechnicianProfile {
+  id String @id @default(uuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  municipalityId String?
+  municipality   Municipality? @relation(fields: [municipalityId], references: [id])
+
+  skills    String[]
+  available Boolean  @default(true)
+  crewName  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Priority {
+  BAJO
+  MEDIO
+  ALTO
+}
+
+model Municipality {
+  id String @id @default(uuid())
+
+  name String @unique
+
+  district String?
+
+  province String?
+
+  department String?
+
+  operators User[]
+
+  reports Report[]
+
+  technicianApplications TechnicianApplication[]
+
+  technicianProfiles TechnicianProfile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TechnicalAttention {
+  id String @id @default(uuid())
+
+  reportId String
+  report   Report @relation(fields: [reportId], references: [id])
+
+  technicianId String
+  technician   User   @relation(fields: [technicianId], references: [id])
+
+  checklist   Json
+  fieldValues Json
+
+  actionTaken     String
+  technicalResult String
+  observations    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reportId])
+  @@index([technicianId])
+}
+
+enum EvidencePhase {
+  BEFORE
+  AFTER
+}
+
+model FieldWork {
+  id String @id @default(uuid())
+
+  reportId String @unique
+  report   Report @relation(fields: [reportId], references: [id])
+
+  technicianId String
+  technician   User   @relation(fields: [technicianId], references: [id])
+
+  arrivedAt DateTime?
+  closedAt  DateTime?
+
+  arrivalLat     Float?
+  arrivalLng     Float?
+  distanceMeters Float?
+
+  notes String?
+
+  evidences FieldWorkEvidence[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([technicianId])
+}
+
+model FieldWorkEvidence {
+  id String @id @default(uuid())
+
+  fieldWorkId String
+  fieldWork   FieldWork @relation(fields: [fieldWorkId], references: [id])
+
+  imageUrl String
+  phase    EvidencePhase
+
+  createdAt DateTime @default(now())
+
+  @@index([fieldWorkId])
+}
+
+enum TechnicalClosureResult {
+  RESOLVED_ON_SITE
+  TEMPORARY_MITIGATION
+  NO_INCIDENT_FOUND
+  DUPLICATE
+  OUT_OF_SCOPE
+  FOLLOW_UP_REQUIRED
+}
+
+model TechnicalClosure {
+  id String @id @default(uuid())
+
+  reportId String @unique
+  report   Report @relation(fields: [reportId], references: [id])
+
+  technicianId String
+  technician   User   @relation(fields: [technicianId], references: [id])
+
+  result String
+
+  closureReasonId String?
+  closureReason   ClosureReason? @relation(fields: [closureReasonId], references: [id])
+
+  observations String
+
+  closureEvidenceUrl String?
+
+  followUpRequired Boolean @default(false)
+  followUpNotes    String?
+
+  closedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([technicianId])
+  @@index([closureReasonId])
 }

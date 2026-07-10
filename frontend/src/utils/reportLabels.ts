@@ -13,29 +13,15 @@ export const categoryLabels: Record<string, string> = {
         "Movilidad",
 };
 
-export const statusLabels: Record<string, string> = {
-
-    REGISTERED:
-        "Registrado",
-
-    VALIDATING:
-        "En validación",
-
-    APPROVED:
-        "Aprobado",
-
-    REJECTED:
-        "Rechazado",
-
-    PRIORITIZED:
-        "Priorizado",
-
-    ASSIGNED:
-        "Asignado",
-
-    IN_PROGRESS:
-        "En proceso",
-
-    RESOLVED:
-        "Resuelto",
-};
+export const statusLabels:
+    Record<string, string> = {
+        REGISTERED: "Pendiente",
+        VALIDATING: "En validación",
+        APPROVED: "Aprobado",
+        REJECTED: "Rechazado",
+        PRIORITIZED: "Priorizado",
+        ASSIGNED: "Asignado",
+        IN_TRANSIT: "En traslado",
+        IN_PROGRESS: "En atención",
+        RESOLVED: "Resuelto",
+    };

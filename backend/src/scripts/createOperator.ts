@@ -1,47 +1,47 @@
 import bcrypt from "bcryptjs";
-
-import { prisma }
-from "../config/prisma";
+import { Role } from "@prisma/client";
+import { prisma } from "../config/prisma";
 
 async function main() {
+  const hashedPassword =
+    await bcrypt.hash("Operador123!", 10);
 
-    const hashedPassword =
-        await bcrypt.hash(
-            "Operador123",
-            10
-        );
+  const operator =
+    await prisma.user.upsert({
+      where: {
+        email: "operador@municipalidad.com",
+      },
 
-    const operator =
-        await prisma.user.create({
+      update: {
+        firstName: "Operador",
+        lastName: "Municipal",
+        password: hashedPassword,
+        role: Role.OPERATOR,
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      },
 
-            data: {
+      create: {
+        email: "operador@municipalidad.com",
+        firstName: "Operador",
+        lastName: "Municipal",
+        password: hashedPassword,
+        role: Role.OPERATOR,
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      },
+    });
 
-                email:
-                    "operador@municipalidad.com",
-
-                firstName:
-                    "Operador",
-
-                lastName:
-                    "Municipal",
-
-                password:
-                    hashedPassword,
-
-                role:
-                    "OPERATOR",
-            },
-        });
-
-    console.log(
-        "Operador creado:",
-        operator.email
-    );
+  console.log("Operador listo:", operator.email);
+  console.log("Contraseña: Operador123!");
 }
 
 main()
-    .catch(console.error)
-    .finally(async () => {
-
-        await prisma.$disconnect();
-    });
+  .catch((error) => {
+    console.error("Error creando operador:", error);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

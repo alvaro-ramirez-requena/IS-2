@@ -61,6 +61,15 @@ export default function
 
             <p>
               <strong>
+                Título:
+              </strong>
+
+              {" "}
+              {formData.title}
+            </p>
+
+            <p>
+              <strong>
                 Categoría:
               </strong>
 

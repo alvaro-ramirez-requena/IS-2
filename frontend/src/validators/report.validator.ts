@@ -32,5 +32,18 @@ export const validateReport = (
       "La descripción es obligatoria";
   }
 
+  if (!values.title.trim()) {
+    errors.title =
+      "El título del reporte es obligatorio";
+  }
+  if (values.title.trim().length < 5) {
+    errors.title =
+      "El título debe tener al menos 5 caracteres";
+  }
+
+  if (values.title.trim().length > 80) {
+    errors.title =
+      "El título no debe superar los 80 caracteres";
+  }
   return errors;
 };

@@ -39,20 +39,22 @@ export default function CreateReportPage() {
     const navigate =
         useNavigate();
 
-    const [formData, setFormData] =
+        const [formData, setFormData] =
 
-        useState<ReportFormValues>({
-            category: "",
-            problemType: "",
-            description: "",
-            isAnonymous: false,
-            latitude: undefined,
-            longitude: undefined,
+            useState<ReportFormValues>({
+                title: "",
+                category: "",
+                problemType: "",
+                description: "",
+                isAnonymous: false,
+                latitude: undefined,
+                longitude: undefined,
+                address: "",
 
-            images: [],
+                images: [],
 
-            imageUrls: [],
-        });
+                imageUrls: [],
+            });
 
     const [errors, setErrors] =
         useState<
@@ -156,12 +158,14 @@ export default function CreateReportPage() {
             );
 
             setFormData({
+                title: "",
                 category: "",
                 problemType: "",
                 description: "",
                 isAnonymous: false,
                 latitude: undefined,
                 longitude: undefined,
+                address: "",
 
                 images: [],
 

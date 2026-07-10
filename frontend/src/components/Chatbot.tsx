@@ -29,7 +29,6 @@ function getWelcomeMessage(page: string, role: string): string {
     if (page === "fieldwork") return "Estoy aquí para ayudarte con este trabajo en campo. ¿Qué necesitas saber?";
   }
   if (page === "my-reports") return "Puedo ayudarte a entender el estado de tus reportes. ¿Qué quieres saber?";
-  if (page === "create-report") return "Estás creando un reporte. El proceso tiene 4 pasos: Información, Ubicación, Evidencia y Confirmar. ¿Tienes alguna duda sobre algún paso?";
   if (page === "home") return "Hola, soy el asistente de ReportaYa. ¿En qué puedo ayudarte hoy?";
   return "Hola, soy el asistente de ReportaYa. ¿En qué puedo ayudarte?";
 }
@@ -138,25 +137,12 @@ export default function Chatbot() {
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
-  msg.role === "user"
-    ? "bg-blue-600 text-white rounded-br-sm"
-    : "bg-gray-100 text-gray-800 rounded-bl-sm"
-}`}>
-  {msg.role === "bot" ? (
-    <div
-      className="prose prose-sm max-w-none"
-      dangerouslySetInnerHTML={{
-        __html: msg.text
-          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-          .replace(/\n\n/g, "<br/><br/>")
-          .replace(/\n(\d+\.)/g, "<br/>$1")
-          .replace(/\n-/g, "<br/>•")
-      }}
-    />
-  ) : (
-    msg.text
-  )}
-</div>
+                  msg.role === "user"
+                    ? "bg-blue-600 text-white rounded-br-sm"
+                    : "bg-gray-100 text-gray-800 rounded-bl-sm"
+                }`}>
+                  {msg.text}
+                </div>
               </div>
             ))}
             {loading && (
