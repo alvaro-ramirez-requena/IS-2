@@ -1,216 +1,149 @@
-import { useState }
-    from "react";
+import { useState } from "react";
 
-import type {
-    ReportFormValues,
-} from "../types/report.types";
+import type { ReportFormValues } from "../types/report.types";
 
-import ReportStepper
-    from "../components/report/ReportStepper";
+import ReportStepper from "../components/report/ReportStepper";
 
-import ReportInformationStep
-    from "../components/report/ReportInformationStep";
+import ReportInformationStep from "../components/report/ReportInformationStep";
 
-import {
-    validateReport,
-} from "../validators/report.validator";
+import { validateReport } from "../validators/report.validator";
 
-import { ReportFactory }
-    from "../factories/report.factory";
+import { ReportFactory } from "../factories/report.factory";
 
-import { ReportService }
-    from "../services/report.service";
+import { ReportService } from "../services/report.service";
 
-import ReportLocationStep
-    from "../components/report/ReportLocationStep";
+import ReportLocationStep from "../components/report/ReportLocationStep";
 
-import ReportEvidenceStep
-    from "../components/report/ReportEvidenceStep";
+import ReportEvidenceStep from "../components/report/ReportEvidenceStep";
 
-import ReportReviewStep
-    from "../components/report/ReportReviewStep";
+import ReportReviewStep from "../components/report/ReportReviewStep";
 
-import {
-    useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateReportPage() {
+  const navigate = useNavigate();
 
-    const navigate =
-        useNavigate();
+  const [formData, setFormData] = useState<ReportFormValues>({
+    title: "",
+    category: "",
+    problemType: "",
+    description: "",
+    isAnonymous: false,
+    latitude: undefined,
+    longitude: undefined,
+    address: "",
 
-        const [formData, setFormData] =
+    images: [],
 
-            useState<ReportFormValues>({
-                title: "",
-                category: "",
-                problemType: "",
-                description: "",
-                isAnonymous: false,
-                latitude: undefined,
-                longitude: undefined,
-                address: "",
+    imageUrls: [],
+  });
 
-                images: [],
+  const [errors, setErrors] = useState<Partial<Record<keyof ReportFormValues, string>>>({});
 
-                imageUrls: [],
-            });
+  const [message, setMessage] = useState("");
 
-    const [errors, setErrors] =
-        useState<
-            Partial<
-                Record<
-                    keyof ReportFormValues,
-                    string
-                >
-            >
-        >({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [message, setMessage] =
-        useState("");
+  const [currentStep, setCurrentStep] = useState(1);
 
-    const [isSubmitting,
-        setIsSubmitting] =
-        useState(false);
+  const handleNext = async () => {
+    if (currentStep === 1) {
+      const validationErrors = validateReport(formData);
 
-    const [currentStep,
-        setCurrentStep] =
-        useState(1);
+      setErrors(validationErrors);
 
-    const handleNext = async () => {
+      if (Object.keys(validationErrors).length > 0) {
+        return;
+      }
+    }
 
-        if (currentStep === 1) {
+    try {
+      setMessage("");
 
-            const validationErrors =
-                validateReport(formData);
+      const userId = localStorage.getItem("userId");
 
-            setErrors(validationErrors);
+      if (!userId) {
+        setMessage("Usuario no autenticado");
 
-            if (
-                Object.keys(validationErrors)
-                    .length > 0
-            ) {
-                return;
-            }
-        }
+        setIsSubmitting(false);
 
-        try {
+        return;
+      }
 
+      if (currentStep === 1) {
+        setCurrentStep(2);
 
-            setMessage("");
+        setIsSubmitting(false);
 
-            const userId =
-                localStorage.getItem("userId");
+        return;
+      }
 
-            if (!userId) {
+      if (currentStep === 2) {
+        setCurrentStep(3);
 
-                setMessage(
-                    "Usuario no autenticado"
-                );
+        setIsSubmitting(false);
 
-                setIsSubmitting(false);
+        return;
+      }
 
-                return;
-            }
+      if (currentStep === 3) {
+        setCurrentStep(4);
 
+        setIsSubmitting(false);
 
-            if (currentStep === 1) {
+        return;
+      }
 
-                setCurrentStep(2);
+      setIsSubmitting(true);
 
-                setIsSubmitting(false);
+      const dto = ReportFactory.toCreateReportDTO(formData, userId);
 
-                return;
-            }
+      await ReportService.createReport(dto);
 
-            if (currentStep === 2) {
+      setMessage("Reporte creado correctamente");
 
-                setCurrentStep(3);
+      setFormData({
+        title: "",
+        category: "",
+        problemType: "",
+        description: "",
+        isAnonymous: false,
+        latitude: undefined,
+        longitude: undefined,
+        address: "",
 
-                setIsSubmitting(false);
+        images: [],
 
-                return;
-            }
+        imageUrls: [],
+      });
 
-            if (currentStep === 3) {
+      setCurrentStep(1);
 
-                setCurrentStep(4);
+      navigate("/home");
+    } catch (error: any) {
+      setMessage(error?.message || "Error inesperado");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-                setIsSubmitting(false);
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  };
 
-                return;
-            }
-
-            setIsSubmitting(true);
-
-            const dto =
-                ReportFactory
-                    .toCreateReportDTO(
-                        formData,
-                        userId
-                    );
-
-            await ReportService
-                .createReport(dto);
-
-            setMessage(
-                "Reporte creado correctamente"
-            );
-
-            setFormData({
-                title: "",
-                category: "",
-                problemType: "",
-                description: "",
-                isAnonymous: false,
-                latitude: undefined,
-                longitude: undefined,
-                address: "",
-
-                images: [],
-
-                imageUrls: [],
-            });
-
-            setCurrentStep(1);
-
-            navigate("/home");
-
-        } catch (error: any) {
-
-            setMessage(
-                error?.message
-                || "Error inesperado"
-            );
-
-        } finally {
-
-            setIsSubmitting(false);
-        }
-    };
-
-    const handlePrevious = () => {
-
-        if (currentStep > 1) {
-
-            setCurrentStep(
-                (prev) => prev - 1
-            );
-        }
-    };
-
-
-
-    return (
-
-        <div className="
+  return (
+    <div
+      className="
       min-h-screen
       bg-[#F5F7FA]
       p-4
       lg:p-10
-    ">
-
-            <div className="
+    "
+    >
+      <div
+        className="
         max-w-6xl
         mx-auto
         bg-white
@@ -218,104 +151,74 @@ export default function CreateReportPage() {
         p-6
         lg:p-10
         shadow-sm
-      ">
-                <div className="
+      "
+      >
+        <div
+          className="
     flex
     justify-end
-">
-
-                    <button
-                        onClick={() =>
-                            navigate("/home")
-                        }
-                        className="
+"
+        >
+          <button
+            onClick={() => navigate("/home")}
+            className="
             text-3xl
             font-bold
             text-gray-400
             hover:text-black
         "
-                    >
-                        ×
-                    </button>
+          >
+            ×
+          </button>
+        </div>
 
-                </div>
-
-                <h1 className="
+        <h1
+          className="
           text-3xl
           lg:text-5xl
           font-bold
-        ">
-                    Crear nuevo reporte
-                </h1>
+        "
+        >
+          Crear nuevo reporte
+        </h1>
 
-                <p className="
+        <p
+          className="
           text-gray-500
           mt-4
           text-lg
-        ">
-                    Registra una incidencia
-                    con tipo de problema,
-                    descripción y opción de anónimo.
-                </p>
+        "
+        >
+          Registra una incidencia con tipo de problema, descripción y opción de anónimo.
+        </p>
 
-                <div className="mt-12">
+        <div className="mt-12">
+          <ReportStepper currentStep={currentStep} />
+        </div>
 
-                    <ReportStepper
-                        currentStep={currentStep}
-                    />
+        {currentStep === 1 && (
+          <ReportInformationStep formData={formData} setFormData={setFormData} errors={errors} />
+        )}
 
-                </div>
+        {currentStep === 2 && <ReportLocationStep formData={formData} setFormData={setFormData} />}
 
-                {currentStep === 1 && (
+        {currentStep === 3 && <ReportEvidenceStep formData={formData} setFormData={setFormData} />}
 
-                    <ReportInformationStep
-                        formData={formData}
-                        setFormData={setFormData}
-                        errors={errors}
-                    />
+        {currentStep === 4 && <ReportReviewStep formData={formData} />}
 
-                )}
-
-                {currentStep === 2 && (
-
-                    <ReportLocationStep
-                        formData={formData}
-                        setFormData={setFormData}
-                    />
-
-                )}
-
-                {currentStep === 3 && (
-
-
-                    <ReportEvidenceStep
-                        formData={formData}
-                        setFormData={setFormData}
-                    />
-
-                )}
-
-                {currentStep === 4 && (
-
-                    <ReportReviewStep
-                        formData={formData}
-                    />
-
-                )}
-
-                <div className="
+        <div
+          className="
     mt-10
     flex
     justify-between
     gap-4
-">
+"
+        >
+          {currentStep > 1 && (
+            <button
+              onClick={handlePrevious}
 
-                    {currentStep > 1 && (
-
-                        <button
-                            onClick={handlePrevious}
-
-                            className="
+              className="
                 px-8
                 py-5
                 border
@@ -324,18 +227,17 @@ export default function CreateReportPage() {
                 font-semibold
                 hover:bg-gray-100
             "
-                        >
-                            ← Anterior
-                        </button>
+            >
+              ← Anterior
+            </button>
+          )}
 
-                    )}
+          <button
+            onClick={handleNext}
 
-                    <button
-                        onClick={handleNext}
+            disabled={isSubmitting}
 
-                        disabled={isSubmitting}
-
-                        className="
+            className="
             flex-1
             bg-blue-600
             hover:bg-blue-700
@@ -345,32 +247,23 @@ export default function CreateReportPage() {
             text-2xl
             font-semibold
         "
-                    >
-                        {
-                            isSubmitting
-                                ? "Creando..."
-                                : currentStep === 4
-                                    ? "Crear reporte"
-                                    : "Siguiente"
-                        }
-                    </button>
+          >
+            {isSubmitting ? "Creando..." : currentStep === 4 ? "Crear reporte" : "Siguiente"}
+          </button>
+        </div>
 
-                </div>
-
-                {message && (
-
-                    <div className="
+        {message && (
+          <div
+            className="
     mt-6
     text-center
     text-lg
-  ">
-                        {message}
-                    </div>
-
-                )}
-
-            </div>
-
-        </div>
-    );
+  "
+          >
+            {message}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

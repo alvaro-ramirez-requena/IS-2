@@ -1,9 +1,7 @@
 import { NotificationRepository } from "../repositories/notification.repository";
 
 export class NotificationService {
-
-  private notificationRepository =
-    new NotificationRepository();
+  private notificationRepository = new NotificationRepository();
 
   async createNotification(data: {
     userId: string;
@@ -11,10 +9,7 @@ export class NotificationService {
     title: string;
     message: string;
   }) {
-
-    return await this
-      .notificationRepository
-      .create(data);
+    return await this.notificationRepository.create(data);
   }
 
   async createMany(
@@ -25,25 +20,13 @@ export class NotificationService {
       message: string;
     }[]
   ) {
-
-    return await this
-      .notificationRepository
-      .createMany(notifications);
+    return await this.notificationRepository.createMany(notifications);
   }
 
-  async getByUser(
-    userId: string
-  ) {
+  async getByUser(userId: string) {
+    const notifications = await this.notificationRepository.findByUser(userId);
 
-    const notifications =
-      await this
-        .notificationRepository
-        .findByUser(userId);
-
-    const unreadCount =
-      await this
-        .notificationRepository
-        .countUnread(userId);
+    const unreadCount = await this.notificationRepository.countUnread(userId);
 
     return {
       unreadCount,
@@ -51,21 +34,11 @@ export class NotificationService {
     };
   }
 
-  async markAsRead(
-    id: string
-  ) {
-
-    return await this
-      .notificationRepository
-      .markAsRead(id);
+  async markAsRead(id: string) {
+    return await this.notificationRepository.markAsRead(id);
   }
 
-  async markAllAsRead(
-    userId: string
-  ) {
-
-    return await this
-      .notificationRepository
-      .markAllAsRead(userId);
+  async markAllAsRead(userId: string) {
+    return await this.notificationRepository.markAllAsRead(userId);
   }
 }

@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { chatWithGemini } from "../services/chatbot.service";
 
 export class ChatbotController {
-
   // POST /api/chatbot/message
   static async sendMessage(req: Request, res: Response) {
     try {
@@ -21,7 +20,6 @@ export class ChatbotController {
       );
 
       return res.json({ reply });
-
     } catch (error: any) {
       console.error("Chatbot error:", error);
       return res.status(500).json({ message: "Error al procesar el mensaje" });

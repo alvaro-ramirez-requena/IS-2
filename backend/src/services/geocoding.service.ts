@@ -12,34 +12,18 @@ export type LocationDetails = {
 };
 
 export class GeocodingService {
-
   private static getApiKey() {
-    return (
-      process.env.GOOGLE_MAPS_API_KEY ||
-      process.env.VITE_GOOGLE_MAPS_API_KEY ||
-      ""
-    );
+    return process.env.GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || "";
   }
 
-  static async getAddress(
-    latitude: number,
-    longitude: number
-  ): Promise<string | undefined> {
-    const locationDetails =
-      await this.getLocationDetails(
-        latitude,
-        longitude
-      );
+  static async getAddress(latitude: number, longitude: number): Promise<string | undefined> {
+    const locationDetails = await this.getLocationDetails(latitude, longitude);
 
     return locationDetails.address || undefined;
   }
 
-  static async getLocationDetails(
-    latitude: number,
-    longitude: number
-  ): Promise<LocationDetails> {
-    const apiKey =
-      this.getApiKey();
+  static async getLocationDetails(latitude: number, longitude: number): Promise<LocationDetails> {
+    const apiKey = this.getApiKey();
 
     if (!apiKey) {
       return {
@@ -50,18 +34,13 @@ export class GeocodingService {
       };
     }
 
-    const response =
-      await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
-      );
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
+    );
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
-    if (
-      data.status !== "OK" ||
-      !data.results?.length
-    ) {
+    if (data.status !== "OK" || !data.results?.length) {
       return {
         address: null,
         district: null,
@@ -70,17 +49,12 @@ export class GeocodingService {
       };
     }
 
-    const result =
-      data.results[0];
+    const result = data.results[0];
 
-    const components =
-      result.address_components as GoogleAddressComponent[];
+    const components = result.address_components as GoogleAddressComponent[];
 
-    const findComponent =
-      (type: string) =>
-        components.find((component) =>
-          component.types.includes(type)
-        )?.long_name || null;
+    const findComponent = (type: string) =>
+      components.find((component) => component.types.includes(type))?.long_name || null;
 
     const district =
       findComponent("locality") ||
@@ -88,15 +62,12 @@ export class GeocodingService {
       findComponent("sublocality_level_1") ||
       findComponent("administrative_area_level_3");
 
-    const province =
-      findComponent("administrative_area_level_2");
+    const province = findComponent("administrative_area_level_2");
 
-    const department =
-      findComponent("administrative_area_level_1");
+    const department = findComponent("administrative_area_level_1");
 
     return {
-      address:
-        result.formatted_address || null,
+      address: result.formatted_address || null,
 
       district,
 

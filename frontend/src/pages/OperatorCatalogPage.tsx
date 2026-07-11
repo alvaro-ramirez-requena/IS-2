@@ -1,407 +1,289 @@
-import {
-    useEffect,
-    useState,
-} from "react";
+import { useEffect, useState } from "react";
+
+import type { FormEvent } from "react";
+
+import { useNavigate } from "react-router-dom";
+
+import { OperationalCatalogService } from "../services/operationalCatalog.service";
 
 import type {
-    FormEvent,
-} from "react";
-
-import {
-    useNavigate,
-} from "react-router-dom";
-
-import {
-    OperationalCatalogService,
+  Category,
+  ClosureReason,
+  ProblemType,
+  SlaConfiguration,
 } from "../services/operationalCatalog.service";
 
-import type {
-    Category,
-    ClosureReason,
-    ProblemType,
-    SlaConfiguration,
-} from "../services/operationalCatalog.service";
-
-type Tab =
-    "CATEGORIES" |
-    "CLOSURE" |
-    "SLA";
+type Tab = "CATEGORIES" | "CLOSURE" | "SLA";
 
 export default function OperatorCatalogPage() {
-    const navigate =
-        useNavigate();
+  const navigate = useNavigate();
 
-    const [tab, setTab] =
-        useState<Tab>("CATEGORIES");
+  const [tab, setTab] = useState<Tab>("CATEGORIES");
 
-    const [categories, setCategories] =
-        useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-    const [problemTypes, setProblemTypes] =
-        useState<ProblemType[]>([]);
+  const [problemTypes, setProblemTypes] = useState<ProblemType[]>([]);
 
-    const [closureReasons, setClosureReasons] =
-        useState<ClosureReason[]>([]);
+  const [closureReasons, setClosureReasons] = useState<ClosureReason[]>([]);
 
-    const [slaConfigurations, setSlaConfigurations] =
-        useState<SlaConfiguration[]>([]);
+  const [slaConfigurations, setSlaConfigurations] = useState<SlaConfiguration[]>([]);
 
-    const [categoryForm, setCategoryForm] =
-        useState({
-            id: "",
-            name: "",
-            description: "",
+  const [categoryForm, setCategoryForm] = useState({
+    id: "",
+    name: "",
+    description: "",
+  });
+
+  const [problemTypeForm, setProblemTypeForm] = useState({
+    id: "",
+    name: "",
+    description: "",
+    categoryId: "",
+  });
+
+  const [closureForm, setClosureForm] = useState({
+    id: "",
+    name: "",
+    description: "",
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  const [saving, setSaving] = useState(false);
+
+  const [error, setError] = useState("");
+
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const loadCatalog = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const [categoriesData, problemTypesData, closureReasonsData, slaData] = await Promise.all([
+        OperationalCatalogService.getCategories(),
+
+        OperationalCatalogService.getProblemTypes(),
+
+        OperationalCatalogService.getClosureReasons(),
+
+        OperationalCatalogService.getSlaConfigurations(),
+      ]);
+
+      setCategories(categoriesData);
+      setProblemTypes(problemTypesData);
+      setClosureReasons(closureReasonsData);
+      setSlaConfigurations(slaData);
+    } catch (error: any) {
+      setError(error.message || "No se pudo cargar el catálogo operativo.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCatalog();
+  }, []);
+
+  const resetMessages = () => {
+    setError("");
+    setSuccessMessage("");
+  };
+
+  const handleCategorySubmit = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!categoryForm.name.trim()) {
+      setError("Ingresa el nombre de la categoría.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      resetMessages();
+
+      if (categoryForm.id) {
+        await OperationalCatalogService.updateCategory(categoryForm.id, {
+          name: categoryForm.name,
+
+          description: categoryForm.description,
         });
 
-    const [problemTypeForm, setProblemTypeForm] =
-        useState({
-            id: "",
-            name: "",
-            description: "",
-            categoryId: "",
+        setSuccessMessage("Categoría actualizada correctamente.");
+      } else {
+        await OperationalCatalogService.createCategory({
+          name: categoryForm.name,
+
+          description: categoryForm.description,
         });
 
-    const [closureForm, setClosureForm] =
-        useState({
-            id: "",
-            name: "",
-            description: "",
+        setSuccessMessage("Categoría creada correctamente.");
+      }
+
+      setCategoryForm({
+        id: "",
+        name: "",
+        description: "",
+      });
+
+      await loadCatalog();
+    } catch (error: any) {
+      setError(error.message || "No se pudo guardar la categoría.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleProblemTypeSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!problemTypeForm.name.trim()) {
+      setError("Ingresa el nombre del tipo de problema.");
+      return;
+    }
+
+    if (!problemTypeForm.categoryId) {
+      setError("Selecciona una categoría.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      resetMessages();
+
+      if (problemTypeForm.id) {
+        await OperationalCatalogService.updateProblemType(problemTypeForm.id, {
+          name: problemTypeForm.name,
+
+          description: problemTypeForm.description,
+
+          categoryId: problemTypeForm.categoryId,
         });
 
-    const [loading, setLoading] =
-        useState(true);
+        setSuccessMessage("Tipo de problema actualizado correctamente.");
+      } else {
+        await OperationalCatalogService.createProblemType({
+          name: problemTypeForm.name,
 
-    const [saving, setSaving] =
-        useState(false);
+          description: problemTypeForm.description,
 
-    const [error, setError] =
-        useState("");
+          categoryId: problemTypeForm.categoryId,
+        });
 
-    const [successMessage, setSuccessMessage] =
-        useState("");
+        setSuccessMessage("Tipo de problema creado correctamente.");
+      }
 
-    const loadCatalog =
-        async () => {
-            try {
-                setLoading(true);
-                setError("");
+      setProblemTypeForm({
+        id: "",
+        name: "",
+        description: "",
+        categoryId: "",
+      });
 
-                const [
-                    categoriesData,
-                    problemTypesData,
-                    closureReasonsData,
-                    slaData,
-                ] =
-                    await Promise.all([
-                        OperationalCatalogService
-                            .getCategories(),
+      await loadCatalog();
+    } catch (error: any) {
+      setError(error.message || "No se pudo guardar el tipo de problema.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
-                        OperationalCatalogService
-                            .getProblemTypes(),
+  const handleClosureSubmit = async (event: FormEvent) => {
+    event.preventDefault();
 
-                        OperationalCatalogService
-                            .getClosureReasons(),
+    if (!closureForm.name.trim()) {
+      setError("Ingresa el nombre del resultado técnico.");
+      return;
+    }
 
-                        OperationalCatalogService
-                            .getSlaConfigurations(),
-                    ]);
+    try {
+      setSaving(true);
+      resetMessages();
 
-                setCategories(categoriesData);
-                setProblemTypes(problemTypesData);
-                setClosureReasons(closureReasonsData);
-                setSlaConfigurations(slaData);
+      if (closureForm.id) {
+        await OperationalCatalogService.updateClosureReason(closureForm.id, {
+          name: closureForm.name,
 
-            } catch (error: any) {
-                setError(
-                    error.message ||
-                    "No se pudo cargar el catálogo operativo."
-                );
+          description: closureForm.description,
+        });
 
-            } finally {
-                setLoading(false);
-            }
-        };
+        setSuccessMessage("Resultado técnico actualizado correctamente.");
+      } else {
+        await OperationalCatalogService.createClosureReason({
+          name: closureForm.name,
 
-    useEffect(() => {
-        loadCatalog();
-    }, []);
+          description: closureForm.description,
+        });
 
-    const resetMessages =
-        () => {
-            setError("");
-            setSuccessMessage("");
-        };
+        setSuccessMessage("Resultado técnico creado correctamente.");
+      }
 
-    const handleCategorySubmit =
-        async (
-            event: FormEvent
-        ) => {
-            event.preventDefault();
+      setClosureForm({
+        id: "",
+        name: "",
+        description: "",
+      });
 
-            if (!categoryForm.name.trim()) {
-                setError("Ingresa el nombre de la categoría.");
-                return;
-            }
+      await loadCatalog();
+    } catch (error: any) {
+      setError(error.message || "No se pudo guardar el resultado técnico.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
-            try {
-                setSaving(true);
-                resetMessages();
+  const handleUpdateSla = async (priority: "BAJO" | "MEDIO" | "ALTO", responseHours: number) => {
+    try {
+      setSaving(true);
+      resetMessages();
 
-                if (categoryForm.id) {
-                    await OperationalCatalogService
-                        .updateCategory(
-                            categoryForm.id,
-                            {
-                                name:
-                                    categoryForm.name,
+      await OperationalCatalogService.updateSla(priority, responseHours);
 
-                                description:
-                                    categoryForm.description,
-                            }
-                        );
+      setSuccessMessage("Tiempo objetivo actualizado correctamente.");
 
-                    setSuccessMessage(
-                        "Categoría actualizada correctamente."
-                    );
+      await loadCatalog();
+    } catch (error: any) {
+      setError(error.message || "No se pudo actualizar el SLA.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
-                } else {
-                    await OperationalCatalogService
-                        .createCategory({
-                            name:
-                                categoryForm.name,
-
-                            description:
-                                categoryForm.description,
-                        });
-
-                    setSuccessMessage(
-                        "Categoría creada correctamente."
-                    );
-                }
-
-                setCategoryForm({
-                    id: "",
-                    name: "",
-                    description: "",
-                });
-
-                await loadCatalog();
-
-            } catch (error: any) {
-                setError(
-                    error.message ||
-                    "No se pudo guardar la categoría."
-                );
-
-            } finally {
-                setSaving(false);
-            }
-        };
-
-    const handleProblemTypeSubmit =
-        async (
-            event: FormEvent
-        ) => {
-            event.preventDefault();
-
-            if (!problemTypeForm.name.trim()) {
-                setError("Ingresa el nombre del tipo de problema.");
-                return;
-            }
-
-            if (!problemTypeForm.categoryId) {
-                setError("Selecciona una categoría.");
-                return;
-            }
-
-            try {
-                setSaving(true);
-                resetMessages();
-
-                if (problemTypeForm.id) {
-                    await OperationalCatalogService
-                        .updateProblemType(
-                            problemTypeForm.id,
-                            {
-                                name:
-                                    problemTypeForm.name,
-
-                                description:
-                                    problemTypeForm.description,
-
-                                categoryId:
-                                    problemTypeForm.categoryId,
-                            }
-                        );
-
-                    setSuccessMessage(
-                        "Tipo de problema actualizado correctamente."
-                    );
-
-                } else {
-                    await OperationalCatalogService
-                        .createProblemType({
-                            name:
-                                problemTypeForm.name,
-
-                            description:
-                                problemTypeForm.description,
-
-                            categoryId:
-                                problemTypeForm.categoryId,
-                        });
-
-                    setSuccessMessage(
-                        "Tipo de problema creado correctamente."
-                    );
-                }
-
-                setProblemTypeForm({
-                    id: "",
-                    name: "",
-                    description: "",
-                    categoryId: "",
-                });
-
-                await loadCatalog();
-
-            } catch (error: any) {
-                setError(
-                    error.message ||
-                    "No se pudo guardar el tipo de problema."
-                );
-
-            } finally {
-                setSaving(false);
-            }
-        };
-
-    const handleClosureSubmit =
-        async (
-            event: FormEvent
-        ) => {
-            event.preventDefault();
-
-            if (!closureForm.name.trim()) {
-                setError("Ingresa el nombre del resultado técnico.");
-                return;
-            }
-
-            try {
-                setSaving(true);
-                resetMessages();
-
-                if (closureForm.id) {
-                    await OperationalCatalogService
-                        .updateClosureReason(
-                            closureForm.id,
-                            {
-                                name:
-                                    closureForm.name,
-
-                                description:
-                                    closureForm.description,
-                            }
-                        );
-
-                    setSuccessMessage(
-                        "Resultado técnico actualizado correctamente."
-                    );
-
-                } else {
-                    await OperationalCatalogService
-                        .createClosureReason({
-                            name:
-                                closureForm.name,
-
-                            description:
-                                closureForm.description,
-                        });
-
-                    setSuccessMessage(
-                        "Resultado técnico creado correctamente."
-                    );
-                }
-
-                setClosureForm({
-                    id: "",
-                    name: "",
-                    description: "",
-                });
-
-                await loadCatalog();
-
-            } catch (error: any) {
-                setError(
-                    error.message ||
-                    "No se pudo guardar el resultado técnico."
-                );
-
-            } finally {
-                setSaving(false);
-            }
-        };
-
-    const handleUpdateSla =
-        async (
-            priority: "BAJO" | "MEDIO" | "ALTO",
-            responseHours: number
-        ) => {
-            try {
-                setSaving(true);
-                resetMessages();
-
-                await OperationalCatalogService
-                    .updateSla(
-                        priority,
-                        responseHours
-                    );
-
-                setSuccessMessage(
-                    "Tiempo objetivo actualizado correctamente."
-                );
-
-                await loadCatalog();
-
-            } catch (error: any) {
-                setError(
-                    error.message ||
-                    "No se pudo actualizar el SLA."
-                );
-
-            } finally {
-                setSaving(false);
-            }
-        };
-
-    if (loading) {
-        return (
-            <div className="
+  if (loading) {
+    return (
+      <div
+        className="
                 min-h-screen
                 flex
                 items-center
                 justify-center
                 text-3xl
                 font-bold
-            ">
-                Cargando catálogo operativo...
-            </div>
-        );
-    }
+            "
+      >
+        Cargando catálogo operativo...
+      </div>
+    );
+  }
 
-    return (
-        <div className="
+  return (
+    <div
+      className="
             min-h-screen
             bg-[#F5F7FA]
             p-6
             lg:p-8
-        ">
-            <div className="
+        "
+    >
+      <div
+        className="
                 max-w-7xl
                 mx-auto
                 space-y-8
-            ">
-                <div className="
+            "
+      >
+        <div
+          className="
                     flex
                     flex-col
                     lg:flex-row
@@ -409,40 +291,37 @@ export default function OperatorCatalogPage() {
                     gap-4
                     items-start
                     lg:items-center
-                ">
-                    <div>
-                        <p className="
-                            text-blue-700
-                            font-bold
-                        ">
-                            US21 - Configuración operativa
-                        </p>
-
-                        <h1 className="
+                "
+        >
+          <div>
+            <h1
+              className="
                             text-4xl
                             lg:text-5xl
                             font-bold
                             text-[#03152E]
                             mt-2
-                        ">
-                            Catálogo operativo del sistema
-                        </h1>
+                        "
+            >
+              Catálogo operativo del sistema
+            </h1>
 
-                        <p className="
+            <p
+              className="
                             text-gray-500
                             mt-3
                             text-lg
                             max-w-3xl
-                        ">
-                            Administra categorías, tipos de problema, resultados técnicos y tiempos objetivo por prioridad.
-                        </p>
-                    </div>
+                        "
+            >
+              Administra categorías, tipos de problema, resultados técnicos y tiempos objetivo por
+              prioridad.
+            </p>
+          </div>
 
-                    <button
-                        onClick={() =>
-                            navigate("/operator")
-                        }
-                        className="
+          <button
+            onClick={() => navigate("/operator")}
+            className="
                             bg-white
                             border
                             rounded-xl
@@ -452,13 +331,14 @@ export default function OperatorCatalogPage() {
                             text-[#03152E]
                             hover:bg-gray-50
                         "
-                    >
-                        Volver al panel
-                    </button>
-                </div>
+          >
+            Volver al panel
+          </button>
+        </div>
 
-                {error && (
-                    <div className="
+        {error && (
+          <div
+            className="
                         bg-red-50
                         border
                         border-red-200
@@ -466,13 +346,15 @@ export default function OperatorCatalogPage() {
                         rounded-2xl
                         p-4
                         font-semibold
-                    ">
-                        {error}
-                    </div>
-                )}
+                    "
+          >
+            {error}
+          </div>
+        )}
 
-                {successMessage && (
-                    <div className="
+        {successMessage && (
+          <div
+            className="
                         bg-green-50
                         border
                         border-green-200
@@ -480,145 +362,150 @@ export default function OperatorCatalogPage() {
                         rounded-2xl
                         p-4
                         font-semibold
-                    ">
-                        {successMessage}
-                    </div>
-                )}
+                    "
+          >
+            {successMessage}
+          </div>
+        )}
 
-                <div className="
+        <div
+          className="
                     flex
                     flex-wrap
                     gap-3
-                ">
-                    <button
-                        onClick={() =>
-                            setTab("CATEGORIES")
-                        }
-                        className={`
+                "
+        >
+          <button
+            onClick={() => setTab("CATEGORIES")}
+            className={`
                             px-5
                             py-3
                             rounded-xl
                             font-bold
                             ${
-                                tab === "CATEGORIES"
-                                    ? "bg-[#03152E] text-white"
-                                    : "bg-white border text-[#03152E]"
+                              tab === "CATEGORIES"
+                                ? "bg-[#03152E] text-white"
+                                : "bg-white border text-[#03152E]"
                             }
                         `}
-                    >
-                        Categorías y problemas
-                    </button>
+          >
+            Categorías y problemas
+          </button>
 
-                    <button
-                        onClick={() =>
-                            setTab("CLOSURE")
-                        }
-                        className={`
+          <button
+            onClick={() => setTab("CLOSURE")}
+            className={`
                             px-5
                             py-3
                             rounded-xl
                             font-bold
                             ${
-                                tab === "CLOSURE"
-                                    ? "bg-[#03152E] text-white"
-                                    : "bg-white border text-[#03152E]"
+                              tab === "CLOSURE"
+                                ? "bg-[#03152E] text-white"
+                                : "bg-white border text-[#03152E]"
                             }
                         `}
-                    >
-                        Resultados técnicos
-                    </button>
+          >
+            Resultados técnicos
+          </button>
 
-                    <button
-                        onClick={() =>
-                            setTab("SLA")
-                        }
-                        className={`
+          <button
+            onClick={() => setTab("SLA")}
+            className={`
                             px-5
                             py-3
                             rounded-xl
                             font-bold
                             ${
-                                tab === "SLA"
-                                    ? "bg-[#03152E] text-white"
-                                    : "bg-white border text-[#03152E]"
+                              tab === "SLA"
+                                ? "bg-[#03152E] text-white"
+                                : "bg-white border text-[#03152E]"
                             }
                         `}
-                    >
-                        SLA por prioridad
-                    </button>
-                </div>
+          >
+            SLA por prioridad
+          </button>
+        </div>
 
-                {tab === "CATEGORIES" && (
-                    <section className="
+        {tab === "CATEGORIES" && (
+          <section
+            className="
                         grid
                         grid-cols-1
                         xl:grid-cols-2
                         gap-8
-                    ">
-                        <div className="
+                    "
+          >
+            <div
+              className="
                             bg-white
                             border
                             rounded-3xl
                             p-6
                             space-y-6
-                        ">
-                            <h2 className="
+                        "
+            >
+              <h2
+                className="
                                 text-2xl
                                 font-bold
                                 text-[#03152E]
-                            ">
-                                Gestión de categorías
-                            </h2>
+                            "
+              >
+                Gestión de categorías
+              </h2>
 
-                            <form
-                                onSubmit={handleCategorySubmit}
-                                className="
+              <form
+                onSubmit={handleCategorySubmit}
+                className="
                                     space-y-4
                                 "
-                            >
-                                <input
-                                    value={categoryForm.name}
-                                    onChange={(event) =>
-                                        setCategoryForm((prev) => ({
-                                            ...prev,
-                                            name: event.target.value,
-                                        }))
-                                    }
-                                    placeholder="Nombre de categoría"
-                                    className="
+              >
+                <input
+                  value={categoryForm.name}
+                  onChange={(event) =>
+                    setCategoryForm((prev) => ({
+                      ...prev,
+                      name: event.target.value,
+                    }))
+                  }
+                  placeholder="Nombre de categoría"
+                  className="
                                         w-full
                                         border
                                         rounded-xl
                                         p-3
                                     "
-                                />
+                />
 
-                                <textarea
-                                    value={categoryForm.description}
-                                    onChange={(event) =>
-                                        setCategoryForm((prev) => ({
-                                            ...prev,
-                                            description: event.target.value,
-                                        }))
-                                    }
-                                    placeholder="Descripción"
-                                    className="
+                <textarea
+                  value={categoryForm.description}
+                  onChange={(event) =>
+                    setCategoryForm((prev) => ({
+                      ...prev,
+                      description: event.target.value,
+                    }))
+                  }
+                  placeholder="Descripción"
+                  className="
                                         w-full
                                         border
                                         rounded-xl
                                         p-3
                                         min-h-[90px]
                                     "
-                                />
+                />
 
-                                <div className="
+                <div
+                  className="
                                     flex
                                     gap-3
-                                ">
-                                    <button
-                                        type="submit"
-                                        disabled={saving}
-                                        className="
+                                "
+                >
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="
                                             bg-blue-700
                                             text-white
                                             font-bold
@@ -627,25 +514,21 @@ export default function OperatorCatalogPage() {
                                             py-3
                                             disabled:bg-gray-300
                                         "
-                                    >
-                                        {
-                                            categoryForm.id
-                                                ? "Actualizar categoría"
-                                                : "Crear categoría"
-                                        }
-                                    </button>
+                  >
+                    {categoryForm.id ? "Actualizar categoría" : "Crear categoría"}
+                  </button>
 
-                                    {categoryForm.id && (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setCategoryForm({
-                                                    id: "",
-                                                    name: "",
-                                                    description: "",
-                                                })
-                                            }
-                                            className="
+                  {categoryForm.id && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCategoryForm({
+                          id: "",
+                          name: "",
+                          description: "",
+                        })
+                      }
+                      className="
                                                 bg-white
                                                 border
                                                 font-bold
@@ -653,20 +536,22 @@ export default function OperatorCatalogPage() {
                                                 px-5
                                                 py-3
                                             "
-                                        >
-                                            Cancelar
-                                        </button>
-                                    )}
-                                </div>
-                            </form>
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </form>
 
-                            <div className="
+              <div
+                className="
                                 space-y-3
-                            ">
-                                {categories.map((category) => (
-                                    <div
-                                        key={category.id}
-                                        className="
+                            "
+              >
+                {categories.map((category) => (
+                  <div
+                    key={category.id}
+                    className="
                                             border
                                             rounded-2xl
                                             p-4
@@ -675,23 +560,28 @@ export default function OperatorCatalogPage() {
                                             gap-4
                                             items-start
                                         "
-                                    >
-                                        <div>
-                                            <p className="
+                  >
+                    <div>
+                      <p
+                        className="
                                                 font-bold
                                                 text-[#03152E]
-                                            ">
-                                                {category.name}
-                                            </p>
+                                            "
+                      >
+                        {category.name}
+                      </p>
 
-                                            <p className="
+                      <p
+                        className="
                                                 text-sm
                                                 text-gray-500
-                                            ">
-                                                {category.description || "Sin descripción"}
-                                            </p>
+                                            "
+                      >
+                        {category.description || "Sin descripción"}
+                      </p>
 
-                                            <span className={`
+                      <span
+                        className={`
                                                 inline-block
                                                 mt-2
                                                 rounded-full
@@ -700,163 +590,158 @@ export default function OperatorCatalogPage() {
                                                 text-xs
                                                 font-bold
                                                 ${
-                                                    category.active
-                                                        ? "bg-green-100 text-green-700"
-                                                        : "bg-gray-100 text-gray-500"
+                                                  category.active
+                                                    ? "bg-green-100 text-green-700"
+                                                    : "bg-gray-100 text-gray-500"
                                                 }
-                                            `}>
-                                                {
-                                                    category.active
-                                                        ? "Activa"
-                                                        : "Inactiva"
-                                                }
-                                            </span>
-                                        </div>
+                                            `}
+                      >
+                        {category.active ? "Activa" : "Inactiva"}
+                      </span>
+                    </div>
 
-                                        <div className="
+                    <div
+                      className="
                                             flex
                                             flex-col
                                             gap-2
-                                        ">
-                                            <button
-                                                onClick={() =>
-                                                    setCategoryForm({
-                                                        id: category.id,
-                                                        name: category.name,
-                                                        description: category.description || "",
-                                                    })
-                                                }
-                                                className="
+                                        "
+                    >
+                      <button
+                        onClick={() =>
+                          setCategoryForm({
+                            id: category.id,
+                            name: category.name,
+                            description: category.description || "",
+                          })
+                        }
+                        className="
                                                     text-blue-700
                                                     font-bold
                                                 "
-                                            >
-                                                Editar
-                                            </button>
+                      >
+                        Editar
+                      </button>
 
-                                            <button
-                                                onClick={async () => {
-                                                    await OperationalCatalogService
-                                                        .toggleCategory(
-                                                            category.id,
-                                                            !category.active
-                                                        );
+                      <button
+                        onClick={async () => {
+                          await OperationalCatalogService.toggleCategory(
+                            category.id,
+                            !category.active
+                          );
 
-                                                    await loadCatalog();
-                                                }}
-                                                className="
+                          await loadCatalog();
+                        }}
+                        className="
                                                     text-red-700
                                                     font-bold
                                                 "
-                                            >
-                                                {
-                                                    category.active
-                                                        ? "Desactivar"
-                                                        : "Activar"
-                                                }
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                      >
+                        {category.active ? "Desactivar" : "Activar"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-                        <div className="
+            <div
+              className="
                             bg-white
                             border
                             rounded-3xl
                             p-6
                             space-y-6
-                        ">
-                            <h2 className="
+                        "
+            >
+              <h2
+                className="
                                 text-2xl
                                 font-bold
                                 text-[#03152E]
-                            ">
-                                Gestión de tipos de problema
-                            </h2>
+                            "
+              >
+                Gestión de tipos de problema
+              </h2>
 
-                            <form
-                                onSubmit={handleProblemTypeSubmit}
-                                className="
+              <form
+                onSubmit={handleProblemTypeSubmit}
+                className="
                                     space-y-4
                                 "
-                            >
-                                <select
-                                    value={problemTypeForm.categoryId}
-                                    onChange={(event) =>
-                                        setProblemTypeForm((prev) => ({
-                                            ...prev,
-                                            categoryId: event.target.value,
-                                        }))
-                                    }
-                                    className="
+              >
+                <select
+                  value={problemTypeForm.categoryId}
+                  onChange={(event) =>
+                    setProblemTypeForm((prev) => ({
+                      ...prev,
+                      categoryId: event.target.value,
+                    }))
+                  }
+                  className="
                                         w-full
                                         border
                                         rounded-xl
                                         p-3
                                         bg-white
                                     "
-                                >
-                                    <option value="">
-                                        Selecciona una categoría
-                                    </option>
+                >
+                  <option value="">Selecciona una categoría</option>
 
-                                    {categories
-                                        .filter((category) => category.active)
-                                        .map((category) => (
-                                            <option
-                                                key={category.id}
-                                                value={category.id}
-                                            >
-                                                {category.name}
-                                            </option>
-                                        ))}
-                                </select>
+                  {categories
+                    .filter((category) => category.active)
+                    .map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                </select>
 
-                                <input
-                                    value={problemTypeForm.name}
-                                    onChange={(event) =>
-                                        setProblemTypeForm((prev) => ({
-                                            ...prev,
-                                            name: event.target.value,
-                                        }))
-                                    }
-                                    placeholder="Nombre del tipo de problema"
-                                    className="
+                <input
+                  value={problemTypeForm.name}
+                  onChange={(event) =>
+                    setProblemTypeForm((prev) => ({
+                      ...prev,
+                      name: event.target.value,
+                    }))
+                  }
+                  placeholder="Nombre del tipo de problema"
+                  className="
                                         w-full
                                         border
                                         rounded-xl
                                         p-3
                                     "
-                                />
+                />
 
-                                <textarea
-                                    value={problemTypeForm.description}
-                                    onChange={(event) =>
-                                        setProblemTypeForm((prev) => ({
-                                            ...prev,
-                                            description: event.target.value,
-                                        }))
-                                    }
-                                    placeholder="Descripción"
-                                    className="
+                <textarea
+                  value={problemTypeForm.description}
+                  onChange={(event) =>
+                    setProblemTypeForm((prev) => ({
+                      ...prev,
+                      description: event.target.value,
+                    }))
+                  }
+                  placeholder="Descripción"
+                  className="
                                         w-full
                                         border
                                         rounded-xl
                                         p-3
                                         min-h-[90px]
                                     "
-                                />
+                />
 
-                                <div className="
+                <div
+                  className="
                                     flex
                                     gap-3
-                                ">
-                                    <button
-                                        type="submit"
-                                        disabled={saving}
-                                        className="
+                                "
+                >
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="
                                             bg-blue-700
                                             text-white
                                             font-bold
@@ -865,26 +750,22 @@ export default function OperatorCatalogPage() {
                                             py-3
                                             disabled:bg-gray-300
                                         "
-                                    >
-                                        {
-                                            problemTypeForm.id
-                                                ? "Actualizar tipo"
-                                                : "Crear tipo"
-                                        }
-                                    </button>
+                  >
+                    {problemTypeForm.id ? "Actualizar tipo" : "Crear tipo"}
+                  </button>
 
-                                    {problemTypeForm.id && (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setProblemTypeForm({
-                                                    id: "",
-                                                    name: "",
-                                                    description: "",
-                                                    categoryId: "",
-                                                })
-                                            }
-                                            className="
+                  {problemTypeForm.id && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setProblemTypeForm({
+                          id: "",
+                          name: "",
+                          description: "",
+                          categoryId: "",
+                        })
+                      }
+                      className="
                                                 bg-white
                                                 border
                                                 font-bold
@@ -892,20 +773,22 @@ export default function OperatorCatalogPage() {
                                                 px-5
                                                 py-3
                                             "
-                                        >
-                                            Cancelar
-                                        </button>
-                                    )}
-                                </div>
-                            </form>
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </form>
 
-                            <div className="
+              <div
+                className="
                                 space-y-3
-                            ">
-                                {problemTypes.map((problemType) => (
-                                    <div
-                                        key={problemType.id}
-                                        className="
+                            "
+              >
+                {problemTypes.map((problemType) => (
+                  <div
+                    key={problemType.id}
+                    className="
                                             border
                                             rounded-2xl
                                             p-4
@@ -914,30 +797,37 @@ export default function OperatorCatalogPage() {
                                             gap-4
                                             items-start
                                         "
-                                    >
-                                        <div>
-                                            <p className="
+                  >
+                    <div>
+                      <p
+                        className="
                                                 font-bold
                                                 text-[#03152E]
-                                            ">
-                                                {problemType.name}
-                                            </p>
+                                            "
+                      >
+                        {problemType.name}
+                      </p>
 
-                                            <p className="
+                      <p
+                        className="
                                                 text-sm
                                                 text-gray-500
-                                            ">
-                                                Categoría: {problemType.category?.name || "No definida"}
-                                            </p>
+                                            "
+                      >
+                        Categoría: {problemType.category?.name || "No definida"}
+                      </p>
 
-                                            <p className="
+                      <p
+                        className="
                                                 text-sm
                                                 text-gray-500
-                                            ">
-                                                {problemType.description || "Sin descripción"}
-                                            </p>
+                                            "
+                      >
+                        {problemType.description || "Sin descripción"}
+                      </p>
 
-                                            <span className={`
+                      <span
+                        className={`
                                                 inline-block
                                                 mt-2
                                                 rounded-full
@@ -946,141 +836,143 @@ export default function OperatorCatalogPage() {
                                                 text-xs
                                                 font-bold
                                                 ${
-                                                    problemType.active
-                                                        ? "bg-green-100 text-green-700"
-                                                        : "bg-gray-100 text-gray-500"
+                                                  problemType.active
+                                                    ? "bg-green-100 text-green-700"
+                                                    : "bg-gray-100 text-gray-500"
                                                 }
-                                            `}>
-                                                {
-                                                    problemType.active
-                                                        ? "Activo"
-                                                        : "Inactivo"
-                                                }
-                                            </span>
-                                        </div>
+                                            `}
+                      >
+                        {problemType.active ? "Activo" : "Inactivo"}
+                      </span>
+                    </div>
 
-                                        <div className="
+                    <div
+                      className="
                                             flex
                                             flex-col
                                             gap-2
-                                        ">
-                                            <button
-                                                onClick={() =>
-                                                    setProblemTypeForm({
-                                                        id: problemType.id,
-                                                        name: problemType.name,
-                                                        description: problemType.description || "",
-                                                        categoryId: problemType.categoryId,
-                                                    })
-                                                }
-                                                className="
+                                        "
+                    >
+                      <button
+                        onClick={() =>
+                          setProblemTypeForm({
+                            id: problemType.id,
+                            name: problemType.name,
+                            description: problemType.description || "",
+                            categoryId: problemType.categoryId,
+                          })
+                        }
+                        className="
                                                     text-blue-700
                                                     font-bold
                                                 "
-                                            >
-                                                Editar
-                                            </button>
+                      >
+                        Editar
+                      </button>
 
-                                            <button
-                                                onClick={async () => {
-                                                    await OperationalCatalogService
-                                                        .toggleProblemType(
-                                                            problemType.id,
-                                                            !problemType.active
-                                                        );
+                      <button
+                        onClick={async () => {
+                          await OperationalCatalogService.toggleProblemType(
+                            problemType.id,
+                            !problemType.active
+                          );
 
-                                                    await loadCatalog();
-                                                }}
-                                                className="
+                          await loadCatalog();
+                        }}
+                        className="
                                                     text-red-700
                                                     font-bold
                                                 "
-                                            >
-                                                {
-                                                    problemType.active
-                                                        ? "Desactivar"
-                                                        : "Activar"
-                                                }
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-                )}
+                      >
+                        {problemType.active ? "Desactivar" : "Activar"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
-                {tab === "CLOSURE" && (
-                    <section className="
+        {tab === "CLOSURE" && (
+          <section
+            className="
                         grid
                         grid-cols-1
                         xl:grid-cols-[420px_1fr]
                         gap-8
-                    ">
-                        <div className="
+                    "
+          >
+            <div
+              className="
                             bg-white
                             border
                             rounded-3xl
                             p-6
                             space-y-6
-                        ">
-                            <h2 className="
+                        "
+            >
+              <h2
+                className="
                                 text-2xl
                                 font-bold
                                 text-[#03152E]
-                            ">
-                                Resultado técnico / motivo de cierre
-                            </h2>
+                            "
+              >
+                Resultado técnico / motivo de cierre
+              </h2>
 
-                            <form
-                                onSubmit={handleClosureSubmit}
-                                className="
+              <form
+                onSubmit={handleClosureSubmit}
+                className="
                                     space-y-4
                                 "
-                            >
-                                <input
-                                    value={closureForm.name}
-                                    onChange={(event) =>
-                                        setClosureForm((prev) => ({
-                                            ...prev,
-                                            name: event.target.value,
-                                        }))
-                                    }
-                                    placeholder="Ej. Resuelto en sitio"
-                                    className="
+              >
+                <input
+                  value={closureForm.name}
+                  onChange={(event) =>
+                    setClosureForm((prev) => ({
+                      ...prev,
+                      name: event.target.value,
+                    }))
+                  }
+                  placeholder="Ej. Resuelto en sitio"
+                  className="
                                         w-full
                                         border
                                         rounded-xl
                                         p-3
                                     "
-                                />
+                />
 
-                                <textarea
-                                    value={closureForm.description}
-                                    onChange={(event) =>
-                                        setClosureForm((prev) => ({
-                                            ...prev,
-                                            description: event.target.value,
-                                        }))
-                                    }
-                                    placeholder="Descripción del resultado técnico"
-                                    className="
+                <textarea
+                  value={closureForm.description}
+                  onChange={(event) =>
+                    setClosureForm((prev) => ({
+                      ...prev,
+                      description: event.target.value,
+                    }))
+                  }
+                  placeholder="Descripción del resultado técnico"
+                  className="
                                         w-full
                                         border
                                         rounded-xl
                                         p-3
                                         min-h-[110px]
                                     "
-                                />
+                />
 
-                                <div className="
+                <div
+                  className="
                                     flex
                                     gap-3
-                                ">
-                                    <button
-                                        type="submit"
-                                        disabled={saving}
-                                        className="
+                                "
+                >
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="
                                             bg-blue-700
                                             text-white
                                             font-bold
@@ -1089,25 +981,21 @@ export default function OperatorCatalogPage() {
                                             py-3
                                             disabled:bg-gray-300
                                         "
-                                    >
-                                        {
-                                            closureForm.id
-                                                ? "Actualizar resultado"
-                                                : "Crear resultado"
-                                        }
-                                    </button>
+                  >
+                    {closureForm.id ? "Actualizar resultado" : "Crear resultado"}
+                  </button>
 
-                                    {closureForm.id && (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setClosureForm({
-                                                    id: "",
-                                                    name: "",
-                                                    description: "",
-                                                })
-                                            }
-                                            className="
+                  {closureForm.id && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setClosureForm({
+                          id: "",
+                          name: "",
+                          description: "",
+                        })
+                      }
+                      className="
                                                 bg-white
                                                 border
                                                 font-bold
@@ -1115,33 +1003,37 @@ export default function OperatorCatalogPage() {
                                                 px-5
                                                 py-3
                                             "
-                                        >
-                                            Cancelar
-                                        </button>
-                                    )}
-                                </div>
-                            </form>
-                        </div>
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
 
-                        <div className="
+            <div
+              className="
                             bg-white
                             border
                             rounded-3xl
                             p-6
                             space-y-3
-                        ">
-                            <h2 className="
+                        "
+            >
+              <h2
+                className="
                                 text-2xl
                                 font-bold
                                 text-[#03152E]
-                            ">
-                                Catálogo de resultados técnicos
-                            </h2>
+                            "
+              >
+                Catálogo de resultados técnicos
+              </h2>
 
-                            {closureReasons.map((reason) => (
-                                <div
-                                    key={reason.id}
-                                    className="
+              {closureReasons.map((reason) => (
+                <div
+                  key={reason.id}
+                  className="
                                         border
                                         rounded-2xl
                                         p-4
@@ -1150,23 +1042,28 @@ export default function OperatorCatalogPage() {
                                         gap-4
                                         items-start
                                     "
-                                >
-                                    <div>
-                                        <p className="
+                >
+                  <div>
+                    <p
+                      className="
                                             font-bold
                                             text-[#03152E]
-                                        ">
-                                            {reason.name}
-                                        </p>
+                                        "
+                    >
+                      {reason.name}
+                    </p>
 
-                                        <p className="
+                    <p
+                      className="
                                             text-sm
                                             text-gray-500
-                                        ">
-                                            {reason.description || "Sin descripción"}
-                                        </p>
+                                        "
+                    >
+                      {reason.description || "Sin descripción"}
+                    </p>
 
-                                        <span className={`
+                    <span
+                      className={`
                                             inline-block
                                             mt-2
                                             rounded-full
@@ -1175,201 +1072,190 @@ export default function OperatorCatalogPage() {
                                             text-xs
                                             font-bold
                                             ${
-                                                reason.active
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-gray-100 text-gray-500"
+                                              reason.active
+                                                ? "bg-green-100 text-green-700"
+                                                : "bg-gray-100 text-gray-500"
                                             }
-                                        `}>
-                                            {
-                                                reason.active
-                                                    ? "Activo"
-                                                    : "Inactivo"
-                                            }
-                                        </span>
-                                    </div>
+                                        `}
+                    >
+                      {reason.active ? "Activo" : "Inactivo"}
+                    </span>
+                  </div>
 
-                                    <div className="
+                  <div
+                    className="
                                         flex
                                         flex-col
                                         gap-2
-                                    ">
-                                        <button
-                                            onClick={() =>
-                                                setClosureForm({
-                                                    id: reason.id,
-                                                    name: reason.name,
-                                                    description: reason.description || "",
-                                                })
-                                            }
-                                            className="
+                                    "
+                  >
+                    <button
+                      onClick={() =>
+                        setClosureForm({
+                          id: reason.id,
+                          name: reason.name,
+                          description: reason.description || "",
+                        })
+                      }
+                      className="
                                                 text-blue-700
                                                 font-bold
                                             "
-                                        >
-                                            Editar
-                                        </button>
+                    >
+                      Editar
+                    </button>
 
-                                        <button
-                                            onClick={async () => {
-                                                await OperationalCatalogService
-                                                    .toggleClosureReason(
-                                                        reason.id,
-                                                        !reason.active
-                                                    );
+                    <button
+                      onClick={async () => {
+                        await OperationalCatalogService.toggleClosureReason(
+                          reason.id,
+                          !reason.active
+                        );
 
-                                                await loadCatalog();
-                                            }}
-                                            className="
+                        await loadCatalog();
+                      }}
+                      className="
                                                 text-red-700
                                                 font-bold
                                             "
-                                        >
-                                            {
-                                                reason.active
-                                                    ? "Desactivar"
-                                                    : "Activar"
-                                            }
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {tab === "SLA" && (
-                        <SlaSection
-                            slaConfigurations={slaConfigurations}
-                            saving={saving}
-                            onSave={handleUpdateSla}
-                        />
-                    )}
+                    >
+                      {reason.active ? "Desactivar" : "Activar"}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-        </div>
-    );
+          </section>
+        )}
+
+        {tab === "SLA" && (
+          <SlaSection
+            slaConfigurations={slaConfigurations}
+            saving={saving}
+            onSave={handleUpdateSla}
+          />
+        )}
+      </div>
+    </div>
+  );
 }
 function SlaSection({
-    slaConfigurations,
-    saving,
-    onSave,
+  slaConfigurations,
+  saving,
+  onSave,
 }: {
-    slaConfigurations: SlaConfiguration[];
-    saving: boolean;
-    onSave: (
-        priority: "BAJO" | "MEDIO" | "ALTO",
-        responseHours: number
-    ) => Promise<void>;
+  slaConfigurations: SlaConfiguration[];
+  saving: boolean;
+  onSave: (priority: "BAJO" | "MEDIO" | "ALTO", responseHours: number) => Promise<void>;
 }) {
-    const [values, setValues] =
-        useState<Record<"BAJO" | "MEDIO" | "ALTO", number>>({
-            BAJO: 72,
-            MEDIO: 48,
-            ALTO: 24,
-        });
+  const [values, setValues] = useState<Record<"BAJO" | "MEDIO" | "ALTO", number>>({
+    BAJO: 72,
+    MEDIO: 48,
+    ALTO: 24,
+  });
 
-    useEffect(() => {
-        setValues({
-            BAJO:
-                slaConfigurations.find((item) => item.priority === "BAJO")
-                    ?.responseHours || 72,
+  useEffect(() => {
+    setValues({
+      BAJO: slaConfigurations.find((item) => item.priority === "BAJO")?.responseHours || 72,
 
-            MEDIO:
-                slaConfigurations.find((item) => item.priority === "MEDIO")
-                    ?.responseHours || 48,
+      MEDIO: slaConfigurations.find((item) => item.priority === "MEDIO")?.responseHours || 48,
 
-            ALTO:
-                slaConfigurations.find((item) => item.priority === "ALTO")
-                    ?.responseHours || 24,
-        });
-    }, [slaConfigurations]);
+      ALTO: slaConfigurations.find((item) => item.priority === "ALTO")?.responseHours || 24,
+    });
+  }, [slaConfigurations]);
 
-    return (
-        <section className="
+  return (
+    <section
+      className="
             bg-white
             border
             rounded-3xl
             p-6
             space-y-6
-        ">
-            <div>
-                <h2 className="
+        "
+    >
+      <div>
+        <h2
+          className="
                     text-2xl
                     font-bold
                     text-[#03152E]
-                ">
-                    Tiempos objetivo por prioridad
-                </h2>
+                "
+        >
+          Tiempos objetivo por prioridad
+        </h2>
 
-                <p className="
+        <p
+          className="
                     text-gray-500
                     mt-2
-                ">
-                    Define las horas máximas esperadas para atender reportes según su prioridad.
-                </p>
-            </div>
+                "
+        >
+          Define las horas máximas esperadas para atender reportes según su prioridad.
+        </p>
+      </div>
 
-            <div className="
+      <div
+        className="
                 grid
                 grid-cols-1
                 md:grid-cols-3
                 gap-5
-            ">
-                {(["BAJO", "MEDIO", "ALTO"] as const)
-                    .map((priority) => (
-                        <div
-                            key={priority}
-                            className="
+            "
+      >
+        {(["BAJO", "MEDIO", "ALTO"] as const).map((priority) => (
+          <div
+            key={priority}
+            className="
                                 border
                                 rounded-2xl
                                 p-5
                                 space-y-4
                             "
-                        >
-                            <h3 className="
+          >
+            <h3
+              className="
                                 text-xl
                                 font-bold
                                 text-[#03152E]
-                            ">
-                                Prioridad {priority}
-                            </h3>
+                            "
+            >
+              Prioridad {priority}
+            </h3>
 
-                            <label className="
+            <label
+              className="
                                 block
                                 text-sm
                                 font-bold
                                 text-gray-600
-                            ">
-                                Horas objetivo
-                            </label>
+                            "
+            >
+              Horas objetivo
+            </label>
 
-                            <input
-                                type="number"
-                                min={1}
-                                value={values[priority]}
-                                onChange={(event) =>
-                                    setValues((prev) => ({
-                                        ...prev,
-                                        [priority]:
-                                            Number(event.target.value),
-                                    }))
-                                }
-                                className="
+            <input
+              type="number"
+              min={1}
+              value={values[priority]}
+              onChange={(event) =>
+                setValues((prev) => ({
+                  ...prev,
+                  [priority]: Number(event.target.value),
+                }))
+              }
+              className="
                                     w-full
                                     border
                                     rounded-xl
                                     p-3
                                 "
-                            />
+            />
 
-                            <button
-                                onClick={() =>
-                                    onSave(
-                                        priority,
-                                        values[priority]
-                                    )
-                                }
-                                disabled={saving}
-                                className="
+            <button
+              onClick={() => onSave(priority, values[priority])}
+              disabled={saving}
+              className="
                                     w-full
                                     bg-blue-700
                                     text-white
@@ -1378,12 +1264,12 @@ function SlaSection({
                                     py-3
                                     disabled:bg-gray-300
                                 "
-                            >
-                                Guardar SLA
-                            </button>
-                        </div>
-                    ))}
-            </div>
-        </section>
-    );
+            >
+              Guardar SLA
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }

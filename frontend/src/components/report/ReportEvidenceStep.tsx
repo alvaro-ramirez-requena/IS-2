@@ -1,168 +1,85 @@
-import {
-  useRef,
-} from "react";
+import { useRef } from "react";
 
-import type {
-  Dispatch,
-  SetStateAction,
-} from "react";
+import type { Dispatch, SetStateAction } from "react";
 
-import type {
-  ReportFormValues,
-} from "../../types/report.types";
+import type { ReportFormValues } from "../../types/report.types";
 
-import { ReportService }
-  from "../../services/report.service";
+import { ReportService } from "../../services/report.service";
 
 type Props = {
-
   formData: ReportFormValues;
 
-  setFormData:
-  Dispatch<
-    SetStateAction<
-      ReportFormValues
-    >
-  >;
+  setFormData: Dispatch<SetStateAction<ReportFormValues>>;
 };
 
-export default function
-  ReportEvidenceStep({
-
-    formData,
-    setFormData,
-
-  }: Props) {
-
-  const inputRef =
-    useRef<HTMLInputElement>(null);
+export default function ReportEvidenceStep({ formData, setFormData }: Props) {
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const MAX_IMAGES = 3;
 
-  const handleSelectImages =
-    async (
-      e: React.ChangeEvent<
-        HTMLInputElement
-      >
-    ) => {
+  const handleSelectImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []);
 
-      const selectedFiles =
-        Array.from(
-          e.target.files || []
-        );
+    if (selectedFiles.length === 0) {
+      return;
+    }
 
-      if (
-        selectedFiles.length === 0
-      ) {
-        return;
+    const uniqueFiles = selectedFiles.filter((file) => {
+      return !formData.images.some(
+        (existingImage) => existingImage.name === file.name && existingImage.size === file.size
+      );
+    });
+
+    if (uniqueFiles.length === 0) {
+      alert("Las imágenes ya fueron agregadas");
+
+      if (inputRef.current) {
+        inputRef.current.value = "";
       }
 
-      const uniqueFiles =
-        selectedFiles.filter(
-          (file) => {
+      return;
+    }
 
-            return !formData.images.some(
-              (existingImage) =>
+    const totalImages = formData.images.length + uniqueFiles.length;
 
-                existingImage.name ===
-                file.name
+    if (totalImages > MAX_IMAGES) {
+      alert(`Máximo ${MAX_IMAGES} imágenes`);
 
-                &&
-
-                existingImage.size ===
-                file.size
-            );
-          }
-        );
-
-      if (uniqueFiles.length === 0) {
-
-        alert(
-          "Las imágenes ya fueron agregadas"
-        );
-
-        if (inputRef.current) {
-          inputRef.current.value = "";
-        }
-
-        return;
+      if (inputRef.current) {
+        inputRef.current.value = "";
       }
 
-      const totalImages =
-        formData.images.length +
-        uniqueFiles.length;
+      return;
+    }
 
-      if (
-        totalImages > MAX_IMAGES
-      ) {
+    try {
+      const uploadedUrls = await Promise.all(
+        uniqueFiles.map((file) => ReportService.uploadImage(file))
+      );
 
-        alert(
-          `Máximo ${MAX_IMAGES} imágenes`
-        );
+      setFormData((prev) => ({
+        ...prev,
 
-        if (inputRef.current) {
-          inputRef.current.value = "";
-        }
+        images: [...prev.images, ...uniqueFiles],
 
-        return;
+        imageUrls: [...prev.imageUrls, ...uploadedUrls],
+      }));
+
+      if (inputRef.current) {
+        inputRef.current.value = "";
       }
+    } catch {
+      alert("Error subiendo imágenes");
+    }
+  };
 
-      try {
-
-        const uploadedUrls =
-          await Promise.all(
-
-            uniqueFiles.map(
-              (file) =>
-                ReportService
-                  .uploadImage(file)
-            )
-          );
-
-        setFormData((prev) => ({
-
-          ...prev,
-
-          images: [
-            ...prev.images,
-            ...uniqueFiles,
-          ],
-
-          imageUrls: [
-            ...prev.imageUrls,
-            ...uploadedUrls,
-          ],
-        }));
-
-        if (inputRef.current) {
-          inputRef.current.value = "";
-        }
-
-      } catch {
-
-        alert(
-          "Error subiendo imágenes"
-        );
-      }
-    };
-
-  const removeImage = (
-    index: number
-  ) => {
-
+  const removeImage = (index: number) => {
     setFormData((prev) => ({
-
       ...prev,
 
-      images:
-        prev.images.filter(
-          (_, i) => i !== index
-        ),
+      images: prev.images.filter((_, i) => i !== index),
 
-      imageUrls:
-        prev.imageUrls.filter(
-          (_, i) => i !== index
-        ),
+      imageUrls: prev.imageUrls.filter((_, i) => i !== index),
     }));
 
     if (inputRef.current) {
@@ -171,85 +88,75 @@ export default function
   };
 
   return (
-
     <div>
-
-      <h2 className="
+      <h2
+        className="
         text-4xl
         font-bold
         mb-4
-      ">
+      "
+      >
         Evidencia del reporte
       </h2>
 
-      <p className="
+      <p
+        className="
         text-gray-500
         text-lg
         mb-10
-      ">
-        Adjunta fotos que ayuden
-        a describir mejor el
-        problema reportado.
+      "
+      >
+        Adjunta fotos que ayuden a describir mejor el problema reportado.
       </p>
 
-      <div className="
+      <div
+        className="
         border
         rounded-3xl
         p-10
-      ">
-
+      "
+      >
         <input
           ref={inputRef}
           type="file"
           multiple
           accept="image/*"
 
-          onChange={
-            handleSelectImages
-          }
+          onChange={handleSelectImages}
         />
-
       </div>
 
-      <div className="
+      <div
+        className="
         grid
         grid-cols-2
         md:grid-cols-4
         gap-4
         mt-8
-      ">
-
-        {formData.images.map(
-          (image, index) => (
-
-            <div
-              key={index}
-              className="
+      "
+      >
+        {formData.images.map((image, index) => (
+          <div
+            key={index}
+            className="
                 relative
               "
-            >
+          >
+            <img
+              src={URL.createObjectURL(image)}
 
-              <img
-                src={
-                  URL.createObjectURL(
-                    image
-                  )
-                }
-
-                className="
+              className="
                   w-full
                   h-40
                   object-cover
                   rounded-2xl
                 "
-              />
+            />
 
-              <button
-                onClick={() =>
-                  removeImage(index)
-                }
+            <button
+              onClick={() => removeImage(index)}
 
-                className="
+              className="
                   absolute
                   top-2
                   right-2
@@ -258,16 +165,12 @@ export default function
                   w-8
                   h-8
                 "
-              >
-                ✕
-              </button>
-
-            </div>
-          )
-        )}
-
+            >
+              ✕
+            </button>
+          </div>
+        ))}
       </div>
-
     </div>
   );
 }

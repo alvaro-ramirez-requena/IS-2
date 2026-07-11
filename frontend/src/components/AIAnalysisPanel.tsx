@@ -105,19 +105,13 @@ function getCategoryLabel(category?: string) {
 function getConfidenceStyle(confidence?: string) {
   const normalized = normalizeValue(confidence);
 
-  return (
-    confidenceStyles[normalized] ||
-    "border-gray-200 bg-gray-100 text-gray-600"
-  );
+  return confidenceStyles[normalized] || "border-gray-200 bg-gray-100 text-gray-600";
 }
 
 function getPriorityStyle(priority?: string) {
   const normalized = priority?.trim().toUpperCase() || "";
 
-  return (
-    priorityStyles[normalized] ||
-    "border-gray-200 bg-gray-50 text-gray-700"
-  );
+  return priorityStyles[normalized] || "border-gray-200 bg-gray-50 text-gray-700";
 }
 
 function getPriorityDotStyle(priority?: string) {
@@ -220,11 +214,7 @@ function DuplicateIcon() {
       stroke="currentColor"
     >
       <circle cx="10.5" cy="10.5" r="6.25" strokeWidth={1.8} />
-      <path
-        strokeLinecap="round"
-        strokeWidth={1.8}
-        d="M15.25 15.25L20 20"
-      />
+      <path strokeLinecap="round" strokeWidth={1.8} d="M15.25 15.25L20 20" />
     </svg>
   );
 }
@@ -238,12 +228,7 @@ function CheckIcon() {
       viewBox="0 0 24 24"
       stroke="currentColor"
     >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2.2}
-        d="M5 12.5l4 4L19 6.5"
-      />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 12.5l4 4L19 6.5" />
     </svg>
   );
 }
@@ -271,19 +256,12 @@ function ChevronIcon({ open }: { open: boolean }) {
   return (
     <svg
       aria-hidden="true"
-      className={`h-5 w-5 transition-transform duration-200 ${
-        open ? "rotate-180" : ""
-      }`}
+      className={`h-5 w-5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
     >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M19 9l-7 7-7-7"
-      />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
     </svg>
   );
 }
@@ -306,21 +284,16 @@ function LoadingState() {
       </div>
 
       <div className="text-center">
-        <p className="text-sm font-medium text-gray-700">
-          Analizando el reporte
-        </p>
+        <p className="text-sm font-medium text-gray-700">Analizando el reporte</p>
         <p className="mt-1 text-xs leading-relaxed text-gray-500">
-          Se está evaluando la clasificación, la prioridad y la existencia de
-          posibles duplicados.
+          Se está evaluando la clasificación, la prioridad y la existencia de posibles duplicados.
         </p>
       </div>
     </div>
   );
 }
 
-export default function AIAnalysisPanel({
-  reportId,
-}: AIAnalysisPanelProps) {
+export default function AIAnalysisPanel({ reportId }: AIAnalysisPanelProps) {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -336,15 +309,12 @@ export default function AIAnalysisPanel({
     setIsOpen(true);
 
     try {
-      const response = await fetch(
-        `${API}/api/ai/analyze/${encodeURIComponent(reportId)}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${API}/api/ai/analyze/${encodeURIComponent(reportId)}`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
 
       if (!response.ok) {
         let message = "No se pudo completar el análisis.";
@@ -366,9 +336,7 @@ export default function AIAnalysisPanel({
       setAnalysis(data);
     } catch (requestError) {
       const message =
-        requestError instanceof Error
-          ? requestError.message
-          : "No se pudo completar el análisis.";
+        requestError instanceof Error ? requestError.message : "No se pudo completar el análisis.";
 
       setError(`${message} Intenta nuevamente.`);
     } finally {
@@ -426,11 +394,7 @@ export default function AIAnalysisPanel({
             </span>
           )}
 
-          {loading && (
-            <span className="hidden text-xs font-medium sm:inline">
-              Analizando
-            </span>
-          )}
+          {loading && <span className="hidden text-xs font-medium sm:inline">Analizando</span>}
 
           <ChevronIcon open={isOpen} />
         </div>
@@ -444,10 +408,7 @@ export default function AIAnalysisPanel({
           {loading && <LoadingState />}
 
           {error && !loading && (
-            <div
-              className="rounded-xl border border-red-200 bg-red-50 p-4"
-              role="alert"
-            >
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4" role="alert">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 shrink-0 text-red-600">
                   <AlertIcon />
@@ -458,9 +419,7 @@ export default function AIAnalysisPanel({
                     No fue posible analizar el reporte
                   </p>
 
-                  <p className="mt-1 text-xs leading-relaxed text-red-700">
-                    {error}
-                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-red-700">{error}</p>
 
                   <button
                     type="button"
@@ -485,29 +444,22 @@ export default function AIAnalysisPanel({
 
                   <div>
                     <h3 className="text-sm font-semibold">Clasificación</h3>
-                    <p className="text-xs text-gray-500">
-                      Categoría propuesta para el reporte
-                    </p>
+                    <p className="text-xs text-gray-500">Categoría propuesta para el reporte</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <div className="rounded-lg border border-gray-100 bg-white p-3">
-                    <p className="text-xs font-medium text-gray-500">
-                      Categoría sugerida
-                    </p>
+                    <p className="text-xs font-medium text-gray-500">Categoría sugerida</p>
                     <p className="mt-1 break-words text-sm font-semibold text-gray-900">
                       {getCategoryLabel(classification?.suggestedCategory)}
                     </p>
                   </div>
 
                   <div className="rounded-lg border border-gray-100 bg-white p-3">
-                    <p className="text-xs font-medium text-gray-500">
-                      Tipo de problema sugerido
-                    </p>
+                    <p className="text-xs font-medium text-gray-500">Tipo de problema sugerido</p>
                     <p className="mt-1 break-words text-sm font-semibold leading-relaxed text-gray-900">
-                      {classification?.suggestedProblemType ||
-                        "No determinado"}
+                      {classification?.suggestedProblemType || "No determinado"}
                     </p>
                   </div>
 
@@ -519,11 +471,7 @@ export default function AIAnalysisPanel({
                     }`}
                   >
                     <div className="mt-0.5 shrink-0">
-                      {classification?.matches ? (
-                        <CheckIcon />
-                      ) : (
-                        <AlertIcon />
-                      )}
+                      {classification?.matches ? <CheckIcon /> : <AlertIcon />}
                     </div>
 
                     <div>
@@ -535,8 +483,8 @@ export default function AIAnalysisPanel({
 
                       {!classification?.matches && (
                         <p className="mt-1 text-xs leading-relaxed opacity-90">
-                          La categoría propuesta por el análisis es diferente a
-                          la registrada actualmente.
+                          La categoría propuesta por el análisis es diferente a la registrada
+                          actualmente.
                         </p>
                       )}
                     </div>
@@ -544,9 +492,7 @@ export default function AIAnalysisPanel({
 
                   {classification?.reason?.trim() && (
                     <div className="rounded-lg bg-white px-3 py-2.5">
-                      <p className="text-xs font-medium text-gray-500">
-                        Motivo del análisis
-                      </p>
+                      <p className="text-xs font-medium text-gray-500">Motivo del análisis</p>
                       <p className="mt-1 break-words text-xs leading-relaxed text-gray-700">
                         {classification.reason}
                       </p>
@@ -571,12 +517,8 @@ export default function AIAnalysisPanel({
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-semibold">
-                      Prioridad sugerida
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      Evaluación de gravedad y riesgo
-                    </p>
+                    <h3 className="text-sm font-semibold">Prioridad sugerida</h3>
+                    <p className="text-xs text-gray-500">Evaluación de gravedad y riesgo</p>
                   </div>
                 </div>
 
@@ -587,9 +529,7 @@ export default function AIAnalysisPanel({
                     )}`}
                   >
                     <div>
-                      <p className="text-xs font-medium opacity-80">
-                        Nivel recomendado
-                      </p>
+                      <p className="text-xs font-medium opacity-80">Nivel recomendado</p>
                       <p className="mt-0.5 text-xl font-bold">
                         {prioritization?.priority || "NO DETERMINADO"}
                       </p>
@@ -604,18 +544,14 @@ export default function AIAnalysisPanel({
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="min-w-0 rounded-lg border border-gray-100 bg-white p-3">
-                      <p className="text-xs font-medium text-gray-500">
-                        Gravedad
-                      </p>
+                      <p className="text-xs font-medium text-gray-500">Gravedad</p>
                       <p className="mt-1 break-words text-sm font-semibold text-gray-800">
                         {formatValue(prioritization?.gravedad)}
                       </p>
                     </div>
 
                     <div className="min-w-0 rounded-lg border border-gray-100 bg-white p-3">
-                      <p className="text-xs font-medium text-gray-500">
-                        Riesgo
-                      </p>
+                      <p className="text-xs font-medium text-gray-500">Riesgo</p>
                       <p className="mt-1 break-words text-sm font-semibold text-gray-800">
                         {formatValue(prioritization?.riesgo)}
                       </p>
@@ -624,9 +560,7 @@ export default function AIAnalysisPanel({
 
                   {prioritization?.justification?.trim() && (
                     <div className="rounded-lg bg-white p-3">
-                      <p className="text-xs font-medium text-gray-500">
-                        Justificación
-                      </p>
+                      <p className="text-xs font-medium text-gray-500">Justificación</p>
                       <p className="mt-1 break-words text-xs leading-relaxed text-gray-700">
                         {prioritization.justification}
                       </p>
@@ -634,8 +568,7 @@ export default function AIAnalysisPanel({
                   )}
 
                   <p className="text-xs leading-relaxed text-gray-500">
-                    La prioridad es una sugerencia. El operador conserva la
-                    decisión final.
+                    La prioridad es una sugerencia. El operador conserva la decisión final.
                   </p>
                 </div>
               </article>
@@ -648,12 +581,8 @@ export default function AIAnalysisPanel({
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-semibold">
-                      Detección de duplicados
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      Reportes similares en la misma zona
-                    </p>
+                    <h3 className="text-sm font-semibold">Detección de duplicados</h3>
+                    <p className="text-xs text-gray-500">Reportes similares en la misma zona</p>
                   </div>
                 </div>
 
@@ -669,8 +598,8 @@ export default function AIAnalysisPanel({
                           Sin duplicados detectados
                         </p>
                         <p className="mt-1 text-xs leading-relaxed text-emerald-700">
-                          No se encontraron reportes similares en un radio de
-                          200 metros durante los últimos 30 días.
+                          No se encontraron reportes similares en un radio de 200 metros durante los
+                          últimos 30 días.
                         </p>
 
                         <span
@@ -692,13 +621,10 @@ export default function AIAnalysisPanel({
 
                       <div>
                         <p className="text-xs font-semibold">
-                          Se encontraron{" "}
-                          {duplicates.duplicates?.length || 0} posibles
-                          duplicados
+                          Se encontraron {duplicates.duplicates?.length || 0} posibles duplicados
                         </p>
                         <p className="mt-1 text-xs leading-relaxed">
-                          Revisa los reportes antes de aprobar o priorizar esta
-                          incidencia.
+                          Revisa los reportes antes de aprobar o priorizar esta incidencia.
                         </p>
                       </div>
                     </div>
@@ -769,7 +695,6 @@ export default function AIAnalysisPanel({
                       d="M4 4v6h6M20 20v-6h-6M5.64 18.36A8 8 0 0018.36 5.64L20 7M4 17l1.64 1.36"
                     />
                   </svg>
-
                   Volver a analizar
                 </button>
               </div>
@@ -783,8 +708,8 @@ export default function AIAnalysisPanel({
               </p>
 
               <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-gray-500">
-                Ejecuta el análisis para recibir sugerencias sobre la
-                clasificación, prioridad y posibles duplicados.
+                Ejecuta el análisis para recibir sugerencias sobre la clasificación, prioridad y
+                posibles duplicados.
               </p>
 
               <button

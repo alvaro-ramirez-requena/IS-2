@@ -1,300 +1,226 @@
-import {
-    useEffect,
-    useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-    useParams,
-    useNavigate,
-    useSearchParams,
-} from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 
-import {
-    statusLabels,
-} from "../utils/reportLabels";
+import { statusLabels } from "../utils/reportLabels";
 
 import { ReportFollowService } from "../services/reportFollow.service";
 
-const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 type Report = {
+  id: string;
 
-    id: string;
+  userId: string;
 
-    userId: string;
+  title: string;
 
-    title: string;
+  problemType: string;
 
-    problemType: string;
+  description: string;
 
-    description: string;
+  isAnonymous: boolean;
 
-    isAnonymous: boolean;
+  latitude?: number;
 
-    latitude?: number;
+  longitude?: number;
 
-    longitude?: number;
+  createdAt: string;
 
-    createdAt: string;
+  address?: string;
 
-    address?: string;
+  status: string;
 
-    status: string;
+  evidences: {
+    imageUrl: string;
+  }[];
 
-    evidences: {
+  user?: {
+    firstName: string;
 
-        imageUrl: string;
-
-    }[];
-
-    user?: {
-
-        firstName: string;
-
-        lastName: string;
-    };
+    lastName: string;
+  };
 };
 
-export default function
-    ReportsByProblemPage() {
+export default function ReportsByProblemPage() {
+  const { problemType } = useParams();
 
-    const { problemType } =
-        useParams();
+  const navigate = useNavigate();
 
-    const navigate =
-        useNavigate();
+  const [searchParams] = useSearchParams();
 
-    const [searchParams] =
-        useSearchParams();
+  const highlightedReportId = searchParams.get("highlight");
 
-    const highlightedReportId =
-        searchParams.get("highlight");
+  const [reports, setReports] = useState<Report[]>([]);
 
-    const [reports, setReports] =
-        useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    const [loading, setLoading] =
-        useState(true);
+  const [isFollowingSelectedReport, setIsFollowingSelectedReport] = useState(false);
 
-    const [isFollowingSelectedReport, setIsFollowingSelectedReport] =
-        useState(false);
+  const [followMessage, setFollowMessage] = useState("");
 
-    const [followMessage, setFollowMessage] =
-        useState("");
+  const handleToggleFollow = async () => {
+    if (!selectedReport) {
+      return;
+    }
 
-    const handleToggleFollow = async () => {
+    const userId = localStorage.getItem("userId");
 
-        if (!selectedReport) {
-            return;
-        }
+    if (!userId) {
+      alert("Debes iniciar sesión para seguir este reporte.");
+      return;
+    }
 
-    const userId =
-        localStorage.getItem("userId");
+    try {
+      setFollowMessage("");
 
-        if (!userId) {
-            alert(
-                "Debes iniciar sesión para seguir este reporte."
-            );
-            return;
-        }
+      if (isFollowingSelectedReport) {
+        await ReportFollowService.unfollowReport(userId, selectedReport.id);
 
-        try {
+        setIsFollowingSelectedReport(false);
 
-            setFollowMessage("");
+        setFollowMessage("Dejaste de seguir este reporte.");
+      } else {
+        await ReportFollowService.followReport(userId, selectedReport.id);
 
-            if (isFollowingSelectedReport) {
+        setIsFollowingSelectedReport(true);
 
-                await ReportFollowService
-                    .unfollowReport(
-                        userId,
-                        selectedReport.id
-                    );
+        setFollowMessage("Ahora sigues este reporte.");
+      }
+    } catch (error: any) {
+      setFollowMessage(error?.message || "No se pudo actualizar el seguimiento.");
+    }
+  };
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
-                setIsFollowingSelectedReport(false);
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/reports/problem/${problemType}`);
 
-                setFollowMessage(
-                    "Dejaste de seguir este reporte."
-                );
+        const data = await response.json();
 
-            } else {
-
-                await ReportFollowService
-                    .followReport(
-                        userId,
-                        selectedReport.id
-                    );
-
-                setIsFollowingSelectedReport(true);
-
-                setFollowMessage(
-                    "Ahora sigues este reporte."
-                );
-            }
-
-        } catch (error: any) {
-
-            setFollowMessage(
-                error?.message ||
-                "No se pudo actualizar el seguimiento."
-            );
-        }
+        setReports(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     };
-    const [selectedReport, setSelectedReport] =
-        useState<Report | null>(null);
 
-        useEffect(() => {
+    fetchReports();
+  }, [problemType]);
 
-            const fetchReports =
-                async () => {
-
-                    try {
-
-                        const response =
-                            await fetch(
-
-                                `${API_URL}/api/reports/problem/${problemType}`
-                            );
-
-                        const data =
-                            await response.json();
-
-
-
-                        setReports(data);
-
-
-
-                    } catch (error) {
-
-                        console.error(error);
-
-                    } finally {
-
-                        setLoading(false);
-                    }
-                };
-
-            fetchReports();
-
-        }, [problemType]);
-
-        if (loading) {
-
-            return (
-
-                <div className="
+  if (loading) {
+    return (
+      <div
+        className="
                     min-h-screen
                     flex
                     items-center
                     justify-center
                     text-3xl
                     font-bold
-                ">
-                    Cargando reportes...
-                </div>
-            );
-        }
+                "
+      >
+        Cargando reportes...
+      </div>
+    );
+  }
 
-        return (
-
-            <div className="
+  return (
+    <div
+      className="
                 min-h-screen
                 bg-[#F5F7FA]
                 p-4
                 lg:p-10
-            ">
-                
-                <div className="
+            "
+    >
+      <div
+        className="
                 max-w-7xl
                 mx-auto
-                ">
+                "
+      >
+        <button
+          onClick={() => navigate("/home")}
 
-                    <button
-
-                        onClick={() =>
-                            navigate("/home")
-                        }
-
-                        className="
+          className="
                         mb-8
                         text-blue-700
                         font-semibold
                         hover:underline
                         "
-                    >
-                        ← Volver al inicio
-                    </button>
+        >
+          ← Volver al inicio
+        </button>
 
-                    <h1 className="
+        <h1
+          className="
                         text-4xl
                         lg:text-5xl
                         font-bold
                         mb-3
-                    ">
-                        {decodeURIComponent(
-                            problemType || ""
-                        )}
-                    </h1>
+                    "
+        >
+          {decodeURIComponent(problemType || "")}
+        </h1>
 
-                    <p className="
+        <p
+          className="
                         text-gray-500
                         text-lg
                         lg:text-xl
                         mb-10
-                    ">
-                        {
-                            reports.length
-                        } reportes encontrados
-                    </p>
+                    "
+        >
+          {reports.length} reportes encontrados
+        </p>
 
-                    {reports.length === 0 ? (
-
-                        <div className="
+        {reports.length === 0 ? (
+          <div
+            className="
                         bg-white
                         rounded-3xl
                         p-16
                         text-center
                         shadow-sm
                         border
-                        ">
-
-                            <h2 className="
+                        "
+          >
+            <h2
+              className="
                                 text-3xl
                                 font-bold
                                 mb-4
-                            ">
-                                No hay reportes
-                            </h2>
+                            "
+            >
+              No hay reportes
+            </h2>
 
-                            <p className="
+            <p
+              className="
                                 text-gray-500
                                 text-lg
-                            ">
-                                Todavía no existen
-                                reportes para este
-                                tipo de problema.
-                            </p>
-
-                        </div>
-
-                    ) : (
-
-                        <div className="
+                            "
+            >
+              Todavía no existen reportes para este tipo de problema.
+            </p>
+          </div>
+        ) : (
+          <div
+            className="
                         space-y-6
-                        ">
+                        "
+          >
+            {reports.map((report) => {
+              const isHighlighted = report.id === highlightedReportId;
 
-                            {reports.map((report) => {
-
-    const isHighlighted =
-        report.id === highlightedReportId;
-
-    return (
-
-        <div
-            key={report.id}
-            className={`
+              return (
+                <div
+                  key={report.id}
+                  className={`
                 bg-white
                 rounded-3xl
                 border
@@ -305,46 +231,41 @@ export default function
                 flex
                 flex-col
                 md:flex-row
-                ${isHighlighted
-                    ? "ring-4 ring-blue-500 border-blue-500 bg-blue-50"
-                    : ""
-                }
+                ${isHighlighted ? "ring-4 ring-blue-500 border-blue-500 bg-blue-50" : ""}
             `}
-        >
-
-                                <div className="
+                >
+                  <div
+                    className="
                                     md:w-[320px]
                                     h-[240px]
                                     bg-gray-200
                                     flex-shrink-0
-                                ">
+                                "
+                  >
+                    <img
+                      src={
+                        report.evidences[0]?.imageUrl ||
+                        "https://placehold.co/600x400?text=Sin+imagen"
+                      }
 
-                                    <img
-
-                                        src={
-                                            report.evidences[0]
-                                                ?.imageUrl ||
-
-                                            "https://placehold.co/600x400?text=Sin+imagen"
-                                        }
-
-                                        className="
+                      className="
                                             w-full
                                             h-full
                                             object-cover
                                         "
-                                    />
+                    />
+                  </div>
 
-                                </div>
-
-                                <div className="
+                  <div
+                    className="
                                     flex-1
                                     p-6
                                     lg:p-8
-                                ">
-                                    {isHighlighted && (
-
-                                        <div className="
+                                "
+                  >
+                    {isHighlighted && (
+                      <div
+                        className="
                                             mb-4
                                             bg-blue-100
                                             text-blue-700
@@ -352,34 +273,28 @@ export default function
                                             py-3
                                             rounded-xl
                                             font-semibold
-                                        ">
-                                            Cambio reciente: este reporte ahora está como {
-                                                statusLabels[
-                                                    report.status
-                                                ]
-                                            }.
-                                        </div>
-                                    )}
+                                        "
+                      >
+                        Cambio reciente: este reporte ahora está como {statusLabels[report.status]}.
+                      </div>
+                    )}
 
-
-                                    <div className="
+                    <div
+                      className="
                                         flex
                                         items-start
                                         justify-between
                                         gap-4
-                                    ">
+                                    "
+                    >
+                      <div>
+                        <h2 className="text-2xl font-bold">{report.title || report.problemType}</h2>
 
-                                        <div>
-                                            <h2 className="text-2xl font-bold">
-                                                {report.title || report.problemType}
-                                            </h2>
+                        <p className="text-sm text-gray-500 mt-1">{report.problemType}</p>
+                      </div>
 
-                                            <p className="text-sm text-gray-500 mt-1">
-                                                {report.problemType}
-                                            </p>
-                                        </div>
-
-                                        <div className="
+                      <div
+                        className="
                                             px-4
                                             py-2
                                             rounded-full
@@ -388,193 +303,149 @@ export default function
                                             bg-yellow-100
                                             text-yellow-700
                                             whitespace-nowrap
-                                        ">
-                                            {
-                                                statusLabels[
-                                                    report.status
-                                                ]
-                                            }
-                                        </div>
+                                        "
+                      >
+                        {statusLabels[report.status]}
+                      </div>
+                    </div>
 
-                                    </div>
-
-                                    <p className="
+                    <p
+                      className="
                                         mt-5
                                         text-gray-600
                                         text-lg
                                         leading-relaxed
-                                    ">
-                                        {report.description}
-                                    </p>
+                                    "
+                    >
+                      {report.description}
+                    </p>
 
-                                    <div className="
+                    <div
+                      className="
                                         mt-5
                                         bg-gray-50
                                         rounded-2xl
                                         p-4
-                                    ">
-
-                                        <p className="
+                                    "
+                    >
+                      <p
+                        className="
                                             text-sm
                                             text-gray-500
                                             mb-1
-                                        ">
-                                            Ubicación
-                                        </p>
+                                        "
+                      >
+                        Ubicación
+                      </p>
 
-                                        <p className="
+                      <p
+                        className="
                                             text-gray-700
                                             font-medium
                                             leading-relaxed
-                                        ">
+                                        "
+                      >
+                        {report.address || "Ubicación no disponible"}
+                      </p>
+                    </div>
 
-                                            {
-                                                report.address
-                                                || "Ubicación no disponible"
-                                            }
-
-                                        </p>
-
-                                    </div>
-
-                                    <div className="
+                    <div
+                      className="
                                             mt-8
                                             flex
                                             items-center
                                             justify-between
                                             gap-4
                                             flex-wrap
-                                        ">
-
-                                        <div className="
+                                        "
+                    >
+                      <div
+                        className="
                                             flex
                                             items-center
                                             gap-4
                                             text-gray-400
                                             flex-wrap
-                                        ">
-
-                                            <p className="
+                                        "
+                      >
+                        <p
+                          className="
                                                 font-semibold
                                                 text-gray-700
-                                            ">
+                                            "
+                        >
+                          {report.isAnonymous
+                            ? "Anónimo"
+                            : `${report.user?.firstName || ""} ${report.user?.lastName || ""}`}
+                        </p>
 
-                                                {
-                                                    report.isAnonymous
+                        <p>{new Date(report.createdAt).toLocaleDateString()}</p>
 
-                                                        ? "Anónimo"
+                        <p>
+                          {(() => {
+                            const diffMs = Date.now() - new Date(report.createdAt).getTime();
 
-                                                        : `${report.user?.firstName || ""} ${report.user?.lastName || ""}`
-                                                }
+                            const minutes = Math.floor(diffMs / (1000 * 60));
 
-                                            </p>
+                            const hours = Math.floor(minutes / 60);
 
-                                            <p>
-                                                {
-                                                    new Date(
-                                                        report.createdAt
-                                                    ).toLocaleDateString()
-                                                }
-                                            </p>
+                            const days = Math.floor(hours / 24);
 
-                                            <p>
+                            if (minutes < 60) {
+                              return `Hace ${minutes} minuto${minutes !== 1 ? "s" : ""}`;
+                            }
 
-                                                {
-                                                    (() => {
+                            if (hours < 24) {
+                              return `Hace ${hours} hora${hours !== 1 ? "s" : ""}`;
+                            }
 
-                                                        const diffMs =
-                                                            Date.now() -
+                            return `Hace ${days} día${days !== 1 ? "s" : ""}`;
+                          })()}
+                        </p>
+                      </div>
 
-                                                            new Date(
-                                                                report.createdAt
-                                                            ).getTime();
+                      <button
+                        onClick={async () => {
+                          setSelectedReport(report);
+                          setFollowMessage("");
 
-                                                        const minutes =
-                                                            Math.floor(
-                                                                diffMs / (1000 * 60)
-                                                            );
+                          const userId = localStorage.getItem("userId");
 
-                                                        const hours =
-                                                            Math.floor(
-                                                                minutes / 60
-                                                            );
+                          if (userId) {
+                            try {
+                              const result = await ReportFollowService.isFollowing(
+                                userId,
+                                report.id
+                              );
 
-                                                        const days =
-                                                            Math.floor(
-                                                                hours / 24
-                                                            );
-
-                                                        if (minutes < 60) {
-
-                                                            return `Hace ${minutes} minuto${minutes !== 1 ? "s" : ""}`;
-                                                        }
-
-                                                        if (hours < 24) {
-
-                                                            return `Hace ${hours} hora${hours !== 1 ? "s" : ""}`;
-                                                        }
-
-                                                        return `Hace ${days} día${days !== 1 ? "s" : ""}`;
-
-                                                    })()
-                                                }
-
-                                            </p>
-
-                                        </div>
-
-                                        <button
-                                        onClick={async () => {
-                                        setSelectedReport(report);
-                                        setFollowMessage("");
-
-                                        const userId =
-                                            localStorage.getItem("userId");
-
-                                        if (userId) {
-                                            try {
-                                                const result =
-                                                    await ReportFollowService
-                                                        .isFollowing(
-                                                            userId,
-                                                            report.id
-                                                        );
-
-                                                setIsFollowingSelectedReport(
-                                                    result.isFollowing
-                                                );
-                                            } catch {
-                                                setIsFollowingSelectedReport(false);
-                                            }
-                                        } else {
-                                            setIsFollowingSelectedReport(false);
-                                        }
-                                    }}
-                                        className="
+                              setIsFollowingSelectedReport(result.isFollowing);
+                            } catch {
+                              setIsFollowingSelectedReport(false);
+                            }
+                          } else {
+                            setIsFollowingSelectedReport(false);
+                          }
+                        }}
+                        className="
                                             text-blue-700
                                             font-semibold
                                             hover:underline
                                         "
-                                        >
-                                        Ver detalle →
-                                        </button>
-                                    </div>
-
-                                </div>
-
-                                    </div>
-                                    );
-                                })}
-
+                      >
+                        Ver detalle →
+                      </button>
                     </div>
-                )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-                        </div>
-
-            {
-                selectedReport && (
-
-                    <div className="
+      {selectedReport && (
+        <div
+          className="
                         fixed
                         inset-0
                         bg-black/50
@@ -583,9 +454,10 @@ export default function
                         items-center
                         justify-center
                         p-4
-                    ">
-
-                        <div className="
+                    "
+        >
+          <div
+            className="
                             bg-white
                             rounded-3xl
                             max-w-5xl
@@ -594,11 +466,11 @@ export default function
                             overflow-y-auto
                             p-8
                             relative
-                        ">
-
-                            <button
-                                onClick={() => setSelectedReport(null)}
-                                className="
+                        "
+          >
+            <button
+              onClick={() => setSelectedReport(null)}
+              className="
                                     absolute
                                     top-5
                                     right-6
@@ -607,19 +479,18 @@ export default function
                                     text-gray-400
                                     hover:text-gray-700
                                 "
-                            >
-                                ×
-                            </button>
+            >
+              ×
+            </button>
 
-                            <h2 className="text-4xl font-bold mb-2 pr-10">
-                            {selectedReport.title || selectedReport.problemType}
-                            </h2>
+            <h2 className="text-4xl font-bold mb-2 pr-10">
+              {selectedReport.title || selectedReport.problemType}
+            </h2>
 
-                            <p className="text-gray-500 mb-4">
-                            {selectedReport.problemType}
-                            </p>
+            <p className="text-gray-500 mb-4">{selectedReport.problemType}</p>
 
-                            <div className="
+            <div
+              className="
                                 mb-6
                                 inline-block
                                 px-4
@@ -628,29 +499,25 @@ export default function
                                 bg-yellow-100
                                 text-yellow-700
                                 font-semibold
-                            ">
-                                {
-                                    statusLabels[
-                                        selectedReport.status
-                                    ]
-                                }
-                            </div>
+                            "
+            >
+              {statusLabels[selectedReport.status]}
+            </div>
 
-                                {
-                                selectedReport.userId !== localStorage.getItem("userId") && (
-
-                                    <div className="
+            {selectedReport.userId !== localStorage.getItem("userId") && (
+              <div
+                className="
                                         mb-6
                                         flex
                                         flex-col
                                         sm:flex-row
                                         sm:items-center
                                         gap-3
-                                    ">
-
-            <button
-                    onClick={handleToggleFollow}
-                    className="
+                                    "
+              >
+                <button
+                  onClick={handleToggleFollow}
+                  className="
                         px-5
                         py-3
                         rounded-full
@@ -660,205 +527,179 @@ export default function
                         transition
                     "
                 >
-                    {
-                        isFollowingSelectedReport
-                            ? "✓ Siguiendo reporte"
-                            : "📌 Seguir reporte"
-                    }
+                  {isFollowingSelectedReport ? "✓ Siguiendo reporte" : "📌 Seguir reporte"}
                 </button>
 
                 {followMessage && (
-                    <p className="
+                  <p
+                    className="
                         text-sm
                         text-blue-700
                         font-semibold
-                    ">
-                        {followMessage}
-                    </p>
+                    "
+                  >
+                    {followMessage}
+                  </p>
                 )}
-
-            </div>
-        )
-    }
-                            <div className="
+              </div>
+            )}
+            <div
+              className="
                                 grid
                                 grid-cols-1
                                 lg:grid-cols-2
                                 gap-8
-                            ">
-
-                                <div>
-
-                                    <img
-                                        src={
-                                            selectedReport.evidences[0]
-                                                ?.imageUrl ||
-                                            "https://placehold.co/600x400?text=Sin+imagen"
-                                        }
-                                        className="
+                            "
+            >
+              <div>
+                <img
+                  src={
+                    selectedReport.evidences[0]?.imageUrl ||
+                    "https://placehold.co/600x400?text=Sin+imagen"
+                  }
+                  className="
                                             w-full
                                             h-[360px]
                                             object-cover
                                             rounded-2xl
                                             border
                                         "
-                                    />
+                />
 
-                                    <div className="
+                <div
+                  className="
                                         mt-6
                                         bg-gray-50
                                         rounded-2xl
                                         p-5
-                                    ">
-
-                                        <p className="
+                                    "
+                >
+                  <p
+                    className="
                                             text-sm
                                             text-gray-500
                                             mb-2
-                                        ">
-                                            Descripción
-                                        </p>
+                                        "
+                  >
+                    Descripción
+                  </p>
 
-                                        <p className="
+                  <p
+                    className="
                                             text-lg
                                             text-gray-700
                                             leading-relaxed
-                                        ">
-                                            {selectedReport.description}
-                                        </p>
+                                        "
+                  >
+                    {selectedReport.description}
+                  </p>
+                </div>
 
-                                    </div>
-
-                                    <div className="
+                <div
+                  className="
                                         mt-6
                                         flex
                                         flex-wrap
                                         gap-4
                                         text-gray-500
-                                    ">
+                                    "
+                >
+                  <p className="font-semibold text-gray-700">
+                    {selectedReport.isAnonymous
+                      ? "Anónimo"
+                      : `${selectedReport.user?.firstName || ""} ${selectedReport.user?.lastName || ""}`}
+                  </p>
 
-                                        <p className="font-semibold text-gray-700">
-                                            {
-                                                selectedReport.isAnonymous
-                                                    ? "Anónimo"
-                                                    : `${selectedReport.user?.firstName || ""} ${selectedReport.user?.lastName || ""}`
-                                            }
-                                        </p>
+                  <p>{new Date(selectedReport.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
 
-                                        <p>
-                                            {
-                                                new Date(
-                                                    selectedReport.createdAt
-                                                ).toLocaleDateString()
-                                            }
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-                                <div>
-
-                                    <div className="
+              <div>
+                <div
+                  className="
                                         bg-green-50
                                         rounded-2xl
                                         p-6
                                         space-y-5
-                                    ">
-
-                                        <div>
-
-                                            <p className="
+                                    "
+                >
+                  <div>
+                    <p
+                      className="
                                                 text-green-700
                                                 font-semibold
                                                 text-lg
-                                            ">
-                                                Ubicación del reporte
-                                            </p>
+                                            "
+                    >
+                      Ubicación del reporte
+                    </p>
 
-                                            <p className="
+                    <p
+                      className="
                                                 text-gray-700
                                                 mt-2
                                                 leading-relaxed
-                                            ">
-                                                {
-                                                    selectedReport.address ||
-                                                    "Ubicación no disponible"
-                                                }
-                                            </p>
+                                            "
+                    >
+                      {selectedReport.address || "Ubicación no disponible"}
+                    </p>
 
-                                            {
-                                                selectedReport.latitude &&
-                                                selectedReport.longitude && (
-
-                                                    <p className="
+                    {selectedReport.latitude && selectedReport.longitude && (
+                      <p
+                        className="
                                                         text-gray-500
                                                         mt-2
                                                         text-sm
-                                                    ">
-                                                        Latitud: {selectedReport.latitude} | Longitud: {selectedReport.longitude}
-                                                    </p>
-                                                )
-                                            }
+                                                    "
+                      >
+                        Latitud: {selectedReport.latitude} | Longitud: {selectedReport.longitude}
+                      </p>
+                    )}
+                  </div>
 
-                                        </div>
-
-                                        {
-                                            selectedReport.latitude &&
-                                            selectedReport.longitude ? (
-
-                                                <>
-
-                                                    <iframe
-                                                        title="Ubicación del reporte"
-                                                        width="100%"
-                                                        height="320"
-                                                        loading="lazy"
-                                                        className="
+                  {selectedReport.latitude && selectedReport.longitude ? (
+                    <>
+                      <iframe
+                        title="Ubicación del reporte"
+                        width="100%"
+                        height="320"
+                        loading="lazy"
+                        className="
                                                             rounded-2xl
                                                             border
                                                         "
-                                                        src={`https://www.google.com/maps?q=${selectedReport.latitude},${selectedReport.longitude}&z=17&output=embed`}
-                                                    />
+                        src={`https://www.google.com/maps?q=${selectedReport.latitude},${selectedReport.longitude}&z=17&output=embed`}
+                      />
 
-                                                    <a
-                                                        href={`https://www.google.com/maps?q=${selectedReport.latitude},${selectedReport.longitude}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="
+                      <a
+                        href={`https://www.google.com/maps?q=${selectedReport.latitude},${selectedReport.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="
                                                             inline-block
                                                             text-blue-700
                                                             font-semibold
                                                             hover:underline
                                                         "
-                                                    >
-                                                        Abrir ubicación en Google Maps
-                                                    </a>
-
-                                                </>
-
-                                            ) : (
-
-                                                <p className="
+                      >
+                        Abrir ubicación en Google Maps
+                      </a>
+                    </>
+                  ) : (
+                    <p
+                      className="
                                                     text-gray-500
-                                                ">
-                                                    Este reporte no tiene coordenadas registradas.
-                                                </p>
-                                            )
-                                        }
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-                )
-            }
-
+                                                "
+                    >
+                      Este reporte no tiene coordenadas registradas.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 }

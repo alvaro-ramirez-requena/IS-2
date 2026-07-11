@@ -1,131 +1,95 @@
-const API_URL =
-    import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export interface TechnicianApplicationDTO {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone?: string;
-    dni?: string;
-    municipalityId: string;
-    skills: string[];
-    experience?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  dni?: string;
+  municipalityId: string;
+  skills: string[];
+  experience?: string;
 }
 
 export class TechnicianApplicationService {
+  static async createApplication(data: TechnicianApplicationDTO) {
+    const response = await fetch(`${API_URL}/api/technician-applications`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
 
-    static async createApplication(
-        data: TechnicianApplicationDTO
-    ) {
-        const response =
-            await fetch(
-                `${API_URL}/api/technician-applications`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(data),
-                }
-            );
+    const result = await response.json();
 
-        const result =
-            await response.json();
-
-        if (!response.ok) {
-            throw new Error(
-                result.message || "Error al registrar postulación."
-            );
-        }
-
-        return result;
+    if (!response.ok) {
+      throw new Error(result.message || "Error al registrar postulación.");
     }
 
-    static async getPendingApplications() {
-        const operatorId =
-            localStorage.getItem("userId");
+    return result;
+  }
 
-        if (!operatorId) {
-            throw new Error(
-                "No se encontró el operador en sesión."
-            );
-        }
+  static async getPendingApplications() {
+    const operatorId = localStorage.getItem("userId");
 
-        const response =
-            await fetch(
-                `${API_URL}/api/technician-applications/pending?operatorId=${operatorId}`
-            );
-
-        const result =
-            await response.json();
-
-        if (!response.ok) {
-            throw new Error(
-                result.message ||
-                "No se pudieron obtener las postulaciones."
-            );
-        }
-
-        return result;
+    if (!operatorId) {
+      throw new Error("No se encontró el operador en sesión.");
     }
 
-    static async approveApplication(
-        applicationId: string,
-        reviewedById?: string
-    ) {
-        const response =
-            await fetch(
-                `${API_URL}/api/technician-applications/${applicationId}/approve`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        reviewedById,
-                    }),
-                }
-            );
+    const response = await fetch(
+      `${API_URL}/api/technician-applications/pending?operatorId=${operatorId}`
+    );
 
-        const result =
-            await response.json();
+    const result = await response.json();
 
-        if (!response.ok) {
-            throw new Error(
-                result.message || "Error al aprobar postulación."
-            );
-        }
-
-        return result;
+    if (!response.ok) {
+      throw new Error(result.message || "No se pudieron obtener las postulaciones.");
     }
 
-    static async rejectApplication(
-        applicationId: string,
-        reviewedById?: string
-    ) {
-        const response =
-            await fetch(
-                `${API_URL}/api/technician-applications/${applicationId}/reject`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        reviewedById,
-                    }),
-                }
-            );
+    return result;
+  }
 
-        const result =
-            await response.json();
+  static async approveApplication(applicationId: string, reviewedById?: string) {
+    const response = await fetch(
+      `${API_URL}/api/technician-applications/${applicationId}/approve`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reviewedById,
+        }),
+      }
+    );
 
-        if (!response.ok) {
-            throw new Error(
-                result.message || "Error al rechazar postulación."
-            );
-        }
+    const result = await response.json();
 
-        return result;
+    if (!response.ok) {
+      throw new Error(result.message || "Error al aprobar postulación.");
     }
+
+    return result;
+  }
+
+  static async rejectApplication(applicationId: string, reviewedById?: string) {
+    const response = await fetch(`${API_URL}/api/technician-applications/${applicationId}/reject`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        reviewedById,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Error al rechazar postulación.");
+    }
+
+    return result;
+  }
 }

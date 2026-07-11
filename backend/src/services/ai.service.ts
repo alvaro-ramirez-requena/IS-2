@@ -80,11 +80,7 @@ Responde SOLO con este JSON:
 }
 
 // ── 2. Priorización automática ────────────────────────────────────────────────
-export async function prioritizeReport(
-  description: string,
-  category: string,
-  problemType: string
-) {
+export async function prioritizeReport(description: string, category: string, problemType: string) {
   const prompt = `
 Analiza este reporte urbano y estima su nivel de prioridad.
 
@@ -209,9 +205,9 @@ Responde SOLO con este JSON:
     const cleaned = raw.replace(/```json|```/g, "").trim();
     const result = JSON.parse(cleaned);
 
-    const confirmedDuplicates = (result.duplicateIndexes || []).map(
-      (i: number) => nearbyReports[i - 1]
-    ).filter(Boolean);
+    const confirmedDuplicates = (result.duplicateIndexes || [])
+      .map((i: number) => nearbyReports[i - 1])
+      .filter(Boolean);
 
     return {
       duplicates: confirmedDuplicates,
@@ -233,12 +229,12 @@ export async function detectDelayedReports() {
 
   // Umbrales de tiempo por estado (en días)
   const thresholds: Record<string, number> = {
-    REGISTERED: 2,    // más de 2 días sin validar
-    VALIDATING: 3,    // más de 3 días en validación
-    APPROVED: 5,      // más de 5 días sin priorizar
-    PRIORITIZED: 7,   // más de 7 días sin asignar
-    ASSIGNED: 10,     // más de 10 días sin iniciar
-    IN_PROGRESS: 14,  // más de 14 días en progreso
+    REGISTERED: 2, // más de 2 días sin validar
+    VALIDATING: 3, // más de 3 días en validación
+    APPROVED: 5, // más de 5 días sin priorizar
+    PRIORITIZED: 7, // más de 7 días sin asignar
+    ASSIGNED: 10, // más de 10 días sin iniciar
+    IN_PROGRESS: 14, // más de 14 días en progreso
   };
 
   const delayed: any[] = [];

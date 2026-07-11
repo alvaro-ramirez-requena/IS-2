@@ -1,18 +1,11 @@
-import {
-  TechnicianApplicationStatus,
-  Role,
-} from "@prisma/client";
+import { TechnicianApplicationStatus, Role } from "@prisma/client";
 
 import bcrypt from "bcryptjs";
 
-import {
-  prisma,
-} from "../config/prisma";
+import { prisma } from "../config/prisma";
 
 export class TechnicianApplicationRepository {
-  async findUserByEmail(
-    email: string
-  ) {
+  async findUserByEmail(email: string) {
     return await prisma.user.findUnique({
       where: {
         email,
@@ -20,9 +13,7 @@ export class TechnicianApplicationRepository {
     });
   }
 
-  async findByEmail(
-    email: string
-  ) {
+  async findByEmail(email: string) {
     return await prisma.technicianApplication.findUnique({
       where: {
         email,
@@ -34,9 +25,7 @@ export class TechnicianApplicationRepository {
     });
   }
 
-  async findById(
-    applicationId: string
-  ) {
+  async findById(applicationId: string) {
     return await prisma.technicianApplication.findUnique({
       where: {
         id: applicationId,
@@ -48,9 +37,7 @@ export class TechnicianApplicationRepository {
     });
   }
 
-  async findByVerificationToken(
-    token: string
-  ) {
+  async findByVerificationToken(token: string) {
     return await prisma.technicianApplication.findFirst({
       where: {
         emailVerificationToken: token,
@@ -62,9 +49,7 @@ export class TechnicianApplicationRepository {
     });
   }
 
-  async verifyEmail(
-    applicationId: string
-  ) {
+  async verifyEmail(applicationId: string) {
     return await prisma.technicianApplication.update({
       where: {
         id: applicationId,
@@ -97,41 +82,29 @@ export class TechnicianApplicationRepository {
   }) {
     return await prisma.technicianApplication.create({
       data: {
-        firstName:
-          data.firstName,
+        firstName: data.firstName,
 
-        lastName:
-          data.lastName,
+        lastName: data.lastName,
 
-        email:
-          data.email,
+        email: data.email,
 
-        phone:
-          data.phone,
+        phone: data.phone,
 
-        dni:
-          data.dni,
+        dni: data.dni,
 
-        municipalityId:
-          data.municipalityId,
+        municipalityId: data.municipalityId,
 
-        skills:
-          data.skills,
+        skills: data.skills,
 
-        experience:
-          data.experience,
+        experience: data.experience,
 
-        emailVerified:
-          data.emailVerified,
+        emailVerified: data.emailVerified,
 
-        emailVerificationToken:
-          data.emailVerificationToken,
+        emailVerificationToken: data.emailVerificationToken,
 
-        emailVerificationExpires:
-          data.emailVerificationExpires,
+        emailVerificationExpires: data.emailVerificationExpires,
 
-        status:
-          TechnicianApplicationStatus.PENDING,
+        status: TechnicianApplicationStatus.PENDING,
       },
 
       include: {
@@ -143,8 +116,7 @@ export class TechnicianApplicationRepository {
   async findPending() {
     return await prisma.technicianApplication.findMany({
       where: {
-        status:
-          TechnicianApplicationStatus.PENDING,
+        status: TechnicianApplicationStatus.PENDING,
       },
 
       include: {
@@ -157,13 +129,10 @@ export class TechnicianApplicationRepository {
     });
   }
 
-  async findPendingByMunicipality(
-    municipalityId: string
-  ) {
+  async findPendingByMunicipality(municipalityId: string) {
     return await prisma.technicianApplication.findMany({
       where: {
-        status:
-          TechnicianApplicationStatus.PENDING,
+        status: TechnicianApplicationStatus.PENDING,
 
         municipalityId,
       },
@@ -190,9 +159,7 @@ export class TechnicianApplicationRepository {
     });
   }
 
-  async findOperatorById(
-    operatorId: string
-  ) {
+  async findOperatorById(operatorId: string) {
     return await prisma.user.findUnique({
       where: {
         id: operatorId,
@@ -204,20 +171,16 @@ export class TechnicianApplicationRepository {
     });
   }
 
-  async approve(
-    applicationId: string,
-    reviewedById?: string
-  ) {
-    const application =
-      await prisma.technicianApplication.findUnique({
-        where: {
-          id: applicationId,
-        },
+  async approve(applicationId: string, reviewedById?: string) {
+    const application = await prisma.technicianApplication.findUnique({
+      where: {
+        id: applicationId,
+      },
 
-        include: {
-          municipality: true,
-        },
-      });
+      include: {
+        municipality: true,
+      },
+    });
 
     if (!application) {
       throw new Error("La postulación no existe.");
@@ -228,135 +191,98 @@ export class TechnicianApplicationRepository {
     }
 
     if (!application.emailVerified) {
-      throw new Error(
-        "No se puede aprobar la postulación porque el correo aún no fue verificado."
-      );
+      throw new Error("No se puede aprobar la postulación porque el correo aún no fue verificado.");
     }
 
-    const temporaryPassword =
-      "Tecnico123";
+    const temporaryPassword = "Tecnico123";
 
-    const hashedPassword =
-      await bcrypt.hash(
-        temporaryPassword,
-        10
-      );
+    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
     return await prisma.$transaction(async (tx) => {
-      const technician =
-        await tx.user.upsert({
-          where: {
-            email:
-              application.email,
-          },
-
-          update: {
-            firstName:
-              application.firstName,
-
-            lastName:
-              application.lastName,
-
-            password:
-              hashedPassword,
-
-            role:
-              Role.TECHNICIAN,
-
-            emailVerified:
-              true,
-
-            emailVerificationToken:
-              null,
-
-            emailVerificationExpires:
-              null,
-          },
-
-          create: {
-            email:
-              application.email,
-
-            firstName:
-              application.firstName,
-
-            lastName:
-              application.lastName,
-
-            password:
-              hashedPassword,
-
-            role:
-              Role.TECHNICIAN,
-
-            emailVerified:
-              true,
-
-            emailVerificationToken:
-              null,
-
-            emailVerificationExpires:
-              null,
-          },
-        });
-
-      await tx.technicianProfile.upsert({
+      const technician = await tx.user.upsert({
         where: {
-          userId:
-            technician.id,
+          email: application.email,
         },
 
         update: {
-          municipalityId:
-            application.municipalityId,
+          firstName: application.firstName,
 
-          skills:
-            application.skills,
+          lastName: application.lastName,
 
-          available:
-            true,
+          password: hashedPassword,
+
+          role: Role.TECHNICIAN,
+
+          emailVerified: true,
+
+          emailVerificationToken: null,
+
+          emailVerificationExpires: null,
         },
 
         create: {
-          userId:
-            technician.id,
+          email: application.email,
 
-          municipalityId:
-            application.municipalityId,
+          firstName: application.firstName,
 
-          skills:
-            application.skills,
+          lastName: application.lastName,
 
-          available:
-            true,
+          password: hashedPassword,
+
+          role: Role.TECHNICIAN,
+
+          emailVerified: true,
+
+          emailVerificationToken: null,
+
+          emailVerificationExpires: null,
         },
       });
 
-      const updatedApplication =
-        await tx.technicianApplication.update({
-          where: {
-            id:
-              applicationId,
-          },
+      await tx.technicianProfile.upsert({
+        where: {
+          userId: technician.id,
+        },
 
-          data: {
-            status:
-              TechnicianApplicationStatus.APPROVED,
+        update: {
+          municipalityId: application.municipalityId,
 
-            reviewedAt:
-              new Date(),
+          skills: application.skills,
 
-            reviewedById,
-          },
+          available: true,
+        },
 
-          include: {
-            municipality: true,
-          },
-        });
+        create: {
+          userId: technician.id,
+
+          municipalityId: application.municipalityId,
+
+          skills: application.skills,
+
+          available: true,
+        },
+      });
+
+      const updatedApplication = await tx.technicianApplication.update({
+        where: {
+          id: applicationId,
+        },
+
+        data: {
+          status: TechnicianApplicationStatus.APPROVED,
+
+          reviewedAt: new Date(),
+
+          reviewedById,
+        },
+
+        include: {
+          municipality: true,
+        },
+      });
 
       return {
-        application:
-          updatedApplication,
+        application: updatedApplication,
 
         technician,
 
@@ -365,20 +291,16 @@ export class TechnicianApplicationRepository {
     });
   }
 
-  async reject(
-    applicationId: string,
-    reviewedById?: string
-  ) {
-    const application =
-      await prisma.technicianApplication.findUnique({
-        where: {
-          id: applicationId,
-        },
+  async reject(applicationId: string, reviewedById?: string) {
+    const application = await prisma.technicianApplication.findUnique({
+      where: {
+        id: applicationId,
+      },
 
-        include: {
-          municipality: true,
-        },
-      });
+      include: {
+        municipality: true,
+      },
+    });
 
     if (!application) {
       throw new Error("La postulación no existe.");
@@ -390,16 +312,13 @@ export class TechnicianApplicationRepository {
 
     return await prisma.technicianApplication.update({
       where: {
-        id:
-          applicationId,
+        id: applicationId,
       },
 
       data: {
-        status:
-          TechnicianApplicationStatus.REJECTED,
+        status: TechnicianApplicationStatus.REJECTED,
 
-        reviewedAt:
-          new Date(),
+        reviewedAt: new Date(),
 
         reviewedById,
       },

@@ -1,231 +1,147 @@
-import {
-  Request,
-  Response,
-} from "express";
+import { Request, Response } from "express";
 
-import {
-  EvidencePhase,
-} from "@prisma/client";
+import { EvidencePhase } from "@prisma/client";
 
-import {
-  FieldWorkService,
-} from "../services/fieldwork.service";
+import { FieldWorkService } from "../services/fieldwork.service";
 
-const fieldWorkService =
-  new FieldWorkService();
+const fieldWorkService = new FieldWorkService();
 
 export class FieldWorkController {
-  static async getByReport(
-    req: Request,
-    res: Response
-  ) {
+  static async getByReport(req: Request, res: Response) {
     try {
-      const reportId =
-        String(req.params.reportId);
+      const reportId = String(req.params.reportId);
 
-      const fieldWork =
-        await fieldWorkService
-          .getByReport(reportId);
+      const fieldWork = await fieldWorkService.getByReport(reportId);
 
       return res.json(fieldWork);
-
     } catch (error: any) {
       return res.status(400).json({
-        message:
-          error.message ||
-          "Error al obtener trazabilidad.",
+        message: error.message || "Error al obtener trazabilidad.",
       });
     }
   }
 
-  static async start(
-    req: Request,
-    res: Response
-  ) {
+  static async start(req: Request, res: Response) {
     try {
-      const reportId =
-        String(req.params.reportId);
+      const reportId = String(req.params.reportId);
 
-      const technicianId =
-        String(req.body.technicianId || "");
+      const technicianId = String(req.body.technicianId || "");
 
-      const fieldWork =
-        await fieldWorkService
-          .startFieldWork({
-            reportId,
-            technicianId,
-          });
+      const fieldWork = await fieldWorkService.startFieldWork({
+        reportId,
+        technicianId,
+      });
 
       return res.status(201).json(fieldWork);
-
     } catch (error: any) {
       return res.status(400).json({
-        message:
-          error.message ||
-          "Error al iniciar trazabilidad.",
+        message: error.message || "Error al iniciar trazabilidad.",
       });
     }
   }
 
-  static async arrive(
-    req: Request,
-    res: Response
-  ) {
+  static async arrive(req: Request, res: Response) {
     try {
-      const reportId =
-        String(req.params.reportId);
+      const reportId = String(req.params.reportId);
 
-      const technicianId =
-        String(req.body.technicianId || "");
+      const technicianId = String(req.body.technicianId || "");
 
-      const arrivalLat =
-        Number(req.body.arrivalLat);
+      const arrivalLat = Number(req.body.arrivalLat);
 
-      const arrivalLng =
-        Number(req.body.arrivalLng);
+      const arrivalLng = Number(req.body.arrivalLng);
 
-      if (
-        Number.isNaN(arrivalLat) ||
-        Number.isNaN(arrivalLng)
-      ) {
+      if (Number.isNaN(arrivalLat) || Number.isNaN(arrivalLng)) {
         return res.status(400).json({
-          message:
-            "La latitud y longitud de llegada son obligatorias.",
+          message: "La latitud y longitud de llegada son obligatorias.",
         });
       }
 
-      const fieldWork =
-        await fieldWorkService
-          .registerArrival({
-            reportId,
-            technicianId,
-            arrivalLat,
-            arrivalLng,
-          });
+      const fieldWork = await fieldWorkService.registerArrival({
+        reportId,
+        technicianId,
+        arrivalLat,
+        arrivalLng,
+      });
 
       return res.json(fieldWork);
-
     } catch (error: any) {
       return res.status(400).json({
-        message:
-          error.message ||
-          "Error al registrar llegada.",
+        message: error.message || "Error al registrar llegada.",
       });
     }
   }
 
-  static async saveNotes(
-    req: Request,
-    res: Response
-  ) {
+  static async saveNotes(req: Request, res: Response) {
     try {
-      const reportId =
-        String(req.params.reportId);
+      const reportId = String(req.params.reportId);
 
-      const notes =
-        String(req.body.notes || "");
+      const notes = String(req.body.notes || "");
 
-      const fieldWork =
-        await fieldWorkService
-          .saveNotes({
-            reportId,
-            notes,
-          });
+      const fieldWork = await fieldWorkService.saveNotes({
+        reportId,
+        notes,
+      });
 
       return res.json(fieldWork);
-
     } catch (error: any) {
       return res.status(400).json({
-        message:
-          error.message ||
-          "Error al guardar notas.",
+        message: error.message || "Error al guardar notas.",
       });
     }
   }
 
-  static async addEvidence(
-    req: Request,
-    res: Response
-  ) {
+  static async addEvidence(req: Request, res: Response) {
     try {
-      const reportId =
-        String(req.params.reportId);
+      const reportId = String(req.params.reportId);
 
-      const technicianId =
-        String(req.body.technicianId || "");
+      const technicianId = String(req.body.technicianId || "");
 
-      const imageUrl =
-        String(req.body.imageUrl || "");
+      const imageUrl = String(req.body.imageUrl || "");
 
-      const phase =
-        req.body.phase as EvidencePhase;
+      const phase = req.body.phase as EvidencePhase;
 
-      const fieldWork =
-        await fieldWorkService
-          .addEvidence({
-            reportId,
-            technicianId,
-            imageUrl,
-            phase,
-          });
+      const fieldWork = await fieldWorkService.addEvidence({
+        reportId,
+        technicianId,
+        imageUrl,
+        phase,
+      });
 
       return res.status(201).json(fieldWork);
-
     } catch (error: any) {
       return res.status(400).json({
-        message:
-          error.message ||
-          "Error al registrar evidencia.",
+        message: error.message || "Error al registrar evidencia.",
       });
     }
   }
 
-  static async close(
-    req: Request,
-    res: Response
-  ) {
+  static async close(req: Request, res: Response) {
     try {
-      const reportId =
-        String(req.params.reportId);
+      const reportId = String(req.params.reportId);
 
-      const fieldWork =
-        await fieldWorkService
-          .closeFieldWork(reportId);
+      const fieldWork = await fieldWorkService.closeFieldWork(reportId);
 
       return res.json({
-        message:
-          "Trabajo de campo cerrado correctamente.",
+        message: "Trabajo de campo cerrado correctamente.",
         fieldWork,
       });
-
     } catch (error: any) {
       return res.status(400).json({
-        message:
-          error.message ||
-          "Error al cerrar trabajo de campo.",
+        message: error.message || "Error al cerrar trabajo de campo.",
       });
     }
   }
-  static async deleteEvidence(
-    req: Request,
-    res: Response
-    ) {
+  static async deleteEvidence(req: Request, res: Response) {
     try {
-        const evidenceId =
-        String(req.params.evidenceId);
+      const evidenceId = String(req.params.evidenceId);
 
-        const fieldWork =
-        await fieldWorkService
-            .deleteEvidence(evidenceId);
+      const fieldWork = await fieldWorkService.deleteEvidence(evidenceId);
 
-        return res.json(fieldWork);
-
+      return res.json(fieldWork);
     } catch (error: any) {
-        return res.status(400).json({
-        message:
-            error.message ||
-            "Error al eliminar evidencia.",
-        });
+      return res.status(400).json({
+        message: error.message || "Error al eliminar evidencia.",
+      });
     }
-    }
+  }
 }

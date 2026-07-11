@@ -1,7 +1,6 @@
 import { prisma } from "../config/prisma";
 
 export class AssignmentRepository {
-
   async getTechnicians(filters?: {
     municipalityId?: string;
     specialty?: string;
@@ -13,18 +12,15 @@ export class AssignmentRepository {
 
         technicianProfile: {
           is: {
-            municipalityId:
-              filters?.municipalityId || undefined,
+            municipalityId: filters?.municipalityId || undefined,
 
-            available:
-              filters?.availability,
+            available: filters?.availability,
 
-            skills:
-              filters?.specialty
-                ? {
-                    has: filters.specialty,
-                  }
-                : undefined,
+            skills: filters?.specialty
+              ? {
+                  has: filters.specialty,
+                }
+              : undefined,
           },
         },
       },
@@ -63,12 +59,7 @@ export class AssignmentRepository {
     });
   }
 
-  async assignReport(
-    reportId: string,
-    technicianId: string,
-    assignedById: string,
-    notes?: string
-  ) {
+  async assignReport(reportId: string, technicianId: string, assignedById: string, notes?: string) {
     return await prisma.reportAssignment.create({
       data: {
         reportId,
@@ -79,132 +70,116 @@ export class AssignmentRepository {
     });
   }
 
-  async getAssignmentsByReport(
-    reportId: string
-  ) {
-    return await prisma
-      .reportAssignment
-      .findMany({
-        where: {
-          reportId,
-        },
+  async getAssignmentsByReport(reportId: string) {
+    return await prisma.reportAssignment.findMany({
+      where: {
+        reportId,
+      },
 
-        include: {
-          technician: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
+      include: {
+        technician: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
 
-              technicianProfile: {
-                select: {
-                  id: true,
-                  userId: true,
-                  municipalityId: true,
-                  skills: true,
-                  available: true,
-                  crewName: true,
+            technicianProfile: {
+              select: {
+                id: true,
+                userId: true,
+                municipalityId: true,
+                skills: true,
+                available: true,
+                crewName: true,
 
-                  municipality: {
-                    select: {
-                      id: true,
-                      name: true,
-                      district: true,
-                      province: true,
-                      department: true,
-                    },
+                municipality: {
+                  select: {
+                    id: true,
+                    name: true,
+                    district: true,
+                    province: true,
+                    department: true,
                   },
                 },
               },
             },
           },
+        },
 
-          assignedBy: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
+        assignedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
           },
         },
+      },
 
-        orderBy: {
-          assignedAt: "desc",
-        },
-      });
+      orderBy: {
+        assignedAt: "desc",
+      },
+    });
   }
 
-  async getActiveAssignment(
-    reportId: string
-  ) {
-    return await prisma
-      .reportAssignment
-      .findFirst({
-        where: {
-          reportId,
-          active: true,
-        },
-      });
+  async getActiveAssignment(reportId: string) {
+    return await prisma.reportAssignment.findFirst({
+      where: {
+        reportId,
+        active: true,
+      },
+    });
   }
 
-  async deactivateAssignment(
-    assignmentId: string
-  ) {
-    return await prisma
-      .reportAssignment
-      .update({
-        where: {
-          id: assignmentId,
-        },
+  async deactivateAssignment(assignmentId: string) {
+    return await prisma.reportAssignment.update({
+      where: {
+        id: assignmentId,
+      },
 
-        data: {
-          active: false,
-        },
-      });
+      data: {
+        active: false,
+      },
+    });
   }
 
-  async getAssignmentsByTechnician(
-    technicianId: string
-  ) {
-    return await prisma
-      .reportAssignment
-      .findMany({
-        where: {
-          technicianId,
-          active: true,
-        },
+  async getAssignmentsByTechnician(technicianId: string) {
+    return await prisma.reportAssignment.findMany({
+      where: {
+        technicianId,
+        active: true,
+      },
 
-        include: {
-          report: {
-            include: {
-              evidences: true,
+      include: {
+        report: {
+          include: {
+            evidences: true,
 
-              user: {
-                select: {
-                  firstName: true,
-                  lastName: true,
-                },
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
               },
-
-              municipality: true,
             },
-          },
 
-          assignedBy: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
+            municipality: true,
           },
         },
 
-        orderBy: {
-          assignedAt: "desc",
+        assignedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
         },
-      });
+      },
+
+      orderBy: {
+        assignedAt: "desc",
+      },
+    });
   }
 }

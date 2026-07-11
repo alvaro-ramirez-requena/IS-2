@@ -62,7 +62,11 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: "operador.callao@test.com" },
-    update: { role: "OPERATOR", emailVerified: true, municipalityId: callao.id },
+    update: {
+      role: "OPERATOR",
+      emailVerified: true,
+      municipalityId: callao.id,
+    },
     create: {
       email: "operador.callao@test.com",
       firstName: "Operador",
@@ -90,7 +94,11 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: "operador.miraflores@test.com" },
-    update: { role: "OPERATOR", emailVerified: true, municipalityId: miraflores.id },
+    update: {
+      role: "OPERATOR",
+      emailVerified: true,
+      municipalityId: miraflores.id,
+    },
     create: {
       email: "operador.miraflores@test.com",
       firstName: "Operador",
@@ -104,7 +112,11 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: "operador.sanisidro@test.com" },
-    update: { role: "OPERATOR", emailVerified: true, municipalityId: sanIsidro.id },
+    update: {
+      role: "OPERATOR",
+      emailVerified: true,
+      municipalityId: sanIsidro.id,
+    },
     create: {
       email: "operador.sanisidro@test.com",
       firstName: "Operador",
@@ -119,7 +131,11 @@ async function main() {
   // Nuevo - Villa El Salvador
   await prisma.user.upsert({
     where: { email: "operador.ves@test.com" },
-    update: { role: "OPERATOR", emailVerified: true, municipalityId: villaElSalvador.id },
+    update: {
+      role: "OPERATOR",
+      emailVerified: true,
+      municipalityId: villaElSalvador.id,
+    },
     create: {
       email: "operador.ves@test.com",
       firstName: "Operador",

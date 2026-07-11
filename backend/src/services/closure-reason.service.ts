@@ -1,7 +1,6 @@
 import { ClosureReasonRepository } from "../repositories/closure-reason.repository";
 
-const closureReasonRepository =
-  new ClosureReasonRepository();
+const closureReasonRepository = new ClosureReasonRepository();
 
 export class ClosureReasonService {
   async getAll() {
@@ -12,10 +11,7 @@ export class ClosureReasonService {
     return await closureReasonRepository.findActive();
   }
 
-  async create(data: {
-    name: string;
-    description?: string;
-  }) {
+  async create(data: { name: string; description?: string }) {
     if (!data.name?.trim()) {
       throw new Error("El nombre del motivo de cierre es obligatorio.");
     }

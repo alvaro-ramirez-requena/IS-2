@@ -9,40 +9,19 @@ router.get("/user/:userId", ReportController.getByUser);
 
 router.get("/category/:category", ReportController.getByCategory);
 
-router.get(
-    "/problem/:problemType",
-    ReportController.getByProblemType
-);
+router.get("/problem/:problemType", ReportController.getByProblemType);
 
-router.get(
-    "/status/:status",
-    ReportController.getByStatus
-);
+router.get("/status/:status", ReportController.getByStatus);
 
-router.get(
-    "/operator/:operatorId/status/:status",
-    ReportController.getReportsByStatusForOperator
-);
+router.get("/operator/:operatorId/status/:status", ReportController.getReportsByStatusForOperator);
 
-router.get(
-  "/top-problems",
-  ReportController.getTopProblems
-);
+router.get("/top-problems", ReportController.getTopProblems);
 
-router.get(
-  "/map/locations",
-  ReportController.getReportsWithLocation.bind(ReportController)
-);
+router.get("/map/locations", ReportController.getReportsWithLocation.bind(ReportController));
 
-router.patch(
-    "/:id/prioritize",
-    ReportController.prioritize
-);
+router.patch("/:id/prioritize", ReportController.prioritize);
 
-router.patch(
-    "/:id/status",
-    ReportController.updateStatus
-);
+router.patch("/:id/status", ReportController.updateStatus);
 
 router.get("/:id", ReportController.getById);
 

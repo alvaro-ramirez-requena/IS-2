@@ -1,10 +1,6 @@
-import {
-  Priority,
-} from "@prisma/client";
+import { Priority } from "@prisma/client";
 
-import {
-  prisma,
-} from "../config/prisma";
+import { prisma } from "../config/prisma";
 
 export class SlaConfigurationRepository {
   async findAll() {
@@ -15,10 +11,7 @@ export class SlaConfigurationRepository {
     });
   }
 
-  async upsert(data: {
-    priority: Priority;
-    responseHours: number;
-  }) {
+  async upsert(data: { priority: Priority; responseHours: number }) {
     return await prisma.slaConfiguration.upsert({
       where: {
         priority: data.priority,

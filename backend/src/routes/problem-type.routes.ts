@@ -1,37 +1,18 @@
 import { Router } from "express";
 import { ProblemTypeController } from "../controllers/problem-type.controller";
 
-const router =
-  Router();
+const router = Router();
 
-router.get(
-  "/",
-  ProblemTypeController.getAll
-);
+router.get("/", ProblemTypeController.getAll);
 
-router.get(
-  "/active",
-  ProblemTypeController.getActive
-);
+router.get("/active", ProblemTypeController.getActive);
 
-router.post(
-  "/",
-  ProblemTypeController.create
-);
+router.post("/", ProblemTypeController.create);
 
-router.patch(
-  "/:id",
-  ProblemTypeController.update
-);
+router.patch("/:id", ProblemTypeController.update);
 
-router.patch(
-  "/:id/deactivate",
-  ProblemTypeController.deactivate
-);
+router.patch("/:id/deactivate", ProblemTypeController.deactivate);
 
-router.patch(
-  "/:id/activate",
-  ProblemTypeController.activate
-);
+router.patch("/:id/activate", ProblemTypeController.activate);
 
 export default router;

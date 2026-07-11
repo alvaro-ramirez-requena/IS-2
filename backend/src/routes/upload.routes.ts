@@ -1,19 +1,12 @@
-import { Router }
-from "express";
+import { Router } from "express";
 
-import {
-  upload,
-} from "../middlewares/upload.middleware";
+import { upload } from "../middlewares/upload.middleware";
 
-import {
-  UploadController,
-} from "../controllers/upload.controller";
+import { UploadController } from "../controllers/upload.controller";
 
-const router =
-  Router();
+const router = Router();
 
-const controller =
-  new UploadController();
+const controller = new UploadController();
 
 router.post(
   "/",

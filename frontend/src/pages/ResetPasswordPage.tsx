@@ -18,19 +18,16 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/auth/reset-password",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token,
-            newPassword,
-          }),
-        }
-      );
+      const response = await fetch("http://localhost:3000/api/auth/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          newPassword,
+        }),
+      });
 
       const data = await response.json();
 
@@ -60,9 +57,7 @@ export default function ResetPasswordPage() {
 
       <div className="w-1/2 flex items-center justify-center">
         <form onSubmit={handleSubmit} className="w-[70%]">
-          <h1 className="text-4xl font-bold mb-10 text-[#152238]">
-            Nueva contraseña
-          </h1>
+          <h1 className="text-4xl font-bold mb-10 text-[#152238]">Nueva contraseña</h1>
 
           <input
             type="password"
@@ -80,11 +75,7 @@ export default function ResetPasswordPage() {
             Actualizar contraseña
           </button>
 
-          {message && (
-            <p className="text-center mt-6">
-              {message}
-            </p>
-          )}
+          {message && <p className="text-center mt-6">{message}</p>}
         </form>
       </div>
     </div>

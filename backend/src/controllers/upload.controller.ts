@@ -1,53 +1,31 @@
-import type {
-  Request,
-  Response,
-} from "express";
+import type { Request, Response } from "express";
 
-import { UploadService }
-from "../services/upload.service";
+import { UploadService } from "../services/upload.service";
 
 import fs from "fs";
 
-const uploadService =
-  new UploadService();
+const uploadService = new UploadService();
 
 export class UploadController {
-
-  async uploadImage(
-    req: Request,
-    res: Response
-  ) {
-
+  async uploadImage(req: Request, res: Response) {
     try {
-
-      const file =
-        req.file;
+      const file = req.file;
 
       if (!file) {
-
-        return res.status(400)
-          .json({
-            message:
-              "Imagen requerida",
-          });
+        return res.status(400).json({
+          message: "Imagen requerida",
+        });
       }
 
-      const result =
-        await uploadService
-          .uploadImage(file.path);
-      
+      const result = await uploadService.uploadImage(file.path);
+
       fs.unlinkSync(file.path);
 
-      return res.status(200)
-        .json(result);
-
+      return res.status(200).json(result);
     } catch (error) {
-
-      return res.status(500)
-        .json({
-          message:
-            "Error subiendo imagen",
-        });
+      return res.status(500).json({
+        message: "Error subiendo imagen",
+      });
     }
   }
 }

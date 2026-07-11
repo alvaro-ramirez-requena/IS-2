@@ -3,9 +3,6 @@ import { MunicipalityController } from "../controllers/municipality.controller";
 
 const router = Router();
 
-router.get(
-  "/",
-  MunicipalityController.getAll
-);
+router.get("/", MunicipalityController.getAll);
 
 export default router;

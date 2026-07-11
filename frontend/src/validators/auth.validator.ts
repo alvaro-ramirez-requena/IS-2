@@ -1,49 +1,28 @@
-import type {
-  RegisterFormValues, LoginFormValues
-} from "../types/auth.types";
+import type { RegisterFormValues, LoginFormValues } from "../types/auth.types";
 
-export const validateRegister = (
-  values: RegisterFormValues
-) => {
-
-  const errors:
-    Partial<
-      Record<
-        keyof RegisterFormValues,
-        string
-      >
-    > = {};
+export const validateRegister = (values: RegisterFormValues) => {
+  const errors: Partial<Record<keyof RegisterFormValues, string>> = {};
 
   if (!values.firstName.trim()) {
-    errors.firstName =
-      "El nombre es obligatorio";
+    errors.firstName = "El nombre es obligatorio";
   }
 
   if (!values.lastName.trim()) {
-    errors.lastName =
-      "El apellido es obligatorio";
+    errors.lastName = "El apellido es obligatorio";
   }
 
-  const emailRegex =
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!values.email.trim()) {
-    errors.email =
-      "El correo es obligatorio";
+    errors.email = "El correo es obligatorio";
   } else if (!emailRegex.test(values.email)) {
-    errors.email =
-      "El correo tiene un formato inválido";
+    errors.email = "El correo tiene un formato inválido";
   }
 
   if (!values.password.trim()) {
-
-    errors.password =
-      "La contraseña es obligatoria";
-
+    errors.password = "La contraseña es obligatoria";
   } else {
-
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
     if (!passwordRegex.test(values.password)) {
       errors.password =
@@ -54,26 +33,15 @@ export const validateRegister = (
   return errors;
 };
 
-export const validateLogin = (
-  values: LoginFormValues
-) => {
-
-  const errors:
-    Partial<
-      Record<
-        keyof LoginFormValues,
-        string
-      >
-    > = {};
+export const validateLogin = (values: LoginFormValues) => {
+  const errors: Partial<Record<keyof LoginFormValues, string>> = {};
 
   if (!values.email.trim()) {
-    errors.email =
-      "El correo es obligatorio";
+    errors.email = "El correo es obligatorio";
   }
 
   if (!values.password.trim()) {
-    errors.password =
-      "La contraseña es obligatoria";
+    errors.password = "La contraseña es obligatoria";
   }
 
   return errors;

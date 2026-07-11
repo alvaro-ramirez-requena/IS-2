@@ -1,24 +1,11 @@
-import {
-  Router,
-} from "express";
+import { Router } from "express";
 
-import {
-  TechnicalClosureController,
-} from "../controllers/technical-closure.controller";
+import { TechnicalClosureController } from "../controllers/technical-closure.controller";
 
-const router =
-  Router();
+const router = Router();
 
-router.post(
-  "/",
-  TechnicalClosureController.createClosure
-);
+router.post("/", TechnicalClosureController.createClosure);
 
-router.get(
-  "/report/:reportId",
-  TechnicalClosureController.getByReportId
-);
-
-
+router.get("/report/:reportId", TechnicalClosureController.getByReportId);
 
 export default router;

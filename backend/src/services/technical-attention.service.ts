@@ -2,11 +2,9 @@ import { Status } from "@prisma/client";
 import { ReportRepository } from "../repositories/report.repository";
 import { TechnicalAttentionRepository } from "../repositories/technical-attention.repository";
 
-const reportRepository =
-  new ReportRepository();
+const reportRepository = new ReportRepository();
 
-const technicalAttentionRepository =
-  new TechnicalAttentionRepository();
+const technicalAttentionRepository = new TechnicalAttentionRepository();
 
 export class TechnicalAttentionService {
   async createAttention(data: {
@@ -34,17 +32,14 @@ export class TechnicalAttentionService {
       throw new Error("El resultado técnico es obligatorio.");
     }
 
-    const report =
-      await reportRepository.findById(data.reportId);
+    const report = await reportRepository.findById(data.reportId);
 
     if (!report) {
       throw new Error("Reporte no encontrado.");
     }
 
     if (report.status !== Status.IN_PROGRESS) {
-      throw new Error(
-        "Solo se puede atender un reporte que está en atención."
-      );
+      throw new Error("Solo se puede atender un reporte que está en atención.");
     }
 
     return await technicalAttentionRepository.create(data);

@@ -1,12 +1,7 @@
 import { prisma } from "../config/prisma";
 
 export class ReportFollowRepository {
-
-  async followReport(
-    userId: string,
-    reportId: string
-  ) {
-
+  async followReport(userId: string, reportId: string) {
     return await prisma.reportFollow.upsert({
       where: {
         userId_reportId: {
@@ -38,11 +33,7 @@ export class ReportFollowRepository {
     });
   }
 
-  async unfollowReport(
-    userId: string,
-    reportId: string
-  ) {
-
+  async unfollowReport(userId: string, reportId: string) {
     return await prisma.reportFollow.delete({
       where: {
         userId_reportId: {
@@ -53,28 +44,20 @@ export class ReportFollowRepository {
     });
   }
 
-  async isFollowing(
-    userId: string,
-    reportId: string
-  ) {
-
-    const follow =
-      await prisma.reportFollow.findUnique({
-        where: {
-          userId_reportId: {
-            userId,
-            reportId,
-          },
+  async isFollowing(userId: string, reportId: string) {
+    const follow = await prisma.reportFollow.findUnique({
+      where: {
+        userId_reportId: {
+          userId,
+          reportId,
         },
-      });
+      },
+    });
 
     return Boolean(follow);
   }
 
-  async findFollowedReportsByUser(
-    userId: string
-  ) {
-
+  async findFollowedReportsByUser(userId: string) {
     return await prisma.reportFollow.findMany({
       where: {
         userId,
@@ -100,10 +83,7 @@ export class ReportFollowRepository {
     });
   }
 
-  async findFollowersByReport(
-    reportId: string
-  ) {
-
+  async findFollowersByReport(reportId: string) {
     return await prisma.reportFollow.findMany({
       where: {
         reportId,

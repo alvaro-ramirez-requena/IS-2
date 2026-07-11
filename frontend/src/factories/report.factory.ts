@@ -1,43 +1,27 @@
-import type {
-  ReportFormValues,
-  CreateReportDTO,
-} from "../types/report.types";
+import type { ReportFormValues, CreateReportDTO } from "../types/report.types";
 
 export class ReportFactory {
-
-  static toCreateReportDTO(
-    formData: ReportFormValues,
-    userId: string
-  ): CreateReportDTO {
-  console.log("formData antes de crear DTO:", formData);
+  static toCreateReportDTO(formData: ReportFormValues, userId: string): CreateReportDTO {
+    console.log("formData antes de crear DTO:", formData);
 
     return {
-      title:
-        formData.title.trim(),
+      title: formData.title.trim(),
 
-      category:
-        formData.category,
+      category: formData.category,
 
-      problemType:
-        formData.problemType,
+      problemType: formData.problemType,
 
-      description:
-        formData.description.trim(),
+      description: formData.description.trim(),
 
-      isAnonymous:
-        formData.isAnonymous,
+      isAnonymous: formData.isAnonymous,
 
-      latitude:
-        formData.latitude,
+      latitude: formData.latitude,
 
-      longitude:
-        formData.longitude,
+      longitude: formData.longitude,
 
-      address:
-        formData.address,
+      address: formData.address,
 
-      imageUrls:
-        formData.imageUrls,
+      imageUrls: formData.imageUrls,
 
       userId,
     };

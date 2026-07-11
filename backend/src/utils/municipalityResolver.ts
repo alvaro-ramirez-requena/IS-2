@@ -12,28 +12,15 @@ export function resolveMunicipalityNameFromLocation(data: {
   department?: string | null;
   address?: string | null;
 }) {
-  const district =
-    data.district
-      ? normalizeText(data.district)
-      : "";
+  const district = data.district ? normalizeText(data.district) : "";
 
-  const province =
-    data.province
-      ? normalizeText(data.province)
-      : "";
+  const province = data.province ? normalizeText(data.province) : "";
 
-  const department =
-    data.department
-      ? normalizeText(data.department)
-      : "";
+  const department = data.department ? normalizeText(data.department) : "";
 
-  const address =
-    data.address
-      ? normalizeText(data.address)
-      : "";
+  const address = data.address ? normalizeText(data.address) : "";
 
-  const fullText =
-    `${district} ${province} ${department} ${address}`;
+  const fullText = `${district} ${province} ${department} ${address}`;
 
   if (
     province === "callao" ||
@@ -57,38 +44,23 @@ export function resolveMunicipalityNameFromLocation(data: {
     return "Municipalidad de Santiago de Surco";
   }
 
-  if (
-    district.includes("miraflores") ||
-    fullText.includes("miraflores")
-  ) {
+  if (district.includes("miraflores") || fullText.includes("miraflores")) {
     return "Municipalidad de Miraflores";
   }
 
-  if (
-    district.includes("san isidro") ||
-    fullText.includes("san isidro")
-  ) {
+  if (district.includes("san isidro") || fullText.includes("san isidro")) {
     return "Municipalidad de San Isidro";
   }
 
-  if (
-    district.includes("lince") ||
-    fullText.includes("lince")
-  ) {
+  if (district.includes("lince") || fullText.includes("lince")) {
     return "Municipalidad de Lince";
   }
 
-  if (
-    district.includes("san borja") ||
-    fullText.includes("san borja")
-  ) {
+  if (district.includes("san borja") || fullText.includes("san borja")) {
     return "Municipalidad de San Borja";
   }
 
-  if (
-    district.includes("la molina") ||
-    fullText.includes("la molina")
-  ) {
+  if (district.includes("la molina") || fullText.includes("la molina")) {
     return "Municipalidad de La Molina";
   }
 

@@ -1,14 +1,7 @@
 import { prisma } from "../config/prisma";
 
 export class NotificationRepository {
-
-  async create(data: {
-    userId: string;
-    reportId?: string;
-    title: string;
-    message: string;
-  }) {
-
+  async create(data: { userId: string; reportId?: string; title: string; message: string }) {
     return await prisma.notification.create({
       data,
     });
@@ -22,7 +15,6 @@ export class NotificationRepository {
       message: string;
     }[]
   ) {
-
     if (notifications.length === 0) {
       return;
     }
@@ -33,10 +25,7 @@ export class NotificationRepository {
     });
   }
 
-  async findByUser(
-    userId: string
-  ) {
-
+  async findByUser(userId: string) {
     return await prisma.notification.findMany({
       where: {
         userId,
@@ -60,10 +49,7 @@ export class NotificationRepository {
     });
   }
 
-  async countUnread(
-    userId: string
-  ) {
-
+  async countUnread(userId: string) {
     return await prisma.notification.count({
       where: {
         userId,
@@ -72,10 +58,7 @@ export class NotificationRepository {
     });
   }
 
-  async markAsRead(
-    id: string
-  ) {
-
+  async markAsRead(id: string) {
     return await prisma.notification.update({
       where: {
         id,
@@ -87,10 +70,7 @@ export class NotificationRepository {
     });
   }
 
-  async markAllAsRead(
-    userId: string
-  ) {
-
+  async markAllAsRead(userId: string) {
     return await prisma.notification.updateMany({
       where: {
         userId,

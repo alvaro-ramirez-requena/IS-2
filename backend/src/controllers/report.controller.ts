@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
 import { ReportService } from "../services/report.service";
-import {
-  ReportCategory,
-  Status,
-} from "@prisma/client";
+import { ReportCategory, Status } from "@prisma/client";
 
 const reportService = new ReportService();
 
@@ -48,173 +45,95 @@ export class ReportController {
     }
   }
 
-  static async getByProblemType(
-    req: Request,
-    res: Response
-  ) {
-
+  static async getByProblemType(req: Request, res: Response) {
     try {
+      const problemType = req.params.problemType as string;
 
-      const problemType =
-        req.params.problemType as string;
-
-      const reports =
-        await reportService
-          .getReportsByProblemType(
-            problemType
-          );
+      const reports = await reportService.getReportsByProblemType(problemType);
 
       res.json(reports);
-
     } catch (error: any) {
-
       res.status(400).json({
-
-        message:
-          error.message,
+        message: error.message,
       });
     }
   }
 
-  static async getReportsWithLocation(
-      req: Request,
-      res: Response
-  ) {
-      try {
-          const reports =
-              await reportService.getReportsWithLocation();
+  static async getReportsWithLocation(req: Request, res: Response) {
+    try {
+      const reports = await reportService.getReportsWithLocation();
 
-          return res.json(reports);
-
-      } catch (error: any) {
-          return res.status(500).json({
-              message:
-                  error.message ||
-                  "Error al obtener reportes con ubicación.",
-          });
-      }
+      return res.json(reports);
+    } catch (error: any) {
+      return res.status(500).json({
+        message: error.message || "Error al obtener reportes con ubicación.",
+      });
+    }
   }
 
-  static async getTopProblems(
-    req: Request,
-    res: Response
-  ) {
-
+  static async getTopProblems(req: Request, res: Response) {
     try {
-
-      const topProblems =
-        await reportService
-          .getTopProblems();
+      const topProblems = await reportService.getTopProblems();
 
       res.json(topProblems);
-
     } catch (error: any) {
-
       res.status(400).json({
-
-        message:
-          error.message,
+        message: error.message,
       });
     }
   }
 
-  static async getByStatus(
-    req: Request,
-    res: Response
-  ) {
-
+  static async getByStatus(req: Request, res: Response) {
     try {
+      const status = req.params.status as Status;
 
-      const status =
-        req.params.status as Status;
-
-      const reports =
-        await reportService
-          .getReportsByStatus(
-            status
-          );
+      const reports = await reportService.getReportsByStatus(status);
 
       res.json(reports);
-
     } catch (error: any) {
-
       res.status(400).json({
-
-        message:
-          error.message,
+        message: error.message,
       });
     }
   }
 
-    static async getReportsByStatusForOperator(
-    req: Request,
-    res: Response
-  ) {
+  static async getReportsByStatusForOperator(req: Request, res: Response) {
     try {
-      const operatorId =
-        req.params.operatorId as string;
+      const operatorId = req.params.operatorId as string;
 
-      const status =
-        req.params.status as Status;
+      const status = req.params.status as Status;
 
-      const reports =
-        await reportService
-          .getReportsByStatusForOperator(
-            operatorId,
-            status
-          );
+      const reports = await reportService.getReportsByStatusForOperator(operatorId, status);
 
       res.json(reports);
-
     } catch (error: any) {
       res.status(400).json({
-        message:
-          error.message,
+        message: error.message,
       });
     }
   }
 
-  static async updateStatus(
-    req: Request,
-    res: Response
-  ) {
-
+  static async updateStatus(req: Request, res: Response) {
     try {
+      const id = req.params.id as string;
 
-      const id =
-        req.params.id as string;
+      const { status } = req.body;
 
-      const { status } =
-        req.body;
-
-      const updatedReport =
-        await reportService
-          .updateReportStatus(
-            id,
-            status
-          );
+      const updatedReport = await reportService.updateReportStatus(id, status);
 
       res.json(updatedReport);
-
     } catch (error: any) {
-
       res.status(400).json({
-
-        message:
-          error.message,
+        message: error.message,
       });
     }
   }
-
 
   static async prioritize(req: Request, res: Response) {
     try {
       const id = req.params.id as string;
 
-      const updatedReport = await reportService.prioritizeReport(
-        id,
-        req.body
-      );
+      const updatedReport = await reportService.prioritizeReport(id, req.body);
 
       res.json(updatedReport);
     } catch (error: any) {
@@ -237,7 +156,4 @@ export class ReportController {
       });
     }
   }
-
-  
-
 }

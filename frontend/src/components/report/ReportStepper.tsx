@@ -1,36 +1,25 @@
-const steps = [
-  "Información",
-  "Ubicación",
-  "Evidencia",
-  "Confirmar",
-];
+const steps = ["Información", "Ubicación", "Evidencia", "Confirmar"];
 
 type Props = {
   currentStep: number;
 };
 
-export default function ReportStepper({
-  currentStep,
-}: Props) {
-
+export default function ReportStepper({ currentStep }: Props) {
   return (
-
-    <div className="
+    <div
+      className="
       flex
       items-center
       justify-between
       mb-12
-    ">
-
+    "
+    >
       {steps.map((step, index) => {
-
         const stepNumber = index + 1;
 
-        const active =
-          currentStep === stepNumber;
+        const active = currentStep === stepNumber;
 
         return (
-
           <div
             key={step}
             className="
@@ -39,14 +28,15 @@ export default function ReportStepper({
               flex-1
             "
           >
-
-            <div className="
+            <div
+              className="
               flex
               items-center
               gap-4
-            ">
-
-              <div className={`
+            "
+            >
+              <div
+                className={`
                 w-12
                 h-12
                 rounded-full
@@ -55,44 +45,36 @@ export default function ReportStepper({
                 justify-center
                 font-bold
                 text-lg
-                ${
-                  active
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-600"
-                }
-              `}>
+                ${active ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"}
+              `}
+              >
                 {stepNumber}
               </div>
 
-              <span className={`
+              <span
+                className={`
                 text-lg
                 font-medium
-                ${
-                  active
-                    ? "text-black"
-                    : "text-gray-500"
-                }
-              `}>
+                ${active ? "text-black" : "text-gray-500"}
+              `}
+              >
                 {step}
               </span>
-
             </div>
 
             {index < steps.length - 1 && (
-
-              <div className="
+              <div
+                className="
                 flex-1
                 h-[2px]
                 bg-gray-300
                 mx-4
-              " />
-
+              "
+              />
             )}
-
           </div>
         );
       })}
-
     </div>
   );
 }

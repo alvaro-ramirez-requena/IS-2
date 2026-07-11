@@ -1,211 +1,148 @@
-import {
-    useEffect,
-    useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-    useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-import {
-    statusLabels,
-} from "../utils/reportLabels";
+import { statusLabels } from "../utils/reportLabels";
 
-// US22 - IA (Leonardo Ttito)
-import DelayAlertsPanel
-    from "../components/DelayAlertsPanel";
+import DelayAlertsPanel from "../components/DelayAlertsPanel";
 
-
-
-const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 type Report = {
+  id: string;
 
-    id: string;
+  title: string;
 
-    title: string;
+  problemType: string;
 
-    problemType: string;
+  description: string;
 
-    description: string;
+  status: string;
 
-    status: string;
+  priority?: "ALTO" | "MEDIO" | "BAJO";
 
-    priority?: "ALTO" | "MEDIO" | "BAJO";
+  createdAt: string;
 
-    createdAt: string;
+  evidences: {
+    imageUrl: string;
+  }[];
 
-    evidences: {
+  isAnonymous: boolean;
 
-        imageUrl: string;
+  user?: {
+    firstName: string;
 
-    }[];
-
-    isAnonymous: boolean;
-
-    user?: {
-
-        firstName: string;
-
-        lastName: string;
-    };
+    lastName: string;
+  };
 };
 
-export default function
-    OperatorDashboardPage() {
+export default function OperatorDashboardPage() {
+  const navigate = useNavigate();
 
-    const navigate =
-        useNavigate();
+  const [reports, setReports] = useState<Report[]>([]);
 
-    const [reports, setReports] =
-        useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    const [loading, setLoading] =
-        useState(true);
+  const [selectedStatus, setSelectedStatus] = useState("REGISTERED");
 
-    const [selectedStatus,
-        setSelectedStatus] =
-        useState("REGISTERED");
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        setLoading(true);
 
-    useEffect(() => {
+        const operatorId = localStorage.getItem("userId");
 
-        const fetchReports =
-            async () => {
-
-                try {
-
-                    setLoading(true);
-
-                    const operatorId =
-                        localStorage.getItem("userId");
-
-                    if (!operatorId) {
-                        throw new Error(
-                            "No se encontró el operador en sesión."
-                        );
-                    }
-
-                    const response =
-                        await fetch(
-                            `${API_URL}/api/reports/operator/${operatorId}/status/${selectedStatus}`
-                        );
-
-                    const data =
-                        await response.json();
-
-                    if (!response.ok) {
-
-                        throw new Error(
-                            data?.message ||
-                            "No se pudieron obtener los reportes."
-                        );
-                    }
-
-                    setReports(
-                        Array.isArray(data)
-                            ? data
-                            : []
-                    );
-
-                } catch (error) {
-
-                    console.error(error);
-
-                    setReports([]);
-
-                } finally {
-
-                    setLoading(false);
-                }
-            };
-
-        fetchReports();
-
-    }, [selectedStatus]);
-
-    const logout = () => {
-
-        localStorage.clear();
-
-        navigate("/login");
-    };
-
-    const getRelativeTime = (
-        date: string
-    ) => {
-
-        const now =
-            new Date().getTime();
-
-        const created =
-            new Date(date).getTime();
-
-        const diff =
-            now - created;
-
-        const minutes =
-            Math.floor(
-                diff / 1000 / 60
-            );
-
-        const hours =
-            Math.floor(
-                minutes / 60
-            );
-
-        const days =
-            Math.floor(
-                hours / 24
-            );
-
-        if (minutes < 60) {
-
-            return `Hace ${minutes} min`;
+        if (!operatorId) {
+          throw new Error("No se encontró el operador en sesión.");
         }
 
-        if (hours < 24) {
+        const response = await fetch(
+          `${API_URL}/api/reports/operator/${operatorId}/status/${selectedStatus}`
+        );
 
-            return `Hace ${hours} horas`;
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.message || "No se pudieron obtener los reportes.");
         }
 
-        return `Hace ${days} días`;
+        setReports(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error(error);
+
+        setReports([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const getPriorityColor = (priority?: string) => {
-        if (priority === "ALTO") return "bg-red-100 text-red-800 border-red-200";
-        if (priority === "MEDIO") return "bg-orange-100 text-orange-800 border-orange-200";
-        if (priority === "BAJO") return "bg-green-100 text-green-800 border-green-200";
-        return "bg-gray-100 text-gray-700 border-gray-200";
-    };
+    fetchReports();
+  }, [selectedStatus]);
 
-    if (loading) {
+  const logout = () => {
+    localStorage.clear();
 
-        return (
+    navigate("/login");
+  };
 
-            <div className="
+  const getRelativeTime = (date: string) => {
+    const now = new Date().getTime();
+
+    const created = new Date(date).getTime();
+
+    const diff = now - created;
+
+    const minutes = Math.floor(diff / 1000 / 60);
+
+    const hours = Math.floor(minutes / 60);
+
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 60) {
+      return `Hace ${minutes} min`;
+    }
+
+    if (hours < 24) {
+      return `Hace ${hours} horas`;
+    }
+
+    return `Hace ${days} días`;
+  };
+
+  const getPriorityColor = (priority?: string) => {
+    if (priority === "ALTO") return "bg-red-100 text-red-800 border-red-200";
+    if (priority === "MEDIO") return "bg-orange-100 text-orange-800 border-orange-200";
+    if (priority === "BAJO") return "bg-green-100 text-green-800 border-green-200";
+    return "bg-gray-100 text-gray-700 border-gray-200";
+  };
+
+  if (loading) {
+    return (
+      <div
+        className="
                 min-h-screen
                 flex
                 items-center
                 justify-center
                 text-3xl
                 font-bold
-            ">
-                Cargando...
-            </div>
-        );
-    }
+            "
+      >
+        Cargando...
+      </div>
+    );
+  }
 
-    return (
-
-        <div className="
+  return (
+    <div
+      className="
             min-h-screen
             bg-[#F5F7FA]
             flex
-        ">
-
-            <aside className="
+        "
+    >
+      <aside
+        className="
                 w-[320px]
                 h-screen
                 sticky
@@ -216,36 +153,35 @@ export default function
                 flex
                 flex-col
                 justify-between
-            ">
-
-                <div>
-
-                    <h1 className="
+            "
+      >
+        <div>
+          <h1
+            className="
                         text-4xl
                         font-bold
                         mb-14
-                    ">
-                        reporta
-                        <span className="
+                    "
+          >
+            reporta
+            <span
+              className="
                             text-yellow-400
-                        ">
-                            Ya
-                        </span>
-                    </h1>
+                        "
+            >
+              Ya
+            </span>
+          </h1>
 
-                    <div className="
+          <div
+            className="
                         space-y-4
-                    ">
+                    "
+          >
+            <button
+              onClick={() => setSelectedStatus("REGISTERED")}
 
-                        <button
-
-                            onClick={() =>
-                                setSelectedStatus(
-                                    "REGISTERED"
-                                )
-                            }
-
-                            className="
+              className="
                                 w-full
                                 text-left
                                 p-4
@@ -254,21 +190,14 @@ export default function
                                 hover:bg-white/20
                                 transition
                             "
-                        >
+            >
+              Pendientes
+            </button>
 
-                            Pendientes
+            <button
+              onClick={() => setSelectedStatus("APPROVED")}
 
-                        </button>
-
-                        <button
-
-                            onClick={() =>
-                                setSelectedStatus(
-                                    "APPROVED"
-                                )
-                            }
-
-                            className="
+              className="
                                 w-full
                                 text-left
                                 p-4
@@ -277,20 +206,13 @@ export default function
                                 hover:bg-white/20
                                 transition
                             "
-                        >
+            >
+              Aprobados
+            </button>
+            <button
+              onClick={() => setSelectedStatus("REJECTED")}
 
-                            Aprobados
-
-                        </button>
-                        <button
-
-                            onClick={() =>
-                                setSelectedStatus(
-                                    "REJECTED"
-                                )
-                            }
-
-                            className="
+              className="
                                 w-full
                                 text-left
                                 p-4
@@ -299,21 +221,14 @@ export default function
                                 hover:bg-white/20
                                 transition
                             "
-                        >
+            >
+              Rechazados
+            </button>
 
-                            Rechazados
+            <button
+              onClick={() => setSelectedStatus("PRIORITIZED")}
 
-                        </button>
-
-                        <button
-
-                            onClick={() =>
-                                setSelectedStatus(
-                                    "PRIORITIZED"
-                                )
-                            }
-
-                            className="
+              className="
                                 w-full
                                 text-left
                                 p-4
@@ -322,15 +237,13 @@ export default function
                                 hover:bg-white/20
                                 transition
                             "
-                        >
+            >
+              Priorizados
+            </button>
 
-                            Priorizados
-
-                        </button>
-
-                        <button
-                            onClick={() => setSelectedStatus("ASSIGNED")}
-                            className={`
+            <button
+              onClick={() => setSelectedStatus("ASSIGNED")}
+              className={`
                                 w-full
                                 text-left
                                 rounded-xl
@@ -338,20 +251,18 @@ export default function
                                 py-4
                                 font-semibold
                                 ${
-                                    selectedStatus === "ASSIGNED"
-                                        ? "bg-white/20"
-                                        : "bg-white/10 hover:bg-white/20"
+                                  selectedStatus === "ASSIGNED"
+                                    ? "bg-white/20"
+                                    : "bg-white/10 hover:bg-white/20"
                                 }
                             `}
-                        >
-                            Asignados
-                        </button>
+            >
+              Asignados
+            </button>
 
-                                <button
-                                    onClick={() =>
-                                        navigate("/operator/monitoring")
-                                    }
-                                    className="
+            <button
+              onClick={() => navigate("/operator/monitoring")}
+              className="
                                         w-full
                                         px-4
                                         py-3
@@ -363,15 +274,13 @@ export default function
                                         hover:bg-yellow-300
                                         transition
                                     "
-                                >
-                                    Monitoreo técnico
-                                </button>
+            >
+              Monitoreo técnico
+            </button>
 
-                            <button
-                                onClick={() =>
-                                    navigate("/operator/technician-applications")
-                                }
-                                className="
+            <button
+              onClick={() => navigate("/operator/technician-applications")}
+              className="
                                     w-full
                                     text-left
                                     p-4
@@ -382,38 +291,16 @@ export default function
                                     hover:bg-yellow-300
                                     transition
                                 "
-                            >
-                                Postulaciones de técnicos
-                            </button>
+            >
+              Postulaciones de técnicos
+            </button>
+          </div>
+        </div>
 
-                        <button
-                            onClick={() =>
-                                navigate("/operator/catalog")
-                            }
-                            className="
-                                w-full
-                                px-4
-                                py-3
-                                rounded-xl
-                                bg-yellow-400
-                                text-black
-                                font-bold
-                                text-left
-                                hover:bg-yellow-300
-                                transition
-                            "
-                        >
-                            Catálogo operativo
-                        </button>
-                    </div>
+        <button
+          onClick={logout}
 
-                </div>
-
-                <button
-
-                    onClick={logout}
-
-                    className="
+          className="
                         w-full
                         bg-red-700
                         hover:bg-red-800
@@ -421,76 +308,65 @@ export default function
                         p-4
                         transition
                     "
-                >
+        >
+          Cerrar sesión
+        </button>
+      </aside>
 
-                    Cerrar sesión
-
-                </button>
-
-            </aside>
-
-            <main className="
+      <main
+        className="
                 flex-1
                 p-8
                 overflow-y-auto
-            ">
-
-                <h2 className="
+            "
+      >
+        <h2
+          className="
                     text-5xl
                     font-bold
                     mb-4
-                ">
+                "
+        >
+          Gestión de reportes
+        </h2>
 
-                    Gestión de reportes
-
-                </h2>
-
-                <p className="
+        <p
+          className="
                     text-gray-500
                     text-xl
                     mb-10
-                ">
+                "
+        >
+          Supervisión municipal
+        </p>
 
-                    Supervisión municipal
+        {/* US22 - Alertas por retraso */}
+        <div className="mb-8">
+          <DelayAlertsPanel />
+        </div>
 
-                </p>
-
-                {/* US22 - Alertas por retraso */}
-                <div className="mb-8">
-                    <DelayAlertsPanel />
-                </div>
-
-                {
-                    reports.length === 0
-
-                        ? (
-
-                            <div className="
+        {reports.length === 0 ? (
+          <div
+            className="
                                 bg-white
                                 rounded-3xl
                                 p-10
                                 border
-                            ">
-
-                                No existen reportes.
-
-                            </div>
-                        )
-
-                        : (
-
-                            <div className="
+                            "
+          >
+            No existen reportes.
+          </div>
+        ) : (
+          <div
+            className="
                                 space-y-6
-                            ">
+                            "
+          >
+            {reports.map((report) => (
+              <div
+                key={report.id}
 
-                                {
-                                    reports.map(
-                                        (report) => (
-
-                                            <div
-                                                key={report.id}
-
-                                                className="
+                className="
                                                     bg-white
                                                     rounded-3xl
                                                     border
@@ -501,190 +377,155 @@ export default function
                                                     gap-6
                                                     shadow-sm
                                                 "
-                                            >
+              >
+                <img
+                  src={report.evidences?.[0]?.imageUrl || "https://placehold.co/600x400"}
 
-                                                <img
+                  alt={report.problemType}
 
-                                                    src={
-                                                        report.evidences?.[0]
-                                                            ?.imageUrl ||
-
-                                                        "https://placehold.co/600x400"
-                                                    }
-
-                                                    alt={
-                                                        report.problemType
-                                                    }
-
-                                                    className="
+                  className="
                                                         w-full
                                                         lg:w-[260px]
                                                         h-[220px]
                                                         object-cover
                                                         rounded-2xl
                                                     "
-                                                />
+                />
 
-                                                <div className="
+                <div
+                  className="
                                                     flex-1
-                                                ">
-
-                                                    <div className="
+                                                "
+                >
+                  <div
+                    className="
                                                         flex
                                                         items-start
                                                         justify-between
                                                         gap-4
-                                                    ">
-
-                                                        <div>
-
-                                                            <div>
-                                                                <h3 className="
+                                                    "
+                  >
+                    <div>
+                      <div>
+                        <h3
+                          className="
                                                                     text-3xl
                                                                     font-bold
                                                                     text-[#03152E]
-                                                                ">
-                                                                    {report.title || report.problemType}
-                                                                </h3>
+                                                                "
+                        >
+                          {report.title || report.problemType}
+                        </h3>
 
-                                                                <p className="
+                        <p
+                          className="
                                                                     text-sm
                                                                     text-gray-500
                                                                     mt-1
-                                                                ">
-                                                                    {report.problemType}
-                                                                </p>
-                                                            </div>
+                                                                "
+                        >
+                          {report.problemType}
+                        </p>
+                      </div>
 
-                                                            <div className="
+                      <div
+                        className="
                                                                 mt-2
                                                                 flex
                                                                 items-center
                                                                 gap-3
                                                                 flex-wrap
-                                                            ">
-
-                                                                <p className="
+                                                            "
+                      >
+                        <p
+                          className="
                                                                     font-semibold
                                                                     text-gray-700
-                                                                ">
+                                                                "
+                        >
+                          {report.isAnonymous
+                            ? "Anónimo"
+                            : `${report.user?.firstName || ""} ${report.user?.lastName || ""}`}
+                        </p>
 
-                                                                    {
-                                                                        report.isAnonymous
-
-                                                                            ? "Anónimo"
-
-                                                                            : `${report.user?.firstName || ""} ${report.user?.lastName || ""}`
-                                                                    }
-
-                                                                </p>
-
-                                                                <p className="
+                        <p
+                          className="
                                                                     text-gray-500
-                                                                ">
+                                                                "
+                        >
+                          {getRelativeTime(report.createdAt)}
+                        </p>
+                      </div>
+                    </div>
 
-                                                                    {
-                                                                        getRelativeTime(
-                                                                            report.createdAt
-                                                                        )
-                                                                    }
-
-                                                                </p>
-
-                                                            </div>
-
-                                                        </div>
-
-                                                        <span className="
+                    <span
+                      className="
                                                             bg-yellow-100
                                                             text-yellow-700
                                                             px-4
                                                             py-2
                                                             rounded-full
                                                             font-semibold
-                                                        ">
+                                                        "
+                    >
+                      {statusLabels[report.status]}
+                    </span>
 
-                                                            {
-                                                                statusLabels[
-                                                                report.status
-                                                                ]
-                                                            }
-
-                                                        </span>
-
-                                                        {report.status === "PRIORITIZED" && report.priority && (
-                                                            <span className={`
+                    {report.status === "PRIORITIZED" && report.priority && (
+                      <span
+                        className={`
                                                                 px-4
                                                                 py-2
                                                                 rounded-full
                                                                 font-semibold
                                                                 border
                                                                 ${getPriorityColor(report.priority)}
-                                                            `}>
-                                                                Prioridad: {report.priority}
-                                                            </span>
-                                                        )}
+                                                            `}
+                      >
+                        Prioridad: {report.priority}
+                      </span>
+                    )}
+                  </div>
 
-                                                    </div>
-
-                                                    <div className="
+                  <div
+                    className="
                                                         mt-6
                                                         flex
                                                         items-end
                                                         justify-between
                                                         gap-6
-                                                    ">
-
-                                                        <p className="
+                                                    "
+                  >
+                    <p
+                      className="
                                                             text-lg
                                                             text-gray-600
                                                             line-clamp-3
                                                             flex-1
-                                                        ">
+                                                        "
+                    >
+                      {report.description}
+                    </p>
 
-                                                            {
-                                                                report.description
-                                                            }
+                    <button
+                      onClick={() => navigate(`/operator/report/${report.id}`)}
 
-                                                        </p>
-
-                                                        <button
-
-                                                            onClick={() =>
-
-                                                                navigate(
-
-                                                                    `/operator/report/${report.id}`
-                                                                )
-                                                            }
-
-                                                            className="
+                      className="
                                                                 text-blue-600
                                                                 font-semibold
                                                                 hover:underline
                                                                 whitespace-nowrap
                                                             "
-                                                        >
-
-                                                            Ver detalle →
-
-                                                        </button>
-
-                                                    </div>
-
-                                                </div>
-
-                                            </div>
-                                        )
-                                    )
-                                }
-
-                            </div>
-                        )
-                }
-
-            </main>
-
-        </div>
-    );
+                    >
+                      Ver detalle →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }

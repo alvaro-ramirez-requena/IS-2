@@ -1,61 +1,45 @@
-import {
-  Priority,
-} from "@prisma/client";
+import { Priority } from "@prisma/client";
 
-import {
-  prisma,
-} from "../config/prisma";
+import { prisma } from "../config/prisma";
 
 async function main() {
   const configurations = [
     {
-      priority:
-        Priority.ALTO,
+      priority: Priority.ALTO,
 
-      responseHours:
-        24,
+      responseHours: 24,
     },
     {
-      priority:
-        Priority.MEDIO,
+      priority: Priority.MEDIO,
 
-      responseHours:
-        48,
+      responseHours: 48,
     },
     {
-      priority:
-        Priority.BAJO,
+      priority: Priority.BAJO,
 
-      responseHours:
-        72,
+      responseHours: 72,
     },
   ];
 
   for (const configuration of configurations) {
     await prisma.slaConfiguration.upsert({
       where: {
-        priority:
-          configuration.priority,
+        priority: configuration.priority,
       },
 
       update: {
-        responseHours:
-          configuration.responseHours,
+        responseHours: configuration.responseHours,
       },
 
       create: {
-        priority:
-          configuration.priority,
+        priority: configuration.priority,
 
-        responseHours:
-          configuration.responseHours,
+        responseHours: configuration.responseHours,
       },
     });
   }
 
-  console.log(
-    "Configuraciones SLA cargadas correctamente."
-  );
+  console.log("Configuraciones SLA cargadas correctamente.");
 }
 
 main()

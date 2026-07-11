@@ -18,8 +18,7 @@ const closureReasons = [
   },
   {
     name: "Reporte duplicado",
-    description:
-      "La incidencia corresponde a un reporte previamente registrado o atendido.",
+    description: "La incidencia corresponde a un reporte previamente registrado o atendido.",
   },
   {
     name: "Fuera del alcance municipal",

@@ -1,7 +1,6 @@
 import { ProblemTypeRepository } from "../repositories/problem-type.repository";
 
-const problemTypeRepository =
-  new ProblemTypeRepository();
+const problemTypeRepository = new ProblemTypeRepository();
 
 export class ProblemTypeService {
   async getAll() {
@@ -12,11 +11,7 @@ export class ProblemTypeService {
     return await problemTypeRepository.findActive();
   }
 
-  async create(data: {
-    name: string;
-    description?: string;
-    categoryId: string;
-  }) {
+  async create(data: { name: string; description?: string; categoryId: string }) {
     if (!data.name?.trim()) {
       throw new Error("El nombre del tipo de problema es obligatorio.");
     }

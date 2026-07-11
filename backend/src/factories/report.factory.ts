@@ -1,7 +1,4 @@
-import {
-  Status,
-  ReportCategory,
-} from "@prisma/client";
+import { Status, ReportCategory } from "@prisma/client";
 
 type CreateReportDTO = {
   title: string;
@@ -17,11 +14,7 @@ type CreateReportDTO = {
 };
 
 export class ReportFactory {
-
-  static create(
-    data: CreateReportDTO
-  ) {
-
+  static create(data: CreateReportDTO) {
     return {
       title: data.title,
       category: data.category,

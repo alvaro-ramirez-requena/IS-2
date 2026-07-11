@@ -1,81 +1,50 @@
-import type {
-  CreateReportDTO,
-  ApiReport,
-} from "../types/report.types";
+import type { CreateReportDTO, ApiReport } from "../types/report.types";
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export class ReportService {
-  static async createReport(
-    dto: CreateReportDTO
-  ): Promise<ApiReport> {
+  static async createReport(dto: CreateReportDTO): Promise<ApiReport> {
+    const response = await fetch(`${API_URL}/api/reports`, {
+      method: "POST",
 
-    const response = await fetch(
-      `${API_URL}/api/reports`,
-      {
-        method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
 
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify(dto),
-      }
-    );
+      body: JSON.stringify(dto),
+    });
 
     if (!response.ok) {
-
-      let message =
-        "No se pudo registrar el reporte";
+      let message = "No se pudo registrar el reporte";
 
       try {
         const error = await response.json();
 
         message = error?.message || message;
-
-      } catch { }
+      } catch {}
 
       throw new Error(message);
     }
 
     return response.json();
-
-
   }
 
-  static async uploadImage(
-    image: File
-  ): Promise<string> {
+  static async uploadImage(image: File): Promise<string> {
+    const formData = new FormData();
 
-    const formData =
-      new FormData();
+    formData.append("image", image);
 
-    formData.append(
-      "image",
-      image
-    );
+    const response = await fetch(`${API_URL}/api/uploads`, {
+      method: "POST",
 
-    const response =
-      await fetch(
-        `${API_URL}/api/uploads`,
-        {
-          method: "POST",
-
-          body: formData,
-        }
-      );
+      body: formData,
+    });
 
     if (!response.ok) {
-
-      throw new Error(
-        "No se pudo subir la imagen"
-      );
+      throw new Error("No se pudo subir la imagen");
     }
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
     return data.imageUrl;
   }

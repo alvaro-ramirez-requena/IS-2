@@ -1,25 +1,16 @@
 import crypto from "crypto";
 
-import {
-  TechnicianApplicationRepository,
-} from "../repositories/technician-application.repository";
+import { TechnicianApplicationRepository } from "../repositories/technician-application.repository";
 
-import {
-  EmailService,
-} from "./email.service";
+import { EmailService } from "./email.service";
 
-const technicianApplicationRepository =
-  new TechnicianApplicationRepository();
+const technicianApplicationRepository = new TechnicianApplicationRepository();
 
-const emailService =
-  new EmailService();
+const emailService = new EmailService();
 
-const FRONTEND_URL =
-  process.env.FRONTEND_URL ||
-  "http://localhost:5173";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-const emailRegex =
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export class TechnicianApplicationService {
   async createApplication(data: {
@@ -76,13 +67,9 @@ export class TechnicianApplicationService {
       throw new Error("La experiencia es obligatoria.");
     }
 
-    const email =
-      data.email.trim().toLowerCase();
+    const email = data.email.trim().toLowerCase();
 
-    const existingUser =
-      await technicianApplicationRepository.findUserByEmail(
-        email
-      );
+    const existingUser = await technicianApplicationRepository.findUserByEmail(email);
 
     if (existingUser) {
       throw new Error(
@@ -90,67 +77,46 @@ export class TechnicianApplicationService {
       );
     }
 
-    const existingApplication =
-      await technicianApplicationRepository.findByEmail(
-        email
-      );
+    const existingApplication = await technicianApplicationRepository.findByEmail(email);
 
     if (existingApplication) {
-      throw new Error(
-        "Ya existe una postulación registrada con este correo."
-      );
+      throw new Error("Ya existe una postulación registrada con este correo.");
     }
 
-    const emailVerificationToken =
-      crypto.randomBytes(32).toString("hex");
+    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
 
-    const emailVerificationExpires =
-      new Date(
-        Date.now() + 1000 * 60 * 60 * 24
-      );
+    const emailVerificationExpires = new Date(Date.now() + 1000 * 60 * 60 * 24);
 
-    const application =
-      await technicianApplicationRepository.create({
-        firstName:
-          data.firstName.trim(),
+    const application = await technicianApplicationRepository.create({
+      firstName: data.firstName.trim(),
 
-        lastName:
-          data.lastName.trim(),
+      lastName: data.lastName.trim(),
 
-        email,
+      email,
 
-        phone:
-          data.phone.trim(),
+      phone: data.phone.trim(),
 
-        dni:
-          data.dni.trim(),
+      dni: data.dni.trim(),
 
-        municipalityId:
-          data.municipalityId,
+      municipalityId: data.municipalityId,
 
-        skills:
-          data.skills,
+      skills: data.skills,
 
-        experience:
-          data.experience.trim(),
+      experience: data.experience.trim(),
 
-        emailVerified:
-          false,
+      emailVerified: false,
 
-        emailVerificationToken,
+      emailVerificationToken,
 
-        emailVerificationExpires,
-      });
+      emailVerificationExpires,
+    });
 
-    const verificationUrl =
-      `${FRONTEND_URL}/technician-application/verify-email?token=${emailVerificationToken}`;
+    const verificationUrl = `${FRONTEND_URL}/technician-application/verify-email?token=${emailVerificationToken}`;
 
     await emailService.sendEmail({
-      to:
-        email,
+      to: email,
 
-      subject:
-        "Verifica tu correo para completar tu postulación técnica",
+      subject: "Verifica tu correo para completar tu postulación técnica",
 
       html: `
         <h2>Verificación de postulación técnica</h2>
@@ -172,21 +138,15 @@ export class TechnicianApplicationService {
     return application;
   }
 
-  async verifyEmail(
-    token: string
-  ) {
+  async verifyEmail(token: string) {
     if (!token) {
       throw new Error("Token inválido.");
     }
 
-    const application =
-      await technicianApplicationRepository
-        .findByVerificationToken(token);
+    const application = await technicianApplicationRepository.findByVerificationToken(token);
 
     if (!application) {
-      throw new Error(
-        "Token inválido o postulación no encontrada."
-      );
+      throw new Error("Token inválido o postulación no encontrada.");
     }
 
     if (application.emailVerified) {
@@ -197,13 +157,10 @@ export class TechnicianApplicationService {
       !application.emailVerificationExpires ||
       application.emailVerificationExpires < new Date()
     ) {
-      throw new Error(
-        "El enlace de verificación ha vencido."
-      );
+      throw new Error("El enlace de verificación ha vencido.");
     }
 
-    return await technicianApplicationRepository
-      .verifyEmail(application.id);
+    return await technicianApplicationRepository.verifyEmail(application.id);
   }
 
   async getPendingApplications() {
@@ -214,13 +171,8 @@ export class TechnicianApplicationService {
     return await technicianApplicationRepository.findAll();
   }
 
-  async getPendingApplicationsForOperator(
-    operatorId: string
-  ) {
-    const operator =
-      await technicianApplicationRepository.findOperatorById(
-        operatorId
-      );
+  async getPendingApplicationsForOperator(operatorId: string) {
+    const operator = await technicianApplicationRepository.findOperatorById(operatorId);
 
     if (!operator) {
       throw new Error("Operador no encontrado.");
@@ -234,43 +186,24 @@ export class TechnicianApplicationService {
       throw new Error("El operador no tiene municipalidad asignada.");
     }
 
-    return await technicianApplicationRepository
-      .findPendingByMunicipality(
-        operator.municipalityId
-      );
+    return await technicianApplicationRepository.findPendingByMunicipality(operator.municipalityId);
   }
 
-  async approveApplication(
-    applicationId: string,
-    reviewedById?: string
-  ) {
-    const application =
-      await technicianApplicationRepository
-        .findById(applicationId);
+  async approveApplication(applicationId: string, reviewedById?: string) {
+    const application = await technicianApplicationRepository.findById(applicationId);
 
     if (!application) {
       throw new Error("Postulación no encontrada.");
     }
 
     if (!application.emailVerified) {
-      throw new Error(
-        "No se puede aprobar la postulación porque el correo aún no fue verificado."
-      );
+      throw new Error("No se puede aprobar la postulación porque el correo aún no fue verificado.");
     }
 
-    return await technicianApplicationRepository.approve(
-      applicationId,
-      reviewedById
-    );
+    return await technicianApplicationRepository.approve(applicationId, reviewedById);
   }
 
-  async rejectApplication(
-    applicationId: string,
-    reviewedById?: string
-  ) {
-    return await technicianApplicationRepository.reject(
-      applicationId,
-      reviewedById
-    );
+  async rejectApplication(applicationId: string, reviewedById?: string) {
+    return await technicianApplicationRepository.reject(applicationId, reviewedById);
   }
 }

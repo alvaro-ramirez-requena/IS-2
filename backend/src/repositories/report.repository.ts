@@ -1,11 +1,6 @@
-import { prisma }
-  from "../config/prisma";
+import { prisma } from "../config/prisma";
 
-import {
-  Status,
-  ReportCategory,
-  Priority,
-} from "@prisma/client";
+import { Status, ReportCategory, Priority } from "@prisma/client";
 
 type CreateReportInput = {
   title: string;
@@ -35,20 +30,14 @@ type CreateReportInput = {
   municipalityId?: string;
 };
 
-const normalizeReportCategory = (
-  category?: ReportCategory | string
-): ReportCategory => {
+const normalizeReportCategory = (category?: ReportCategory | string): ReportCategory => {
   if (!category) {
     return ReportCategory.INFRASTRUCTURE;
   }
 
-  const value =
-    String(category).toUpperCase();
+  const value = String(category).toUpperCase();
 
-  if (
-    value === ReportCategory.SECURITY ||
-    value.includes("SEGURIDAD")
-  ) {
+  if (value === ReportCategory.SECURITY || value.includes("SEGURIDAD")) {
     return ReportCategory.SECURITY;
   }
 
@@ -81,102 +70,65 @@ const normalizeReportCategory = (
 };
 
 const getResolvedVisibilityDate = () => {
-  const thirtyDaysAgo =
-    new Date();
+  const thirtyDaysAgo = new Date();
 
-  thirtyDaysAgo.setDate(
-    thirtyDaysAgo.getDate() - 30
-  );
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   return thirtyDaysAgo;
 };
 
 export class ReportRepository {
-
-  async create(
-    data: CreateReportInput
-  ) {
+  async create(data: CreateReportInput) {
     return await prisma.report.create({
       data: {
-        title:
-          data.title,
+        title: data.title,
 
-        category:
-          normalizeReportCategory(
-            data.category
-          ),
+        category: normalizeReportCategory(data.category),
 
-        problemType:
-          data.problemType,
+        problemType: data.problemType,
 
-        categoryId:
-          data.categoryId,
+        categoryId: data.categoryId,
 
-        problemTypeId:
-          data.problemTypeId,
+        problemTypeId: data.problemTypeId,
 
-        description:
-          data.description,
+        description: data.description,
 
-        latitude:
-          data.latitude,
+        latitude: data.latitude,
 
-        longitude:
-          data.longitude,
+        longitude: data.longitude,
 
-        address:
-          data.address,
+        address: data.address,
 
-        isAnonymous:
-          data.isAnonymous ?? false,
+        isAnonymous: data.isAnonymous ?? false,
 
-        userId:
-          data.userId,
+        userId: data.userId,
 
-        status:
-          data.status,
+        status: data.status,
 
-        municipalityId:
-          data.municipalityId,
+        municipalityId: data.municipalityId,
       },
     });
   }
 
   async createEvidences(
-
     reportId: string,
 
     imageUrls: string[]
   ) {
+    return await prisma.reportEvidence.createMany({
+      data: imageUrls.map((imageUrl) => ({
+        reportId,
 
-    return await prisma
-      .reportEvidence
-      .createMany({
-
-        data:
-          imageUrls.map(
-            (imageUrl) => ({
-
-              reportId,
-
-              imageUrl,
-            })
-          ),
-      });
+        imageUrl,
+      })),
+    });
   }
 
-
-
-  async findByUser(
-    userId: string
-  ) {
-
+  async findByUser(userId: string) {
     return await prisma.report.findMany({
-
       where: { userId },
 
       include: {
-
         evidences: true,
 
         user: {
@@ -191,13 +143,9 @@ export class ReportRepository {
         createdAt: "desc",
       },
     });
-
   }
 
-  async findByCategory(
-    category: ReportCategory
-  ) {
-
+  async findByCategory(category: ReportCategory) {
     return await prisma.report.findMany({
       where: { category },
 
@@ -207,52 +155,45 @@ export class ReportRepository {
     });
   }
 
-async findByProblemType(problemType: string) {
-  const resolvedVisibilityDate =
-    getResolvedVisibilityDate();
+  async findByProblemType(problemType: string) {
+    const resolvedVisibilityDate = getResolvedVisibilityDate();
 
-  return await prisma.report.findMany({
-    where: {
-      problemType,
+    return await prisma.report.findMany({
+      where: {
+        problemType,
 
-      OR: [
-        {
-          status: {
-            in: [
-              "APPROVED",
-              "PRIORITIZED",
-              "ASSIGNED",
-              "IN_PROGRESS",
-            ],
+        OR: [
+          {
+            status: {
+              in: ["APPROVED", "PRIORITIZED", "ASSIGNED", "IN_PROGRESS"],
+            },
           },
-        },
-        {
-          status: "RESOLVED",
-          resolvedAt: {
-            gte: resolvedVisibilityDate,
+          {
+            status: "RESOLVED",
+            resolvedAt: {
+              gte: resolvedVisibilityDate,
+            },
           },
-        },
-      ],
-    },
+        ],
+      },
 
-    include: {
-      evidences: true,
-      user: {
-        select: {
-          firstName: true,
-          lastName: true,
+      include: {
+        evidences: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
         },
       },
-    },
 
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-}
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
   async getTopProblems() {
-    const resolvedVisibilityDate =
-      getResolvedVisibilityDate();
+    const resolvedVisibilityDate = getResolvedVisibilityDate();
 
     return await prisma.report.groupBy({
       by: ["problemType"],
@@ -261,12 +202,7 @@ async findByProblemType(problemType: string) {
         OR: [
           {
             status: {
-              in: [
-                "APPROVED",
-                "PRIORITIZED",
-                "ASSIGNED",
-                "IN_PROGRESS",
-              ],
+              in: ["APPROVED", "PRIORITIZED", "ASSIGNED", "IN_PROGRESS"],
             },
           },
           {
@@ -290,92 +226,71 @@ async findByProblemType(problemType: string) {
     });
   }
 
-  async findByStatus(
-    status: Status
-  ) {
+  async findByStatus(status: Status) {
+    return await prisma.report.findMany({
+      where: {
+        status,
+      },
 
-    return await prisma
-      .report
-      .findMany({
+      include: {
+        evidences: true,
 
-        where: {
-          status,
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
         },
+      },
 
-        include: {
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
 
-          evidences: true,
+  async findByStatusAndMunicipality(status: Status, municipalityId: string) {
+    return await prisma.report.findMany({
+      where: {
+        status,
+        municipalityId,
+      },
 
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-            },
+      include: {
+        evidences: true,
+
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
           },
         },
 
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+        municipality: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
   }
 
-  async findByStatusAndMunicipality(
-    status: Status,
-    municipalityId: string
-  ) {
-    return await prisma
-      .report
-      .findMany({
-        where: {
-          status,
-          municipalityId,
-        },
+  async updateStatus(id: string, status: Status) {
+    return await prisma.report.update({
+      where: {
+        id,
+      },
 
-        include: {
-          evidences: true,
+      data: {
+        status,
 
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-            },
-          },
-
-          municipality: true,
-        },
-
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-  }
-
-  async updateStatus(
-    id: string,
-    status: Status
-  ) {
-    return await prisma
-      .report
-      .update({
-        where: {
-          id,
-        },
-
-        data: {
-          status,
-
-          resolvedAt:
-            status === "RESOLVED"
-              ? new Date()
-              : null,
-        },
-      });
+        resolvedAt: status === "RESOLVED" ? new Date() : null,
+      },
+    });
   }
 
   async findReportsWithLocation() {
-    const resolvedVisibilityDate =
-      getResolvedVisibilityDate();
+    const resolvedVisibilityDate = getResolvedVisibilityDate();
 
     return await prisma.report.findMany({
       where: {
@@ -390,12 +305,7 @@ async findByProblemType(problemType: string) {
         OR: [
           {
             status: {
-              in: [
-                "APPROVED",
-                "PRIORITIZED",
-                "ASSIGNED",
-                "IN_PROGRESS",
-              ],
+              in: ["APPROVED", "PRIORITIZED", "ASSIGNED", "IN_PROGRESS"],
             },
           },
           {
@@ -423,16 +333,18 @@ async findByProblemType(problemType: string) {
     });
   }
 
-
-  async updatePrioritization(id: string, data: {
-    impact: string;
-    probability: string;
-    priority: Priority;
-    operationalType: string;
-    targetDate: Date;
-    justification: string;
-    status: Status;
-  }) {
+  async updatePrioritization(
+    id: string,
+    data: {
+      impact: string;
+      probability: string;
+      priority: Priority;
+      operationalType: string;
+      targetDate: Date;
+      justification: string;
+      status: Status;
+    }
+  ) {
     return await prisma.report.update({
       where: { id },
       data: {

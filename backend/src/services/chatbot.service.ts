@@ -4,7 +4,6 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 async function getSystemContext(role: string, page: string, pageId?: string): Promise<string> {
-
   const totalReports = await prisma.report.count();
   const byStatus = await prisma.report.groupBy({
     by: ["status"],
@@ -15,20 +14,21 @@ async function getSystemContext(role: string, page: string, pageId?: string): Pr
     _count: { category: true },
   });
 
-  const statusSummary = byStatus
-    .map((s) => `${s.status}: ${s._count.status}`)
-    .join(", ");
+  const statusSummary = byStatus.map((s) => `${s.status}: ${s._count.status}`).join(", ");
 
-  const categorySummary = byCategory
-    .map((c) => `${c.category}: ${c._count.category}`)
-    .join(", ");
+  const categorySummary = byCategory.map((c) => `${c.category}: ${c._count.category}`).join(", ");
 
   let pageContext = "";
 
   if (page === "my-reports" && pageId) {
     const userReports = await prisma.report.findMany({
       where: { userId: pageId },
-      select: { problemType: true, status: true, createdAt: true, address: true },
+      select: {
+        problemType: true,
+        status: true,
+        createdAt: true,
+        address: true,
+      },
       orderBy: { createdAt: "desc" },
       take: 10,
     });
@@ -41,7 +41,12 @@ ${userReports.map((r) => `- ${r.problemType} (${r.status}) - ${r.address || "sin
   if (page === "operator") {
     const pending = await prisma.report.findMany({
       where: { status: "REGISTERED" },
-      select: { problemType: true, createdAt: true, address: true, category: true },
+      select: {
+        problemType: true,
+        createdAt: true,
+        address: true,
+        category: true,
+      },
       orderBy: { createdAt: "asc" },
       take: 10,
     });
@@ -57,7 +62,10 @@ ${pending.map((r) => `- ${r.problemType} (${r.category}) - ${r.address || "sin d
   if (page === "operator-detail" && pageId) {
     const report = await prisma.report.findUnique({
       where: { id: pageId },
-      include: { user: { select: { firstName: true, lastName: true } }, evidences: true },
+      include: {
+        user: { select: { firstName: true, lastName: true } },
+        evidences: true,
+      },
     });
     if (report) {
       pageContext = `
@@ -88,14 +96,18 @@ El técnico está trabajando en el reporte:
 - Descripción: ${report.description}
 - Ubicación: ${report.address || "sin dirección"}
 - Estado: ${report.status}
-${fw ? `
+${
+  fw
+    ? `
 Trabajo de campo:
 - Llegada: ${fw.arrivedAt ? new Date(fw.arrivedAt).toLocaleTimeString("es-PE") : "No registrada"}
 - Cierre: ${fw.closedAt ? new Date(fw.closedAt).toLocaleTimeString("es-PE") : "No registrado"}
 - Notas: ${fw.notes || "Sin notas"}
 - Fotos antes: ${fw.evidences.filter((e) => e.phase === "BEFORE").length}
 - Fotos después: ${fw.evidences.filter((e) => e.phase === "AFTER").length}
-` : "No se ha iniciado el trabajo de campo aún."}
+`
+    : "No se ha iniciado el trabajo de campo aún."
+}
 `;
     }
   }
@@ -132,9 +144,12 @@ Problemas más reportados: ${topProblems.map((p) => `${p.problemType} (${p._coun
   }
 
   const roleContext: Record<string, string> = {
-    CITIZEN: "Eres un asistente amigable para ciudadanos de ReportaYa. Ayudas a entender cómo reportar problemas, consultar el estado de sus reportes y navegar la plataforma. Responde de forma simple y clara.",
-    OPERATOR: "Eres un asistente para operadores municipales de ReportaYa. Ayudas a gestionar reportes, identificar prioridades, detectar patrones y tomar decisiones de validación. Responde de forma profesional y concisa.",
-    TECHNICIAN: "Eres un asistente para técnicos de campo de ReportaYa. Ayudas a entender qué acciones tomar en cada tipo de problema, cómo registrar el trabajo y qué información documentar. Responde de forma práctica y directa.",
+    CITIZEN:
+      "Eres un asistente amigable para ciudadanos de ReportaYa. Ayudas a entender cómo reportar problemas, consultar el estado de sus reportes y navegar la plataforma. Responde de forma simple y clara.",
+    OPERATOR:
+      "Eres un asistente para operadores municipales de ReportaYa. Ayudas a gestionar reportes, identificar prioridades, detectar patrones y tomar decisiones de validación. Responde de forma profesional y concisa.",
+    TECHNICIAN:
+      "Eres un asistente para técnicos de campo de ReportaYa. Ayudas a entender qué acciones tomar en cada tipo de problema, cómo registrar el trabajo y qué información documentar. Responde de forma práctica y directa.",
   };
 
   return `
@@ -163,14 +178,13 @@ export async function chatWithGemini(
   page: string,
   pageId?: string
 ): Promise<string> {
-
   const systemContext = await getSystemContext(role, page, pageId);
 
   const response = await fetch(GROQ_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${GROQ_API_KEY}`,
+      Authorization: `Bearer ${GROQ_API_KEY}`,
     },
     body: JSON.stringify({
       model: "llama-3.1-8b-instant",

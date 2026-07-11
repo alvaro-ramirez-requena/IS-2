@@ -1,7 +1,6 @@
 import { CategoryRepository } from "../repositories/category.repository";
 
-const categoryRepository =
-  new CategoryRepository();
+const categoryRepository = new CategoryRepository();
 
 export class CategoryService {
   async getAll() {
@@ -12,10 +11,7 @@ export class CategoryService {
     return await categoryRepository.findActive();
   }
 
-  async create(data: {
-    name: string;
-    description?: string;
-  }) {
+  async create(data: { name: string; description?: string }) {
     if (!data.name?.trim()) {
       throw new Error("El nombre de la categoría es obligatorio.");
     }

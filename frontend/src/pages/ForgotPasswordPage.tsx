@@ -10,16 +10,13 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
 
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/auth/forgot-password",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const response = await fetch("http://localhost:3000/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
 
       const data = await response.json();
 
@@ -63,9 +60,7 @@ export default function ForgotPasswordPage() {
             </button>
           </div>
 
-          <h1 className="text-4xl font-bold mb-10 text-[#152238]">
-            Restablecer contraseña
-          </h1>
+          <h1 className="text-4xl font-bold mb-10 text-[#152238]">Restablecer contraseña</h1>
 
           <input
             type="email"
@@ -83,11 +78,7 @@ export default function ForgotPasswordPage() {
             Enviar enlace
           </button>
 
-          {message && (
-            <p className="text-center mt-6">
-              {message}
-            </p>
-          )}
+          {message && <p className="text-center mt-6">{message}</p>}
         </form>
       </div>
     </div>

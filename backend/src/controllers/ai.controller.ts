@@ -8,7 +8,6 @@ import {
 import { prisma } from "../config/prisma";
 
 export class AIController {
-
   // GET /api/ai/analyze/:reportId
   // Clasificación + priorización + duplicados en un solo llamado
   static async analyzeReport(req: Request, res: Response) {

@@ -1,203 +1,149 @@
-import {
-    useEffect,
-    useMemo,
-    useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import {
-    useNavigate,
-    useParams,
-} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-import {
-    statusLabels,
-} from "../utils/reportLabels";
+import { statusLabels } from "../utils/reportLabels";
 
-import {
-    formatTargetDate,
-    getPriorityLabel,
-    getSlaViewState,
-} from "../utils/sla.utils";
+import { formatTargetDate, getPriorityLabel, getSlaViewState } from "../utils/sla.utils";
 
-const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-const technicalClosureResultLabels:
-    Record<string, string> = {
-        RESOLVED_ON_SITE:
-            "Resuelto en sitio",
+const technicalClosureResultLabels: Record<string, string> = {
+  RESOLVED_ON_SITE: "Resuelto en sitio",
 
-        TEMPORARY_MITIGATION:
-            "Mitigación temporal",
+  TEMPORARY_MITIGATION: "Mitigación temporal",
 
-        NO_INCIDENT_FOUND:
-            "No se encontró incidencia",
+  NO_INCIDENT_FOUND: "No se encontró incidencia",
 
-        DUPLICATE:
-            "Reporte duplicado",
+  DUPLICATE: "Reporte duplicado",
 
-        OUT_OF_SCOPE:
-            "Fuera de competencia",
+  OUT_OF_SCOPE: "Fuera de competencia",
 
-        FOLLOW_UP_REQUIRED:
-            "Seguimiento requerido",
-    };
+  FOLLOW_UP_REQUIRED: "Seguimiento requerido",
+};
 
-const technicianStatusStyles:
-    Record<string, string> = {
-        ASSIGNED:
-            "border-amber-200 bg-amber-50 text-amber-700",
+const technicianStatusStyles: Record<string, string> = {
+  ASSIGNED: "border-amber-200 bg-amber-50 text-amber-700",
 
-        IN_TRANSIT:
-            "border-yellow-200 bg-yellow-50 text-yellow-700",
+  IN_TRANSIT: "border-yellow-200 bg-yellow-50 text-yellow-700",
 
-        IN_PROGRESS:
-            "border-emerald-200 bg-emerald-50 text-emerald-700",
+  IN_PROGRESS: "border-emerald-200 bg-emerald-50 text-emerald-700",
 
-        RESOLVED:
-            "border-green-200 bg-green-50 text-green-700",
+  RESOLVED: "border-green-200 bg-green-50 text-green-700",
 
-        PRIORITIZED:
-            "border-slate-200 bg-slate-100 text-slate-700",
-    };
+  PRIORITIZED: "border-slate-200 bg-slate-100 text-slate-700",
+};
 
-const priorityStyles:
-    Record<string, string> = {
-        ALTO:
-            "border-red-200 bg-red-50 text-red-700",
+const priorityStyles: Record<string, string> = {
+  ALTO: "border-red-200 bg-red-50 text-red-700",
 
-        MEDIO:
-            "border-amber-200 bg-amber-50 text-amber-700",
+  MEDIO: "border-amber-200 bg-amber-50 text-amber-700",
 
-        BAJO:
-            "border-emerald-200 bg-emerald-50 text-emerald-700",
-    };
+  BAJO: "border-emerald-200 bg-emerald-50 text-emerald-700",
+};
 
 const progressSteps = [
-    {
-        status: "ASSIGNED",
-        label: "Asignado",
-        description:
-            "El reporte fue asignado al técnico.",
-    },
-    {
-        status: "IN_TRANSIT",
-        label: "En traslado",
-        description:
-            "El técnico se dirige a la ubicación.",
-    },
-    {
-        status: "IN_PROGRESS",
-        label: "En atención",
-        description:
-            "La intervención se encuentra en curso.",
-    },
-    {
-        status: "RESOLVED",
-        label: "Finalizado",
-        description:
-            "Se registró el cierre técnico.",
-    },
+  {
+    status: "ASSIGNED",
+    label: "Asignado",
+    description: "El reporte fue asignado al técnico.",
+  },
+  {
+    status: "IN_TRANSIT",
+    label: "En traslado",
+    description: "El técnico se dirige a la ubicación.",
+  },
+  {
+    status: "IN_PROGRESS",
+    label: "En atención",
+    description: "La intervención se encuentra en curso.",
+  },
+  {
+    status: "RESOLVED",
+    label: "Finalizado",
+    description: "Se registró el cierre técnico.",
+  },
 ];
 
 type Report = {
-    id: string;
-    title?: string;
-    problemType: string;
-    description: string;
-    status: string;
-    priority?: string;
-    targetDate?: string | null;
-    address?: string;
-    latitude?: number;
-    longitude?: number;
+  id: string;
+  title?: string;
+  problemType: string;
+  description: string;
+  status: string;
+  priority?: string;
+  targetDate?: string | null;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+
+  evidences?: {
+    imageUrl: string;
+  }[];
+
+  fieldWork?: {
+    arrivedAt?: string | null;
+    closedAt?: string | null;
+    notes?: string | null;
+    distanceMeters?: number | null;
 
     evidences?: {
-        imageUrl: string;
+      id: string;
+      imageUrl: string;
+      phase: "BEFORE" | "AFTER";
     }[];
+  } | null;
 
-    fieldWork?: {
-        arrivedAt?: string | null;
-        closedAt?: string | null;
-        notes?: string | null;
-        distanceMeters?: number | null;
+  technicalAttentions?: {
+    id: string;
+    actionTaken: string;
+    technicalResult: string;
+    observations?: string | null;
+    createdAt: string;
+  }[];
 
-        evidences?: {
-            id: string;
-            imageUrl: string;
-            phase: "BEFORE" | "AFTER";
-        }[];
-    } | null;
+  technicalClosure?: {
+    id: string;
+    result: string;
+    observations: string;
+    closureEvidenceUrl?: string | null;
+    followUpRequired: boolean;
+    followUpNotes?: string | null;
+    closedAt: string;
 
-    technicalAttentions?: {
-        id: string;
-        actionTaken: string;
-        technicalResult: string;
-        observations?: string | null;
-        createdAt: string;
-    }[];
-
-    technicalClosure?: {
-        id: string;
-        result: string;
-        observations: string;
-        closureEvidenceUrl?: string | null;
-        followUpRequired: boolean;
-        followUpNotes?: string | null;
-        closedAt: string;
-
-        technician?: {
-            firstName: string;
-            lastName: string;
-            email: string;
-        };
-    } | null;
+    technician?: {
+      firstName: string;
+      lastName: string;
+      email: string;
+    };
+  } | null;
 };
 
-function formatDateTime(
-    value?: string | null
-) {
-    if (!value) {
-        return "No registrado";
-    }
+function formatDateTime(value?: string | null) {
+  if (!value) {
+    return "No registrado";
+  }
 
-    return new Intl.DateTimeFormat(
-        "es-PE",
-        {
-            dateStyle: "medium",
-            timeStyle: "short",
-        }
-    ).format(new Date(value));
+  return new Intl.DateTimeFormat("es-PE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
 }
 
-function getStatusStyle(
-    status?: string
-) {
-    return (
-        technicianStatusStyles[status || ""] ||
-        "border-slate-200 bg-slate-100 text-slate-700"
-    );
+function getStatusStyle(status?: string) {
+  return technicianStatusStyles[status || ""] || "border-slate-200 bg-slate-100 text-slate-700";
 }
 
-function getPriorityStyle(
-    priority?: string
-) {
-    return (
-        priorityStyles[
-            priority?.toUpperCase() || ""
-        ] ||
-        "border-slate-200 bg-slate-50 text-slate-700"
-    );
+function getPriorityStyle(priority?: string) {
+  return (
+    priorityStyles[priority?.toUpperCase() || ""] || "border-slate-200 bg-slate-50 text-slate-700"
+  );
 }
 
-function Icon({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    return (
-        <div className="
+function Icon({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="
             flex
             h-10
             w-10
@@ -207,23 +153,25 @@ function Icon({
             rounded-xl
             bg-emerald-50
             text-emerald-700
-        ">
-            {children}
-        </div>
-    );
+        "
+    >
+      {children}
+    </div>
+  );
 }
 
 function InfoCard({
-    label,
-    value,
-    children,
+  label,
+  value,
+  children,
 }: {
-    label: string;
-    value?: string;
-    children?: React.ReactNode;
+  label: string;
+  value?: string;
+  children?: React.ReactNode;
 }) {
-    return (
-        <div className="
+  return (
+    <div
+      className="
             min-w-0
             rounded-2xl
             border
@@ -231,198 +179,158 @@ function InfoCard({
             bg-white
             p-4
             shadow-sm
-        ">
-            <p className="
+        "
+    >
+      <p
+        className="
                 text-xs
                 font-semibold
                 uppercase
                 tracking-wide
                 text-slate-400
-            ">
-                {label}
-            </p>
+            "
+      >
+        {label}
+      </p>
 
-            {children || (
-                <p className="
+      {children || (
+        <p
+          className="
                     mt-2
                     break-words
                     text-sm
                     font-semibold
                     leading-relaxed
                     text-slate-800
-                ">
-                    {value || "No registrado"}
-                </p>
-            )}
-        </div>
-    );
+                "
+        >
+          {value || "No registrado"}
+        </p>
+      )}
+    </div>
+  );
 }
 
 function EmptyImageIcon() {
-    return (
-        <svg
-            aria-hidden="true"
-            className="h-12 w-12"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-        >
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M3 16.5l5-5 4 4 3-3 6 6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
-            />
-            <circle
-                cx="8.5"
-                cy="8.5"
-                r="1.25"
-            />
-        </svg>
-    );
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-12 w-12"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M3 16.5l5-5 4 4 3-3 6 6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
+      />
+      <circle cx="8.5" cy="8.5" r="1.25" />
+    </svg>
+  );
 }
 
 export default function TechnicianReportDetailPage() {
-    const { id } =
-        useParams();
+  const { id } = useParams();
 
-    const navigate =
-        useNavigate();
+  const navigate = useNavigate();
 
-    const [report, setReport] =
-        useState<Report | null>(null);
+  const [report, setReport] = useState<Report | null>(null);
 
-    const [loading, setLoading] =
-        useState(true);
+  const [loading, setLoading] = useState(true);
 
-    const [submitting, setSubmitting] =
-        useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-    const [errorMessage, setErrorMessage] =
-        useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-    const fetchReport =
-        async () => {
-            try {
-                setLoading(true);
-                setErrorMessage("");
+  const fetchReport = async () => {
+    try {
+      setLoading(true);
+      setErrorMessage("");
 
-                const response =
-                    await fetch(
-                        `${API_URL}/api/reports/${id}`
-                    );
+      const response = await fetch(`${API_URL}/api/reports/${id}`);
 
-                const data =
-                    await response.json()
-                        .catch(() => null);
+      const data = await response.json().catch(() => null);
 
-                if (!response.ok) {
-                    throw new Error(
-                        data?.message ||
-                        "No se pudo cargar el trabajo."
-                    );
-                }
+      if (!response.ok) {
+        throw new Error(data?.message || "No se pudo cargar el trabajo.");
+      }
 
-                setReport(data);
+      setReport(data);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo cargar el trabajo.";
 
-            } catch (error) {
-                const message =
-                    error instanceof Error
-                        ? error.message
-                        : "No se pudo cargar el trabajo.";
+      setErrorMessage(message);
+      setReport(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                setErrorMessage(message);
-                setReport(null);
+  useEffect(() => {
+    void fetchReport();
+  }, [id]);
 
-            } finally {
-                setLoading(false);
-            }
-        };
+  const updateStatus = async (status: string) => {
+    if (!report || submitting) {
+      return;
+    }
 
-    useEffect(() => {
-        void fetchReport();
-    }, [id]);
+    try {
+      setSubmitting(true);
+      setErrorMessage("");
 
-    const updateStatus =
-        async (status: string) => {
-            if (!report || submitting) {
-                return;
-            }
+      const response = await fetch(`${API_URL}/api/reports/${report.id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status,
+        }),
+      });
 
-            try {
-                setSubmitting(true);
-                setErrorMessage("");
+      const data = await response.json().catch(() => null);
 
-                const response =
-                    await fetch(
-                        `${API_URL}/api/reports/${report.id}/status`,
-                        {
-                            method: "PATCH",
-                            headers: {
-                                "Content-Type":
-                                    "application/json",
-                            },
-                            body:
-                                JSON.stringify({
-                                    status,
-                                }),
-                        }
-                    );
+      if (!response.ok) {
+        throw new Error(data?.message || "No se pudo actualizar el estado.");
+      }
 
-                const data =
-                    await response.json()
-                        .catch(() => null);
+      await fetchReport();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo actualizar el estado.";
 
-                if (!response.ok) {
-                    throw new Error(
-                        data?.message ||
-                        "No se pudo actualizar el estado."
-                    );
-                }
+      setErrorMessage(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-                await fetchReport();
+  const currentProgressIndex = useMemo(() => {
+    if (!report) {
+      return 0;
+    }
 
-            } catch (error) {
-                const message =
-                    error instanceof Error
-                        ? error.message
-                        : "No se pudo actualizar el estado.";
+    const index = progressSteps.findIndex((step) => step.status === report.status);
 
-                setErrorMessage(message);
+    return index >= 0 ? index : 0;
+  }, [report]);
 
-            } finally {
-                setSubmitting(false);
-            }
-        };
-
-    const currentProgressIndex =
-        useMemo(() => {
-            if (!report) {
-                return 0;
-            }
-
-            const index =
-                progressSteps.findIndex(
-                    (step) =>
-                        step.status === report.status
-                );
-
-            return index >= 0
-                ? index
-                : 0;
-        }, [report]);
-
-    if (loading) {
-        return (
-            <div className="
+  if (loading) {
+    return (
+      <div
+        className="
                 min-h-screen
                 bg-slate-50
                 flex
                 items-center
                 justify-center
                 px-6
-            ">
-                <div className="
+            "
+      >
+        <div
+          className="
                     rounded-3xl
                     border
                     border-slate-200
@@ -431,8 +339,10 @@ export default function TechnicianReportDetailPage() {
                     py-8
                     text-center
                     shadow-sm
-                ">
-                    <div className="
+                "
+        >
+          <div
+            className="
                         mx-auto
                         mb-4
                         h-10
@@ -442,38 +352,46 @@ export default function TechnicianReportDetailPage() {
                         border-4
                         border-emerald-100
                         border-t-emerald-600
-                    " />
+                    "
+          />
 
-                    <p className="
+          <p
+            className="
                         font-semibold
                         text-slate-800
-                    ">
-                        Cargando trabajo asignado
-                    </p>
+                    "
+          >
+            Cargando trabajo asignado
+          </p>
 
-                    <p className="
+          <p
+            className="
                         mt-1
                         text-sm
                         text-slate-500
-                    ">
-                        Estamos recuperando la información del reporte.
-                    </p>
-                </div>
-            </div>
-        );
-    }
+                    "
+          >
+            Estamos recuperando la información del reporte.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-    if (!report) {
-        return (
-            <div className="
+  if (!report) {
+    return (
+      <div
+        className="
                 min-h-screen
                 bg-slate-50
                 flex
                 items-center
                 justify-center
                 px-6
-            ">
-                <div className="
+            "
+      >
+        <div
+          className="
                     w-full
                     max-w-md
                     rounded-3xl
@@ -483,8 +401,10 @@ export default function TechnicianReportDetailPage() {
                     p-8
                     text-center
                     shadow-sm
-                ">
-                    <div className="
+                "
+        >
+          <div
+            className="
                         mx-auto
                         mb-4
                         flex
@@ -495,34 +415,36 @@ export default function TechnicianReportDetailPage() {
                         rounded-full
                         bg-red-50
                         text-2xl
-                    ">
-                        ⚠
-                    </div>
+                    "
+          >
+            ⚠
+          </div>
 
-                    <h1 className="
+          <h1
+            className="
                         text-xl
                         font-bold
                         text-slate-900
-                    ">
-                        No se pudo abrir el trabajo
-                    </h1>
+                    "
+          >
+            No se pudo abrir el trabajo
+          </h1>
 
-                    <p className="
+          <p
+            className="
                         mt-2
                         text-sm
                         leading-relaxed
                         text-slate-500
-                    ">
-                        {errorMessage ||
-                            "El reporte solicitado no existe o ya no está disponible."}
-                    </p>
+                    "
+          >
+            {errorMessage || "El reporte solicitado no existe o ya no está disponible."}
+          </p>
 
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate("/technician")
-                        }
-                        className="
+          <button
+            type="button"
+            onClick={() => navigate("/technician")}
+            className="
                             mt-6
                             w-full
                             rounded-xl
@@ -534,57 +456,44 @@ export default function TechnicianReportDetailPage() {
                             transition
                             hover:bg-emerald-700
                         "
-                    >
-                        Volver al panel técnico
-                    </button>
-                </div>
-            </div>
-        );
-    }
+          >
+            Volver al panel técnico
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-    const primaryImage =
-        report.evidences?.[0]?.imageUrl;
+  const primaryImage = report.evidences?.[0]?.imageUrl;
 
-    const beforeEvidences =
-        report.fieldWork?.evidences
-            ?.filter(
-                (evidence) =>
-                    evidence.phase === "BEFORE"
-            ) || [];
+  const beforeEvidences =
+    report.fieldWork?.evidences?.filter((evidence) => evidence.phase === "BEFORE") || [];
 
-    const afterEvidences =
-        report.fieldWork?.evidences
-            ?.filter(
-                (evidence) =>
-                    evidence.phase === "AFTER"
-            ) || [];
+  const afterEvidences =
+    report.fieldWork?.evidences?.filter((evidence) => evidence.phase === "AFTER") || [];
 
-    const latestAttention =
-        report.technicalAttentions?.[0];
+  const latestAttention = report.technicalAttentions?.[0];
 
-    const slaState =
-        getSlaViewState(
-            report.targetDate,
-            report.status
-        );
+  const slaState = getSlaViewState(report.targetDate, report.status);
 
-    const hasCoordinates =
-        report.latitude !== null &&
-        report.latitude !== undefined &&
-        report.longitude !== null &&
-        report.longitude !== undefined;
+  const hasCoordinates =
+    report.latitude !== null &&
+    report.latitude !== undefined &&
+    report.longitude !== null &&
+    report.longitude !== undefined;
 
-    const reportStatus =
-        statusLabels[report.status] ||
-        report.status;
+  const reportStatus = statusLabels[report.status] || report.status;
 
-    return (
-        <div className="
+  return (
+    <div
+      className="
             min-h-screen
             bg-slate-50
-        ">
-            {/* Barra superior */}
-            <header className="
+        "
+    >
+      {/* Barra superior */}
+      <header
+        className="
                 sticky
                 top-0
                 z-30
@@ -593,8 +502,10 @@ export default function TechnicianReportDetailPage() {
                 bg-[#064E3B]
                 text-white
                 shadow-sm
-            ">
-                <div className="
+            "
+      >
+        <div
+          className="
                     mx-auto
                     flex
                     max-w-7xl
@@ -604,13 +515,12 @@ export default function TechnicianReportDetailPage() {
                     px-5
                     py-4
                     lg:px-8
-                ">
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate("/technician")
-                        }
-                        className="
+                "
+        >
+          <button
+            type="button"
+            onClick={() => navigate("/technician")}
+            className="
                             inline-flex
                             items-center
                             gap-2
@@ -623,34 +533,33 @@ export default function TechnicianReportDetailPage() {
                             transition
                             hover:bg-white/10
                         "
-                    >
-                        <span aria-hidden="true">
-                            ←
-                        </span>
+          >
+            <span aria-hidden="true">←</span>
+            Volver al panel técnico
+          </button>
 
-                        Volver al panel técnico
-                    </button>
-
-                    <div className="
+          <div
+            className="
                         hidden
                         items-center
                         gap-2
                         sm:flex
-                    ">
-                        <span className="
+                    "
+          >
+            <span
+              className="
                             text-xl
                             font-bold
                             tracking-tight
                             text-white
-                        ">
-                            reporta
-                            <span className="text-[#FACC15]">
-                                Ya
-                            </span>
-                        </span>
+                        "
+            >
+              reporta
+              <span className="text-[#FACC15]">Ya</span>
+            </span>
 
-
-                        <span className="
+            <span
+              className="
                             rounded-full
                             bg-emerald-50
                             px-3
@@ -658,25 +567,28 @@ export default function TechnicianReportDetailPage() {
                             text-xs
                             font-semibold
                             text-emerald-700
-                        ">
-                            Módulo técnico
-                        </span>
-                    </div>
-                </div>
-            </header>
+                        "
+            >
+              Módulo técnico
+            </span>
+          </div>
+        </div>
+      </header>
 
-            <main className="
+      <main
+        className="
                 mx-auto
                 max-w-7xl
                 px-5
                 py-8
                 lg:px-8
                 lg:py-10
-            ">
-                {errorMessage && (
-                    <div
-                        role="alert"
-                        className="
+            "
+      >
+        {errorMessage && (
+          <div
+            role="alert"
+            className="
                             mb-6
                             flex
                             items-start
@@ -690,50 +602,53 @@ export default function TechnicianReportDetailPage() {
                             text-sm
                             text-red-700
                         "
-                    >
-                        <span aria-hidden="true">
-                            ⚠
-                        </span>
+          >
+            <span aria-hidden="true">⚠</span>
 
-                        <div className="flex-1">
-                            <p className="font-semibold">
-                                No se pudo completar la operación
-                            </p>
+            <div className="flex-1">
+              <p className="font-semibold">No se pudo completar la operación</p>
 
-                            <p className="mt-1">
-                                {errorMessage}
-                            </p>
-                        </div>
-                    </div>
-                )}
+              <p className="mt-1">{errorMessage}</p>
+            </div>
+          </div>
+        )}
 
-                {/* Encabezado */}
-                <section className="
+        {/* Encabezado */}
+        <section
+          className="
                     overflow-hidden
                     rounded-3xl
                     border
                     border-slate-200
                     bg-white
                     shadow-sm
-                ">
-                    <div className="
+                "
+        >
+          <div
+            className="
                         grid
                         grid-cols-1
                         lg:grid-cols-[1.25fr_0.75fr]
-                    ">
-                        <div className="
+                    "
+          >
+            <div
+              className="
                             p-6
                             sm:p-8
                             lg:p-10
-                        ">
-                            <div className="
+                        "
+            >
+              <div
+                className="
                                 mb-5
                                 flex
                                 flex-wrap
                                 items-center
                                 gap-3
-                            ">
-                                <span className="
+                            "
+              >
+                <span
+                  className="
                                     rounded-full
                                     bg-emerald-50
                                     px-3
@@ -743,26 +658,28 @@ export default function TechnicianReportDetailPage() {
                                     uppercase
                                     tracking-wide
                                     text-emerald-700
-                                ">
-                                    Trabajo asignado
-                                </span>
+                                "
+                >
+                  Trabajo asignado
+                </span>
 
-                                <span className={`
+                <span
+                  className={`
                                     rounded-full
                                     border
                                     px-3
                                     py-1
                                     text-xs
                                     font-semibold
-                                    ${getStatusStyle(
-                                        report.status
-                                    )}
-                                `}>
-                                    {reportStatus}
-                                </span>
-                            </div>
+                                    ${getStatusStyle(report.status)}
+                                `}
+                >
+                  {reportStatus}
+                </span>
+              </div>
 
-                            <h1 className="
+              <h1
+                className="
                                 max-w-3xl
                                 text-3xl
                                 font-bold
@@ -771,86 +688,94 @@ export default function TechnicianReportDetailPage() {
                                 text-slate-950
                                 sm:text-4xl
                                 lg:text-5xl
-                            ">
-                                {report.title ||
-                                    report.problemType}
-                            </h1>
+                            "
+              >
+                {report.title || report.problemType}
+              </h1>
 
-                            <p className="
+              <p
+                className="
                                 mt-3
                                 text-lg
                                 font-medium
                                 text-slate-500
-                            ">
-                                {report.problemType}
-                            </p>
+                            "
+              >
+                {report.problemType}
+              </p>
 
-                            <div className="
+              <div
+                className="
                                 mt-7
                                 flex
                                 flex-wrap
                                 gap-3
-                            ">
-                                <span className={`
+                            "
+              >
+                <span
+                  className={`
                                     rounded-xl
                                     border
                                     px-3
                                     py-2
                                     text-sm
                                     font-semibold
-                                    ${getPriorityStyle(
-                                        report.priority
-                                    )}
-                                `}>
-                                    Prioridad:{" "}
-                                    {getPriorityLabel(
-                                        report.priority
-                                    )}
-                                </span>
+                                    ${getPriorityStyle(report.priority)}
+                                `}
+                >
+                  Prioridad: {getPriorityLabel(report.priority)}
+                </span>
 
-                                <span className={`
+                <span
+                  className={`
                                     rounded-xl
                                     px-3
                                     py-2
                                     text-sm
                                     font-semibold
                                     ${slaState.className}
-                                `}>
-                                    SLA: {slaState.label}
-                                </span>
-                            </div>
-                        </div>
+                                `}
+                >
+                  SLA: {slaState.label}
+                </span>
+              </div>
+            </div>
 
-                        <div className="
+            <div
+              className="
                             relative
                             min-h-[260px]
                             bg-slate-100
                             lg:min-h-full
-                        ">
-                            {primaryImage ? (
-                                <>
-                                    <img
-                                        src={primaryImage}
-                                        alt={`Evidencia del reporte: ${report.problemType}`}
-                                        className="
+                        "
+            >
+              {primaryImage ? (
+                <>
+                  <img
+                    src={primaryImage}
+                    alt={`Evidencia del reporte: ${report.problemType}`}
+                    className="
                                             absolute
                                             inset-0
                                             h-full
                                             w-full
                                             object-cover
                                         "
-                                    />
+                  />
 
-                                    <div className="
+                  <div
+                    className="
                                         absolute
                                         inset-0
                                         bg-gradient-to-t
                                         from-black/40
                                         via-transparent
                                         to-transparent
-                                    " />
+                                    "
+                  />
 
-                                    <span className="
+                  <span
+                    className="
                                         absolute
                                         bottom-4
                                         left-4
@@ -862,12 +787,14 @@ export default function TechnicianReportDetailPage() {
                                         font-semibold
                                         text-white
                                         backdrop-blur
-                                    ">
-                                        Evidencia ciudadana
-                                    </span>
-                                </>
-                            ) : (
-                                <div className="
+                                    "
+                  >
+                    Evidencia ciudadana
+                  </span>
+                </>
+              ) : (
+                <div
+                  className="
                                     flex
                                     h-full
                                     min-h-[260px]
@@ -876,23 +803,27 @@ export default function TechnicianReportDetailPage() {
                                     justify-center
                                     gap-3
                                     text-slate-400
-                                ">
-                                    <EmptyImageIcon />
+                                "
+                >
+                  <EmptyImageIcon />
 
-                                    <p className="
+                  <p
+                    className="
                                         text-sm
                                         font-medium
-                                    ">
-                                        No hay evidencia inicial
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </section>
+                                    "
+                  >
+                    No hay evidencia inicial
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
 
-                {/* Progreso */}
-                <section className="
+        {/* Progreso */}
+        <section
+          className="
                     mt-6
                     rounded-3xl
                     border
@@ -901,69 +832,76 @@ export default function TechnicianReportDetailPage() {
                     p-5
                     shadow-sm
                     sm:p-6
-                ">
-                    <div className="
+                "
+        >
+          <div
+            className="
                         mb-5
                         flex
                         flex-col
                         gap-1
-                    ">
-                        <h2 className="
+                    "
+          >
+            <h2
+              className="
                             text-lg
                             font-bold
                             text-slate-900
-                        ">
-                            Progreso de la atención
-                        </h2>
+                        "
+            >
+              Progreso de la atención
+            </h2>
 
-                        <p className="
+            <p
+              className="
                             text-sm
                             text-slate-500
-                        ">
-                            Consulta en qué etapa se encuentra actualmente el trabajo.
-                        </p>
-                    </div>
+                        "
+            >
+              Consulta en qué etapa se encuentra actualmente el trabajo.
+            </p>
+          </div>
 
-                    <div className="
+          <div
+            className="
                         grid
                         grid-cols-1
                         gap-3
                         sm:grid-cols-2
                         xl:grid-cols-4
-                    ">
-                        {progressSteps.map(
-                            (step, index) => {
-                                const completed =
-                                    index <
-                                    currentProgressIndex;
+                    "
+          >
+            {progressSteps.map((step, index) => {
+              const completed = index < currentProgressIndex;
 
-                                const active =
-                                    index ===
-                                    currentProgressIndex;
+              const active = index === currentProgressIndex;
 
-                                return (
-                                    <div
-                                        key={step.status}
-                                        className={`
+              return (
+                <div
+                  key={step.status}
+                  className={`
                                             rounded-2xl
                                             border
                                             p-4
                                             transition
                                             ${
-                                                active
-                                                    ? "border-emerald-300 bg-emerald-50"
-                                                    : completed
-                                                        ? "border-emerald-200 bg-white"
-                                                        : "border-slate-200 bg-slate-50"
+                                              active
+                                                ? "border-emerald-300 bg-emerald-50"
+                                                : completed
+                                                  ? "border-emerald-200 bg-white"
+                                                  : "border-slate-200 bg-slate-50"
                                             }
                                         `}
-                                    >
-                                        <div className="
+                >
+                  <div
+                    className="
                                             flex
                                             items-start
                                             gap-3
-                                        ">
-                                            <div className={`
+                                        "
+                  >
+                    <div
+                      className={`
                                                 flex
                                                 h-8
                                                 w-8
@@ -974,57 +912,59 @@ export default function TechnicianReportDetailPage() {
                                                 text-xs
                                                 font-bold
                                                 ${
-                                                    active ||
-                                                    completed
-                                                        ? "bg-emerald-600 text-white"
-                                                        : "bg-slate-200 text-slate-500"
+                                                  active || completed
+                                                    ? "bg-emerald-600 text-white"
+                                                    : "bg-slate-200 text-slate-500"
                                                 }
-                                            `}>
-                                                {completed
-                                                    ? "✓"
-                                                    : index + 1}
-                                            </div>
+                                            `}
+                    >
+                      {completed ? "✓" : index + 1}
+                    </div>
 
-                                            <div>
-                                                <p className={`
+                    <div>
+                      <p
+                        className={`
                                                     text-sm
                                                     font-semibold
                                                     ${
-                                                        active
-                                                            ? "text-emerald-800"
-                                                            : "text-slate-800"
+                                                      active ? "text-emerald-800" : "text-slate-800"
                                                     }
-                                                `}>
-                                                    {step.label}
-                                                </p>
+                                                `}
+                      >
+                        {step.label}
+                      </p>
 
-                                                <p className="
+                      <p
+                        className="
                                                     mt-1
                                                     text-xs
                                                     leading-relaxed
                                                     text-slate-500
-                                                ">
-                                                    {step.description}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            }
-                        )}
+                                                "
+                      >
+                        {step.description}
+                      </p>
                     </div>
-                </section>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
-                <div className="
+        <div
+          className="
                     mt-6
                     grid
                     grid-cols-1
                     gap-6
                     xl:grid-cols-[minmax(0,1fr)_360px]
-                ">
-                    {/* Contenido principal */}
-                    <div className="space-y-6">
-                        <section className="
+                "
+        >
+          {/* Contenido principal */}
+          <div className="space-y-6">
+            <section
+              className="
                             rounded-3xl
                             border
                             border-slate-200
@@ -1032,60 +972,70 @@ export default function TechnicianReportDetailPage() {
                             p-6
                             shadow-sm
                             sm:p-8
-                        ">
-                            <div className="
+                        "
+            >
+              <div
+                className="
                                 mb-5
                                 flex
                                 items-start
                                 gap-3
-                            ">
-                                <Icon>
-                                    <svg
-                                        aria-hidden="true"
-                                        className="h-5 w-5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={1.8}
-                                            d="M8 10h8M8 14h5m-8 6l2.5-3H19a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2v3z"
-                                        />
-                                    </svg>
-                                </Icon>
+                            "
+              >
+                <Icon>
+                  <svg
+                    aria-hidden="true"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.8}
+                      d="M8 10h8M8 14h5m-8 6l2.5-3H19a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2v3z"
+                    />
+                  </svg>
+                </Icon>
 
-                                <div>
-                                    <h2 className="
+                <div>
+                  <h2
+                    className="
                                         text-xl
                                         font-bold
                                         text-slate-900
-                                    ">
-                                        Descripción del reporte
-                                    </h2>
+                                    "
+                  >
+                    Descripción del reporte
+                  </h2>
 
-                                    <p className="
+                  <p
+                    className="
                                         mt-1
                                         text-sm
                                         text-slate-500
-                                    ">
-                                        Información registrada por el ciudadano.
-                                    </p>
-                                </div>
-                            </div>
+                                    "
+                  >
+                    Información registrada por el ciudadano.
+                  </p>
+                </div>
+              </div>
 
-                            <p className="
+              <p
+                className="
                                 whitespace-pre-line
                                 text-base
                                 leading-8
                                 text-slate-700
-                            ">
-                                {report.description}
-                            </p>
-                        </section>
+                            "
+              >
+                {report.description}
+              </p>
+            </section>
 
-                        <section className="
+            <section
+              className="
                             rounded-3xl
                             border
                             border-slate-200
@@ -1093,80 +1043,73 @@ export default function TechnicianReportDetailPage() {
                             p-6
                             shadow-sm
                             sm:p-8
-                        ">
-                            <div className="
+                        "
+            >
+              <div
+                className="
                                 mb-5
                                 flex
                                 items-start
                                 gap-3
-                            ">
-                                <Icon>
-                                    <svg
-                                        aria-hidden="true"
-                                        className="h-5 w-5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={1.8}
-                                            d="M12 21s7-5.25 7-12a7 7 0 10-14 0c0 6.75 7 12 7 12z"
-                                        />
-                                        <circle
-                                            cx="12"
-                                            cy="9"
-                                            r="2.25"
-                                        />
-                                    </svg>
-                                </Icon>
+                            "
+              >
+                <Icon>
+                  <svg
+                    aria-hidden="true"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.8}
+                      d="M12 21s7-5.25 7-12a7 7 0 10-14 0c0 6.75 7 12 7 12z"
+                    />
+                    <circle cx="12" cy="9" r="2.25" />
+                  </svg>
+                </Icon>
 
-                                <div>
-                                    <h2 className="
+                <div>
+                  <h2
+                    className="
                                         text-xl
                                         font-bold
                                         text-slate-900
-                                    ">
-                                        Ubicación y datos operativos
-                                    </h2>
+                                    "
+                  >
+                    Ubicación y datos operativos
+                  </h2>
 
-                                    <p className="
+                  <p
+                    className="
                                         mt-1
                                         text-sm
                                         text-slate-500
-                                    ">
-                                        Información útil para realizar la intervención.
-                                    </p>
-                                </div>
-                            </div>
+                                    "
+                  >
+                    Información útil para realizar la intervención.
+                  </p>
+                </div>
+              </div>
 
-                            <div className="
+              <div
+                className="
                                 grid
                                 grid-cols-1
                                 gap-4
                                 sm:grid-cols-2
-                            ">
-                                <InfoCard
-                                    label="Dirección"
-                                    value={
-                                        report.address ||
-                                        "Ubicación no registrada"
-                                    }
-                                />
+                            "
+              >
+                <InfoCard label="Dirección" value={report.address || "Ubicación no registrada"} />
 
-                                <InfoCard
-                                    label="Fecha objetivo"
-                                    value={formatTargetDate(
-                                        report.targetDate
-                                    )}
-                                />
+                <InfoCard label="Fecha objetivo" value={formatTargetDate(report.targetDate)} />
 
-                                <InfoCard
-                                    label="Tiempo de atención"
-                                >
-                                    <div className="mt-2">
-                                        <span className={`
+                <InfoCard label="Tiempo de atención">
+                  <div className="mt-2">
+                    <span
+                      className={`
                                             inline-flex
                                             rounded-full
                                             px-3
@@ -1174,25 +1117,27 @@ export default function TechnicianReportDetailPage() {
                                             text-xs
                                             font-semibold
                                             ${slaState.className}
-                                        `}>
-                                            {slaState.label}
-                                        </span>
+                                        `}
+                    >
+                      {slaState.label}
+                    </span>
 
-                                        <p className="
+                    <p
+                      className="
                                             mt-2
                                             text-xs
                                             leading-relaxed
                                             text-slate-500
-                                        ">
-                                            {slaState.description}
-                                        </p>
-                                    </div>
-                                </InfoCard>
+                                        "
+                    >
+                      {slaState.description}
+                    </p>
+                  </div>
+                </InfoCard>
 
-                                <InfoCard
-                                    label="Prioridad"
-                                >
-                                    <span className={`
+                <InfoCard label="Prioridad">
+                  <span
+                    className={`
                                         mt-2
                                         inline-flex
                                         rounded-full
@@ -1201,68 +1146,49 @@ export default function TechnicianReportDetailPage() {
                                         py-1.5
                                         text-xs
                                         font-semibold
-                                        ${getPriorityStyle(
-                                            report.priority
-                                        )}
-                                    `}>
-                                        {getPriorityLabel(
-                                            report.priority
-                                        )}
-                                    </span>
-                                </InfoCard>
+                                        ${getPriorityStyle(report.priority)}
+                                    `}
+                  >
+                    {getPriorityLabel(report.priority)}
+                  </span>
+                </InfoCard>
 
-                                {report.fieldWork && (
-                                    <>
-                                        <InfoCard
-                                            label="Llegada registrada"
-                                            value={formatDateTime(
-                                                report.fieldWork
-                                                    .arrivedAt
-                                            )}
-                                        />
+                {report.fieldWork && (
+                  <>
+                    <InfoCard
+                      label="Llegada registrada"
+                      value={formatDateTime(report.fieldWork.arrivedAt)}
+                    />
 
-                                        <InfoCard
-                                            label="Cierre de visita"
-                                            value={formatDateTime(
-                                                report.fieldWork
-                                                    .closedAt
-                                            )}
-                                        />
+                    <InfoCard
+                      label="Cierre de visita"
+                      value={formatDateTime(report.fieldWork.closedAt)}
+                    />
 
-                                        <InfoCard
-                                            label="Distancia registrada"
-                                            value={
-                                                report.fieldWork
-                                                    .distanceMeters !==
-                                                    null &&
-                                                report.fieldWork
-                                                    .distanceMeters !==
-                                                    undefined
-                                                    ? `${report.fieldWork.distanceMeters.toFixed(
-                                                        0
-                                                    )} metros`
-                                                    : "No calculada"
-                                            }
-                                        />
+                    <InfoCard
+                      label="Distancia registrada"
+                      value={
+                        report.fieldWork.distanceMeters !== null &&
+                        report.fieldWork.distanceMeters !== undefined
+                          ? `${report.fieldWork.distanceMeters.toFixed(0)} metros`
+                          : "No calculada"
+                      }
+                    />
 
-                                        <InfoCard
-                                            label="Notas de campo"
-                                            value={
-                                                report.fieldWork
-                                                    .notes ||
-                                                "Sin notas registradas"
-                                            }
-                                        />
-                                    </>
-                                )}
-                            </div>
+                    <InfoCard
+                      label="Notas de campo"
+                      value={report.fieldWork.notes || "Sin notas registradas"}
+                    />
+                  </>
+                )}
+              </div>
 
-                            {hasCoordinates && (
-                                <a
-                                    href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="
+              {hasCoordinates && (
+                <a
+                  href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
                                         mt-5
                                         inline-flex
                                         items-center
@@ -1281,19 +1207,17 @@ export default function TechnicianReportDetailPage() {
                                         hover:border-emerald-300
                                         hover:bg-emerald-100
                                     "
-                                >
-                                    <span aria-hidden="true">
-                                        ↗
-                                    </span>
+                >
+                  <span aria-hidden="true">↗</span>
+                  Abrir ubicación en Google Maps
+                </a>
+              )}
+            </section>
 
-                                    Abrir ubicación en Google Maps
-                                </a>
-                            )}
-                        </section>
-
-                        {report.status === "RESOLVED" && (
-                            <>
-                                <section className="
+            {report.status === "RESOLVED" && (
+              <>
+                <section
+                  className="
                                     rounded-3xl
                                     border
                                     border-emerald-200
@@ -1301,14 +1225,18 @@ export default function TechnicianReportDetailPage() {
                                     p-6
                                     shadow-sm
                                     sm:p-8
-                                ">
-                                    <div className="
+                                "
+                >
+                  <div
+                    className="
                                         mb-6
                                         flex
                                         items-start
                                         gap-3
-                                    ">
-                                        <div className="
+                                    "
+                  >
+                    <div
+                      className="
                                             flex
                                             h-11
                                             w-11
@@ -1319,156 +1247,151 @@ export default function TechnicianReportDetailPage() {
                                             bg-emerald-600
                                             text-lg
                                             text-white
-                                        ">
-                                            ✓
-                                        </div>
+                                        "
+                    >
+                      ✓
+                    </div>
 
-                                        <div>
-                                            <h2 className="
+                    <div>
+                      <h2
+                        className="
                                                 text-xl
                                                 font-bold
                                                 text-slate-900
-                                            ">
-                                                Cierre operativo
-                                            </h2>
+                                            "
+                      >
+                        Cierre operativo
+                      </h2>
 
-                                            <p className="
+                      <p
+                        className="
                                                 mt-1
                                                 text-sm
                                                 text-slate-500
-                                            ">
-                                                Resultado final registrado por el técnico.
-                                            </p>
-                                        </div>
-                                    </div>
+                                            "
+                      >
+                        Resultado final registrado por el técnico.
+                      </p>
+                    </div>
+                  </div>
 
-                                    {report.technicalClosure ? (
-                                        <div className="
+                  {report.technicalClosure ? (
+                    <div
+                      className="
                                             grid
                                             grid-cols-1
                                             gap-5
                                             lg:grid-cols-2
-                                        ">
-                                            <div className="
+                                        "
+                    >
+                      <div
+                        className="
                                                 space-y-4
                                                 rounded-2xl
                                                 border
                                                 border-emerald-100
                                                 bg-white
                                                 p-5
-                                            ">
-                                                <InfoCard
-                                                    label="Resultado técnico"
-                                                    value={
-                                                        technicalClosureResultLabels[
-                                                            report
-                                                                .technicalClosure
-                                                                .result
-                                                        ] ||
-                                                        report
-                                                            .technicalClosure
-                                                            .result
-                                                    }
-                                                />
+                                            "
+                      >
+                        <InfoCard
+                          label="Resultado técnico"
+                          value={
+                            technicalClosureResultLabels[report.technicalClosure.result] ||
+                            report.technicalClosure.result
+                          }
+                        />
 
-                                                <InfoCard
-                                                    label="Fecha de cierre"
-                                                    value={formatDateTime(
-                                                        report
-                                                            .technicalClosure
-                                                            .closedAt
-                                                    )}
-                                                />
+                        <InfoCard
+                          label="Fecha de cierre"
+                          value={formatDateTime(report.technicalClosure.closedAt)}
+                        />
 
-                                                {report
-                                                    .technicalClosure
-                                                    .technician && (
-                                                    <InfoCard
-                                                        label="Técnico responsable"
-                                                        value={`${report.technicalClosure.technician.firstName} ${report.technicalClosure.technician.lastName}`}
-                                                    />
-                                                )}
-                                            </div>
+                        {report.technicalClosure.technician && (
+                          <InfoCard
+                            label="Técnico responsable"
+                            value={`${report.technicalClosure.technician.firstName} ${report.technicalClosure.technician.lastName}`}
+                          />
+                        )}
+                      </div>
 
-                                            <div className="
+                      <div
+                        className="
                                                 space-y-4
                                                 rounded-2xl
                                                 border
                                                 border-emerald-100
                                                 bg-white
                                                 p-5
-                                            ">
-                                                <div>
-                                                    <p className="
+                                            "
+                      >
+                        <div>
+                          <p
+                            className="
                                                         text-xs
                                                         font-semibold
                                                         uppercase
                                                         tracking-wide
                                                         text-slate-400
-                                                    ">
-                                                        Observaciones
-                                                    </p>
+                                                    "
+                          >
+                            Observaciones
+                          </p>
 
-                                                    <p className="
+                          <p
+                            className="
                                                         mt-2
                                                         whitespace-pre-line
                                                         text-sm
                                                         leading-7
                                                         text-slate-700
-                                                    ">
-                                                        {
-                                                            report
-                                                                .technicalClosure
-                                                                .observations
-                                                        }
-                                                    </p>
-                                                </div>
+                                                    "
+                          >
+                            {report.technicalClosure.observations}
+                          </p>
+                        </div>
 
-                                                {report
-                                                    .technicalClosure
-                                                    .followUpRequired && (
-                                                    <div className="
+                        {report.technicalClosure.followUpRequired && (
+                          <div
+                            className="
                                                         rounded-xl
                                                         border
                                                         border-amber-200
                                                         bg-amber-50
                                                         p-4
-                                                    ">
-                                                        <p className="
+                                                    "
+                          >
+                            <p
+                              className="
                                                             text-sm
                                                             font-semibold
                                                             text-amber-800
-                                                        ">
-                                                            Requiere seguimiento
-                                                        </p>
+                                                        "
+                            >
+                              Requiere seguimiento
+                            </p>
 
-                                                        <p className="
+                            <p
+                              className="
                                                             mt-1
                                                             text-sm
                                                             leading-relaxed
                                                             text-amber-700
-                                                        ">
-                                                            {report
-                                                                .technicalClosure
-                                                                .followUpNotes ||
-                                                                "No se indicaron notas adicionales."}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
+                                                        "
+                            >
+                              {report.technicalClosure.followUpNotes ||
+                                "No se indicaron notas adicionales."}
+                            </p>
+                          </div>
+                        )}
+                      </div>
 
-                                            {report
-                                                .technicalClosure
-                                                .closureEvidenceUrl && (
-                                                <a
-                                                    href={
-                                                        report
-                                                            .technicalClosure
-                                                            .closureEvidenceUrl
-                                                    }
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="
+                      {report.technicalClosure.closureEvidenceUrl && (
+                        <a
+                          href={report.technicalClosure.closureEvidenceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="
                                                         group
                                                         overflow-hidden
                                                         rounded-2xl
@@ -1477,15 +1400,11 @@ export default function TechnicianReportDetailPage() {
                                                         bg-white
                                                         lg:col-span-2
                                                     "
-                                                >
-                                                    <img
-                                                        src={
-                                                            report
-                                                                .technicalClosure
-                                                                .closureEvidenceUrl
-                                                        }
-                                                        alt="Evidencia de cierre"
-                                                        className="
+                        >
+                          <img
+                            src={report.technicalClosure.closureEvidenceUrl}
+                            alt="Evidencia de cierre"
+                            className="
                                                             h-72
                                                             w-full
                                                             object-cover
@@ -1493,36 +1412,43 @@ export default function TechnicianReportDetailPage() {
                                                             duration-300
                                                             group-hover:scale-[1.01]
                                                         "
-                                                    />
+                          />
 
-                                                    <div className="
+                          <div
+                            className="
                                                         flex
                                                         items-center
                                                         justify-between
                                                         px-5
                                                         py-4
-                                                    ">
-                                                        <span className="
+                                                    "
+                          >
+                            <span
+                              className="
                                                             text-sm
                                                             font-semibold
                                                             text-slate-800
-                                                        ">
-                                                            Evidencia del cierre
-                                                        </span>
+                                                        "
+                            >
+                              Evidencia del cierre
+                            </span>
 
-                                                        <span className="
+                            <span
+                              className="
                                                             text-sm
                                                             font-semibold
                                                             text-emerald-700
-                                                        ">
-                                                            Ver imagen ↗
-                                                        </span>
-                                                    </div>
-                                                </a>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div className="
+                                                        "
+                            >
+                              Ver imagen ↗
+                            </span>
+                          </div>
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      className="
                                             rounded-2xl
                                             border
                                             border-amber-200
@@ -1530,14 +1456,17 @@ export default function TechnicianReportDetailPage() {
                                             p-5
                                             text-sm
                                             text-amber-700
-                                        ">
-                                            El reporte está resuelto, pero todavía no se encontró un cierre técnico registrado.
-                                        </div>
-                                    )}
-                                </section>
+                                        "
+                    >
+                      El reporte está resuelto, pero todavía no se encontró un cierre técnico
+                      registrado.
+                    </div>
+                  )}
+                </section>
 
-                                {latestAttention && (
-                                    <section className="
+                {latestAttention && (
+                  <section
+                    className="
                                         rounded-3xl
                                         border
                                         border-slate-200
@@ -1545,80 +1474,83 @@ export default function TechnicianReportDetailPage() {
                                         p-6
                                         shadow-sm
                                         sm:p-8
-                                    ">
-                                        <h2 className="
+                                    "
+                  >
+                    <h2
+                      className="
                                             text-xl
                                             font-bold
                                             text-slate-900
-                                        ">
-                                            Atención técnica previa
-                                        </h2>
+                                        "
+                    >
+                      Atención técnica previa
+                    </h2>
 
-                                        <p className="
+                    <p
+                      className="
                                             mt-1
                                             text-sm
                                             text-slate-500
-                                        ">
-                                            Registro preliminar realizado antes del cierre.
-                                        </p>
+                                        "
+                    >
+                      Registro preliminar realizado antes del cierre.
+                    </p>
 
-                                        <div className="
+                    <div
+                      className="
                                             mt-5
                                             grid
                                             grid-cols-1
                                             gap-4
                                             sm:grid-cols-2
-                                        ">
-                                            <InfoCard
-                                                label="Acción realizada"
-                                                value={
-                                                    latestAttention
-                                                        .actionTaken
-                                                }
-                                            />
+                                        "
+                    >
+                      <InfoCard label="Acción realizada" value={latestAttention.actionTaken} />
 
-                                            <InfoCard
-                                                label="Resultado preliminar"
-                                                value={
-                                                    latestAttention
-                                                        .technicalResult
-                                                }
-                                            />
+                      <InfoCard
+                        label="Resultado preliminar"
+                        value={latestAttention.technicalResult}
+                      />
 
-                                            <div className="
+                      <div
+                        className="
                                                 rounded-2xl
                                                 border
                                                 border-slate-200
                                                 bg-white
                                                 p-4
                                                 sm:col-span-2
-                                            ">
-                                                <p className="
+                                            "
+                      >
+                        <p
+                          className="
                                                     text-xs
                                                     font-semibold
                                                     uppercase
                                                     tracking-wide
                                                     text-slate-400
-                                                ">
-                                                    Observaciones
-                                                </p>
+                                                "
+                        >
+                          Observaciones
+                        </p>
 
-                                                <p className="
+                        <p
+                          className="
                                                     mt-2
                                                     text-sm
                                                     leading-7
                                                     text-slate-700
-                                                ">
-                                                    {latestAttention
-                                                        .observations ||
-                                                        "Sin observaciones registradas."}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </section>
-                                )}
+                                                "
+                        >
+                          {latestAttention.observations || "Sin observaciones registradas."}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                )}
 
-                                <section className="
+                <section
+                  className="
                                     rounded-3xl
                                     border
                                     border-slate-200
@@ -1626,188 +1558,186 @@ export default function TechnicianReportDetailPage() {
                                     p-6
                                     shadow-sm
                                     sm:p-8
-                                ">
-                                    <h2 className="
+                                "
+                >
+                  <h2
+                    className="
                                         text-xl
                                         font-bold
                                         text-slate-900
-                                    ">
-                                        Evidencias de campo
-                                    </h2>
+                                    "
+                  >
+                    Evidencias de campo
+                  </h2>
 
-                                    <p className="
+                  <p
+                    className="
                                         mt-1
                                         text-sm
                                         text-slate-500
-                                    ">
-                                        Comparación del estado antes y después de la intervención.
-                                    </p>
+                                    "
+                  >
+                    Comparación del estado antes y después de la intervención.
+                  </p>
 
-                                    <div className="
+                  <div
+                    className="
                                         mt-6
                                         grid
                                         grid-cols-1
                                         gap-6
                                         lg:grid-cols-2
-                                    ">
-                                        <EvidenceGallery
-                                            title="Antes de la intervención"
-                                            evidences={
-                                                beforeEvidences
-                                            }
-                                            emptyMessage="No se registraron fotografías antes de la intervención."
-                                        />
+                                    "
+                  >
+                    <EvidenceGallery
+                      title="Antes de la intervención"
+                      evidences={beforeEvidences}
+                      emptyMessage="No se registraron fotografías antes de la intervención."
+                    />
 
-                                        <EvidenceGallery
-                                            title="Después de la intervención"
-                                            evidences={
-                                                afterEvidences
-                                            }
-                                            emptyMessage="No se registraron fotografías después de la intervención."
-                                        />
-                                    </div>
-                                </section>
-                            </>
-                        )}
-                    </div>
+                    <EvidenceGallery
+                      title="Después de la intervención"
+                      evidences={afterEvidences}
+                      emptyMessage="No se registraron fotografías después de la intervención."
+                    />
+                  </div>
+                </section>
+              </>
+            )}
+          </div>
 
-                    {/* Panel de acciones */}
-                    <aside className="
+          {/* Panel de acciones */}
+          <aside
+            className="
                         xl:sticky
                         xl:top-24
                         xl:self-start
-                    ">
-                        <div className="
+                    "
+          >
+            <div
+              className="
                             overflow-hidden
                             rounded-3xl
                             border
                             border-slate-200
                             bg-white
                             shadow-sm
-                        ">
-                            <div className="
+                        "
+            >
+              <div
+                className="
                                 bg-[#064E3B]
                                 px-6
                                 py-5
                                 text-white
-                            ">
-                                <p className="
+                            "
+              >
+                <p
+                  className="
                                     text-xs
                                     font-semibold
                                     uppercase
                                     tracking-widest
                                     text-emerald-200
-                                ">
-                                    Gestión del trabajo
-                                </p>
+                                "
+                >
+                  Gestión del trabajo
+                </p>
 
-                                <h2 className="
+                <h2
+                  className="
                                     mt-1
                                     text-xl
                                     font-bold
-                                ">
-                                    Acciones disponibles
-                                </h2>
+                                "
+                >
+                  Acciones disponibles
+                </h2>
 
-                                <p className="
+                <p
+                  className="
                                     mt-2
                                     text-sm
                                     leading-relaxed
                                     text-white/70
-                                ">
-                                    Continúa con la siguiente actividad según el estado del reporte.
-                                </p>
-                            </div>
+                                "
+                >
+                  Continúa con la siguiente actividad según el estado del reporte.
+                </p>
+              </div>
 
-                            <div className="
+              <div
+                className="
                                 space-y-4
                                 p-5
-                            ">
-                                {report.status ===
-                                    "ASSIGNED" && (
-                                    <ActionButton
-                                        title="Iniciar traslado"
-                                        description="Confirma que te diriges hacia la ubicación del reporte."
-                                        icon="→"
-                                        disabled={submitting}
-                                        onClick={() =>
-                                            void updateStatus(
-                                                "IN_TRANSIT"
-                                            )
-                                        }
-                                    />
-                                )}
+                            "
+              >
+                {report.status === "ASSIGNED" && (
+                  <ActionButton
+                    title="Iniciar traslado"
+                    description="Confirma que te diriges hacia la ubicación del reporte."
+                    icon="→"
+                    disabled={submitting}
+                    onClick={() => void updateStatus("IN_TRANSIT")}
+                  />
+                )}
 
-                                {report.status ===
-                                    "IN_TRANSIT" && (
-                                    <ActionButton
-                                        title="Iniciar atención"
-                                        description="Indica que ya llegaste o que la intervención está comenzando."
-                                        icon="✓"
-                                        disabled={submitting}
-                                        onClick={() =>
-                                            void updateStatus(
-                                                "IN_PROGRESS"
-                                            )
-                                        }
-                                    />
-                                )}
+                {report.status === "IN_TRANSIT" && (
+                  <ActionButton
+                    title="Iniciar atención"
+                    description="Indica que ya llegaste o que la intervención está comenzando."
+                    icon="✓"
+                    disabled={submitting}
+                    onClick={() => void updateStatus("IN_PROGRESS")}
+                  />
+                )}
 
-                                {report.status ===
-                                    "IN_PROGRESS" && (
-                                    <>
-                                        <ActionButton
-                                            title="Atender reporte"
-                                            description="Registra la verificación, los datos encontrados y la acción realizada."
-                                            icon="1"
-                                            onClick={() =>
-                                                navigate(
-                                                    `/technician/reports/${report.id}/attend`
-                                                )
-                                            }
-                                        />
+                {report.status === "IN_PROGRESS" && (
+                  <>
+                    <ActionButton
+                      title="Atender reporte"
+                      description="Registra la verificación, los datos encontrados y la acción realizada."
+                      icon="1"
+                      onClick={() => navigate(`/technician/reports/${report.id}/attend`)}
+                    />
 
-                                        <ActionButton
-                                            title="Evidencia y trazabilidad"
-                                            description="Registra llegada, ubicación y fotografías de campo."
-                                            icon="2"
-                                            variant="secondary"
-                                            onClick={() =>
-                                                navigate(
-                                                    `/technician/reports/${report.id}/fieldwork`
-                                                )
-                                            }
-                                        />
+                    <ActionButton
+                      title="Evidencia y trazabilidad"
+                      description="Registra llegada, ubicación y fotografías de campo."
+                      icon="2"
+                      variant="secondary"
+                      onClick={() => navigate(`/technician/reports/${report.id}/fieldwork`)}
+                    />
 
-                                        <ActionButton
-                                            title="Cerrar intervención"
-                                            description="Registra el resultado técnico final y resuelve el reporte."
-                                            icon="3"
-                                            variant="dark"
-                                            onClick={() =>
-                                                navigate(
-                                                    `/technician/reports/${report.id}/closure`
-                                                )
-                                            }
-                                        />
-                                    </>
-                                )}
+                    <ActionButton
+                      title="Cerrar intervención"
+                      description="Registra el resultado técnico final y resuelve el reporte."
+                      icon="3"
+                      variant="dark"
+                      onClick={() => navigate(`/technician/reports/${report.id}/closure`)}
+                    />
+                  </>
+                )}
 
-                                {report.status ===
-                                    "RESOLVED" && (
-                                    <div className="
+                {report.status === "RESOLVED" && (
+                  <div
+                    className="
                                         rounded-2xl
                                         border
                                         border-emerald-200
                                         bg-emerald-50
                                         p-5
-                                    ">
-                                        <div className="
+                                    "
+                  >
+                    <div
+                      className="
                                             flex
                                             items-center
                                             gap-3
-                                        ">
-                                            <span className="
+                                        "
+                    >
+                      <span
+                        className="
                                                 flex
                                                 h-9
                                                 w-9
@@ -1817,67 +1747,73 @@ export default function TechnicianReportDetailPage() {
                                                 bg-emerald-600
                                                 font-bold
                                                 text-white
-                                            ">
-                                                ✓
-                                            </span>
+                                            "
+                      >
+                        ✓
+                      </span>
 
-                                            <div>
-                                                <p className="
+                      <div>
+                        <p
+                          className="
                                                     text-sm
                                                     font-bold
                                                     text-emerald-800
-                                                ">
-                                                    Trabajo finalizado
-                                                </p>
+                                                "
+                        >
+                          Trabajo finalizado
+                        </p>
 
-                                                <p className="
+                        <p
+                          className="
                                                     mt-1
                                                     text-xs
                                                     leading-relaxed
                                                     text-emerald-700
-                                                ">
-                                                    La intervención ya cuenta con estado resuelto.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                                                "
+                        >
+                          La intervención ya cuenta con estado resuelto.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                                {![
-                                    "ASSIGNED",
-                                    "IN_TRANSIT",
-                                    "IN_PROGRESS",
-                                    "RESOLVED",
-                                ].includes(report.status) && (
-                                    <div className="
+                {!["ASSIGNED", "IN_TRANSIT", "IN_PROGRESS", "RESOLVED"].includes(report.status) && (
+                  <div
+                    className="
                                         rounded-2xl
                                         border
                                         border-slate-200
                                         bg-slate-50
                                         p-5
-                                    ">
-                                        <p className="
+                                    "
+                  >
+                    <p
+                      className="
                                             text-sm
                                             font-semibold
                                             text-slate-700
-                                        ">
-                                            Sin acciones disponibles
-                                        </p>
+                                        "
+                    >
+                      Sin acciones disponibles
+                    </p>
 
-                                        <p className="
+                    <p
+                      className="
                                             mt-1
                                             text-xs
                                             leading-relaxed
                                             text-slate-500
-                                        ">
-                                            El estado actual del reporte no permite realizar acciones técnicas.
-                                        </p>
-                                    </div>
-                                )}
+                                        "
+                    >
+                      El estado actual del reporte no permite realizar acciones técnicas.
+                    </p>
+                  </div>
+                )}
 
-                                {submitting && (
-                                    <div
-                                        className="
+                {submitting && (
+                  <div
+                    className="
                                             flex
                                             items-center
                                             gap-3
@@ -1888,9 +1824,10 @@ export default function TechnicianReportDetailPage() {
                                             text-sm
                                             text-slate-600
                                         "
-                                        role="status"
-                                    >
-                                        <div className="
+                    role="status"
+                  >
+                    <div
+                      className="
                                             h-4
                                             w-4
                                             animate-spin
@@ -1898,55 +1835,49 @@ export default function TechnicianReportDetailPage() {
                                             border-2
                                             border-slate-200
                                             border-t-emerald-600
-                                        " />
-
-                                        Actualizando estado...
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </aside>
-                </div>
-            </main>
+                                        "
+                    />
+                    Actualizando estado...
+                  </div>
+                )}
+              </div>
+            </div>
+          </aside>
         </div>
-    );
+      </main>
+    </div>
+  );
 }
 
 function ActionButton({
-    title,
-    description,
-    icon,
-    onClick,
-    disabled = false,
-    variant = "primary",
+  title,
+  description,
+  icon,
+  onClick,
+  disabled = false,
+  variant = "primary",
 }: {
-    title: string;
-    description: string;
-    icon: string;
-    onClick: () => void;
-    disabled?: boolean;
-    variant?:
-        | "primary"
-        | "secondary"
-        | "dark";
+  title: string;
+  description: string;
+  icon: string;
+  onClick: () => void;
+  disabled?: boolean;
+  variant?: "primary" | "secondary" | "dark";
 }) {
-    const styles = {
-        primary:
-            "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700",
+  const styles = {
+    primary: "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700",
 
-        secondary:
-            "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100",
+    secondary: "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100",
 
-        dark:
-            "border-[#064E3B] bg-[#064E3B] text-white hover:bg-[#033D2E]",
-    };
+    dark: "border-[#064E3B] bg-[#064E3B] text-white hover:bg-[#033D2E]",
+  };
 
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            disabled={disabled}
-            className={`
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`
                 w-full
                 rounded-2xl
                 border
@@ -1957,13 +1888,16 @@ function ActionButton({
                 disabled:opacity-50
                 ${styles[variant]}
             `}
-        >
-            <div className="
+    >
+      <div
+        className="
                 flex
                 items-start
                 gap-3
-            ">
-                <span className="
+            "
+      >
+        <span
+          className="
                     flex
                     h-9
                     w-9
@@ -1974,67 +1908,79 @@ function ActionButton({
                     bg-white/15
                     text-sm
                     font-bold
-                ">
-                    {icon}
-                </span>
+                "
+        >
+          {icon}
+        </span>
 
-                <div>
-                    <p className="
+        <div>
+          <p
+            className="
                         text-sm
                         font-bold
-                    ">
-                        {title}
-                    </p>
+                    "
+          >
+            {title}
+          </p>
 
-                    <p className="
+          <p
+            className="
                         mt-1
                         text-xs
                         leading-relaxed
                         opacity-80
-                    ">
-                        {description}
-                    </p>
-                </div>
-            </div>
-        </button>
-    );
+                    "
+          >
+            {description}
+          </p>
+        </div>
+      </div>
+    </button>
+  );
 }
 
 function EvidenceGallery({
-    title,
-    evidences,
-    emptyMessage,
+  title,
+  evidences,
+  emptyMessage,
 }: {
-    title: string;
-    evidences: {
-        id: string;
-        imageUrl: string;
-    }[];
-    emptyMessage: string;
+  title: string;
+  evidences: {
+    id: string;
+    imageUrl: string;
+  }[];
+  emptyMessage: string;
 }) {
-    return (
-        <div className="
+  return (
+    <div
+      className="
             rounded-2xl
             border
             border-slate-200
             bg-slate-50
             p-4
-        ">
-            <div className="
+        "
+    >
+      <div
+        className="
                 mb-4
                 flex
                 items-center
                 justify-between
                 gap-3
-            ">
-                <p className="
+            "
+      >
+        <p
+          className="
                     font-semibold
                     text-slate-800
-                ">
-                    {title}
-                </p>
+                "
+        >
+          {title}
+        </p>
 
-                <span className="
+        <span
+          className="
                     rounded-full
                     bg-white
                     px-2.5
@@ -2042,28 +1988,28 @@ function EvidenceGallery({
                     text-xs
                     font-semibold
                     text-slate-500
-                ">
-                    {evidences.length} foto
-                    {evidences.length === 1
-                        ? ""
-                        : "s"}
-                </span>
-            </div>
+                "
+        >
+          {evidences.length} foto
+          {evidences.length === 1 ? "" : "s"}
+        </span>
+      </div>
 
-            {evidences.length > 0 ? (
-                <div className="
+      {evidences.length > 0 ? (
+        <div
+          className="
                     grid
                     grid-cols-2
                     gap-3
-                ">
-                    {evidences.map(
-                        (evidence) => (
-                            <a
-                                key={evidence.id}
-                                href={evidence.imageUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="
+                "
+        >
+          {evidences.map((evidence) => (
+            <a
+              key={evidence.id}
+              href={evidence.imageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="
                                     group
                                     overflow-hidden
                                     rounded-xl
@@ -2071,11 +2017,11 @@ function EvidenceGallery({
                                     border-slate-200
                                     bg-white
                                 "
-                            >
-                                <img
-                                    src={evidence.imageUrl}
-                                    alt={title}
-                                    className="
+            >
+              <img
+                src={evidence.imageUrl}
+                alt={title}
+                className="
                                         h-32
                                         w-full
                                         object-cover
@@ -2083,13 +2029,13 @@ function EvidenceGallery({
                                         duration-300
                                         group-hover:scale-105
                                     "
-                                />
-                            </a>
-                        )
-                    )}
-                </div>
-            ) : (
-                <div className="
+              />
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div
+          className="
                     flex
                     min-h-36
                     flex-col
@@ -2102,23 +2048,28 @@ function EvidenceGallery({
                     bg-white
                     px-5
                     text-center
-                ">
-                    <div className="
+                "
+        >
+          <div
+            className="
                         text-slate-300
-                    ">
-                        <EmptyImageIcon />
-                    </div>
+                    "
+          >
+            <EmptyImageIcon />
+          </div>
 
-                    <p className="
+          <p
+            className="
                         mt-2
                         text-xs
                         leading-relaxed
                         text-slate-500
-                    ">
-                        {emptyMessage}
-                    </p>
-                </div>
-            )}
+                    "
+          >
+            {emptyMessage}
+          </p>
         </div>
-    );
+      )}
+    </div>
+  );
 }

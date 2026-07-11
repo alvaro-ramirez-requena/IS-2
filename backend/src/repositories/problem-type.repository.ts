@@ -29,11 +29,7 @@ export class ProblemTypeRepository {
     });
   }
 
-  async create(data: {
-    name: string;
-    description?: string;
-    categoryId: string;
-  }) {
+  async create(data: { name: string; description?: string; categoryId: string }) {
     return await prisma.problemType.create({
       data: {
         name: data.name,

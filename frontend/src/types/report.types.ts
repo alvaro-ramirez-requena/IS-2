@@ -1,5 +1,4 @@
 export type ReportFormValues = {
-
   title: string;
 
   category: string;
@@ -21,12 +20,11 @@ export type ReportFormValues = {
   imageUrls: string[];
 
   categoryId?: string;
-  
+
   problemTypeId?: string;
 };
 
 export type CreateReportDTO = {
-
   title: string;
 
   category: string;
@@ -49,7 +47,6 @@ export type CreateReportDTO = {
 };
 
 export type ApiReport = {
-
   id: string;
 
   title: string;
@@ -81,19 +78,18 @@ export type ApiReport = {
   justification?: string;
 
   status:
-  | "REGISTERED"
-  | "VALIDATING"
-  | "APPROVED"
-  | "REJECTED"
-  | "PRIORITIZED"
-  | "ASSIGNED"
-  | "IN_PROGRESS"
-  | "RESOLVED";
+    | "REGISTERED"
+    | "VALIDATING"
+    | "APPROVED"
+    | "REJECTED"
+    | "PRIORITIZED"
+    | "ASSIGNED"
+    | "IN_PROGRESS"
+    | "RESOLVED";
 
   userId: string;
 
   user?: {
-
     firstName: string;
 
     lastName: string;

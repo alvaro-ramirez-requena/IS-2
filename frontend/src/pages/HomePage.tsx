@@ -1,64 +1,56 @@
-import Navbar
-    from "../components/home/Navbar";
+import Navbar from "../components/home/Navbar";
 
-import ProblemBanner
-    from "../components/home/ProblemBanner";
+import ProblemBanner from "../components/home/ProblemBanner";
 
-import CategorySection
-    from "../components/home/CategorySection";
+import CategorySection from "../components/home/CategorySection";
 
-import {
-    useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
+  const navigate = useNavigate();
 
-    const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
-    const token =
-        localStorage.getItem("token");
+  const firstName = localStorage.getItem("firstName");
 
-    const firstName =
-        localStorage.getItem("firstName");
+  const handleCreateReport = () => {
+    if (!token) {
+      alert("Debes iniciar sesión para crear un reporte.");
+      return;
+    }
 
-    const handleCreateReport = () => {
+    navigate("/reports/create");
+  };
 
-        if (!token) {
-            alert("Debes iniciar sesión para crear un reporte.");
-            return;
-        }
+  const handleMyReports = () => {
+    if (!token) {
+      alert("Debes iniciar sesión para ver tus reportes.");
+      return;
+    }
 
-        navigate("/reports/create");
-    };
+    navigate("/my-reports");
+  };
 
-    const handleMyReports = () => {
-
-        if (!token) {
-            alert("Debes iniciar sesión para ver tus reportes.");
-            return;
-        }
-
-        navigate("/my-reports");
-    };
-
-    return (
-
-        <div className="
+  return (
+    <div
+      className="
             min-h-screen
             bg-[#F5F7FA]
-        ">
+        "
+    >
+      <Navbar />
 
-            <Navbar />
-
-            <main className="
+      <main
+        className="
                 max-w-[1700px]
                 mx-auto
                 px-12
                 py-10
                 space-y-16
-            ">
-
-                <section className="
+            "
+      >
+        <section
+          className="
                     bg-white
                     rounded-3xl
                     shadow-sm
@@ -71,56 +63,57 @@ export default function HomePage() {
                     gap-8
                     items-start
                     lg:items-center
-                ">
-
-                    <div>
-
-                        <p className="
+                "
+        >
+          <div>
+            <p
+              className="
                             text-sm
                             font-semibold
                             text-blue-700
                             mb-3
-                        ">
-                            Plataforma ciudadana
-                        </p>
+                        "
+            >
+              Plataforma ciudadana
+            </p>
 
-                        <h1 className="
+            <h1
+              className="
                             text-4xl
                             lg:text-5xl
                             font-bold
                             text-[#03152E]
                             leading-tight
-                        ">
-                            {
-                                token
-                                    ? `Bienvenido, ${firstName ?? "ciudadano"}`
-                                    : "Bienvenido a ReportaYa"
-                            }
-                        </h1>
+                        "
+            >
+              {token ? `Bienvenido, ${firstName ?? "ciudadano"}` : "Bienvenido a ReportaYa"}
+            </h1>
 
-                        <p className="
+            <p
+              className="
                             mt-5
                             text-lg
                             text-gray-600
                             max-w-3xl
-                        ">
-                            Reporta problemas de tu comunidad, consulta el estado
-                            de tus reportes y ayuda a mejorar tu distrito.
-                        </p>
+                        "
+            >
+              Reporta problemas de tu comunidad, consulta el estado de tus reportes y ayuda a
+              mejorar tu distrito.
+            </p>
+          </div>
 
-                    </div>
-
-                    <div className="
+          <div
+            className="
                         flex
                         flex-wrap
                         gap-4
-                    ">
-
-                        {!token && (
-                            <>
-                                <button
-                                    onClick={() => navigate("/login")}
-                                    className="
+                    "
+          >
+            {!token && (
+              <>
+                <button
+                  onClick={() => navigate("/login")}
+                  className="
                                         bg-[#03152E]
                                         hover:bg-[#09213f]
                                         text-white
@@ -130,13 +123,13 @@ export default function HomePage() {
                                         font-semibold
                                         transition
                                     "
-                                >
-                                    Iniciar sesión
-                                </button>
+                >
+                  Iniciar sesión
+                </button>
 
-                                <button
-                                    onClick={() => navigate("/register")}
-                                    className="
+                <button
+                  onClick={() => navigate("/register")}
+                  className="
                                         bg-white
                                         hover:bg-gray-50
                                         border
@@ -148,29 +141,28 @@ export default function HomePage() {
                                         font-semibold
                                         transition
                                     "
-                                >
-                                    Registrarse
-                                </button>
-                            </>
-                        )}
+                >
+                  Registrarse
+                </button>
+              </>
+            )}
+          </div>
+        </section>
 
-                    </div>
+        <ProblemBanner />
 
-                </section>
-
-                <ProblemBanner />
-
-                <div className="
+        <div
+          className="
                     flex
                     flex-wrap
                     justify-center
                     gap-6
                     mb-12
-                ">
-
-                    <button
-                        onClick={handleCreateReport}
-                        className="
+                "
+        >
+          <button
+            onClick={handleCreateReport}
+            className="
                             bg-red-700
                             hover:bg-red-800
                             text-white
@@ -181,32 +173,32 @@ export default function HomePage() {
                             w-full
                             sm:w-[320px]
                         "
-                    >
-
-                        <p className="
+          >
+            <p
+              className="
                             text-4xl
                             font-bold
-                        ">
-                            +
-                        </p>
+                        "
+            >
+              +
+            </p>
 
-                        <h3 className="
+            <h3
+              className="
                             text-2xl
                             font-semibold
                             mt-4
-                        ">
-                            Crear reporte
-                        </h3>
+                        "
+            >
+              Crear reporte
+            </h3>
 
-                        <p className="mt-2 text-red-100">
-                            Reporta un problema en tu distrito
-                        </p>
+            <p className="mt-2 text-red-100">Reporta un problema en tu distrito</p>
+          </button>
 
-                    </button>
-
-                    <button
-                        onClick={handleMyReports}
-                        className="
+          <button
+            onClick={handleMyReports}
+            className="
                             bg-white
                             hover:bg-gray-50
                             border
@@ -217,38 +209,39 @@ export default function HomePage() {
                             w-full
                             sm:w-[320px]
                         "
-                    >
-
-                        <p className="
+          >
+            <p
+              className="
                             text-4xl
                             font-bold
-                        ">
-                            📄
-                        </p>
+                        "
+            >
+              📄
+            </p>
 
-                        <h3 className="
+            <h3
+              className="
                             text-2xl
                             font-semibold
                             mt-4
-                        ">
-                            Mis reportes
-                        </h3>
+                        "
+            >
+              Mis reportes
+            </h3>
 
-                        <p className="
+            <p
+              className="
                             mt-2
                             text-gray-500
-                        ">
-                            Consulta y da seguimiento
-                        </p>
-
-                    </button>
-
-                </div>
-
-                <CategorySection />
-
-            </main>
-
+                        "
+            >
+              Consulta y da seguimiento
+            </p>
+          </button>
         </div>
-    );
+
+        <CategorySection />
+      </main>
+    </div>
+  );
 }

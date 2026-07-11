@@ -1,6 +1,4 @@
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 type Props = {
   title: string;
@@ -8,29 +6,12 @@ type Props = {
   color: string;
 };
 
-export default function CategoryCard({
-  title,
-  reports,
-  color,
-}: Props) {
-
-  const navigate =
-    useNavigate();
+export default function CategoryCard({ title, reports, color }: Props) {
+  const navigate = useNavigate();
 
   return (
-
     <div
-
-      onClick={() =>
-
-        navigate(
-
-          `/reports/problem/${encodeURIComponent(
-            title
-          )
-          }`
-        )
-      }
+      onClick={() => navigate(`/reports/problem/${encodeURIComponent(title)}`)}
 
       className={`
         ${color}
@@ -42,21 +23,23 @@ hover:scale-[1.02]
 transition
       `}
     >
-
-      <h3 className="
+      <h3
+        className="
         text-2xl
         font-semibold
-      ">
+      "
+      >
         {title}
       </h3>
 
-      <p className="
+      <p
+        className="
         mt-2
         text-gray-600
-      ">
+      "
+      >
         {reports} reportes
       </p>
-
     </div>
   );
 }

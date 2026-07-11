@@ -46,11 +46,7 @@ export class EmailService {
     });
   }
 
-  async sendEmail(data: {
-    to: string;
-    subject: string;
-    html: string;
-  }) {
+  async sendEmail(data: { to: string; subject: string; html: string }) {
     await this.transporter.sendMail({
       from: process.env.SMTP_FROM,
       to: data.to,

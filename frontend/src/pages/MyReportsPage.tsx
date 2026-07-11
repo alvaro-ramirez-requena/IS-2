@@ -1,248 +1,186 @@
-import {
-    useEffect,
-    useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-    useNavigate,
-    useSearchParams,
-} from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-import {
-    statusLabels,
-} from "../utils/reportLabels";
+import { statusLabels } from "../utils/reportLabels";
 
-    const API_URL =
-        import.meta.env.VITE_API_URL ||
-        "http://localhost:3000";
-
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 type Report = {
+  id: string;
 
-    id: string;
+  title: string;
 
-    title: string;
+  problemType: string;
 
-    problemType: string;
+  description: string;
 
-    description: string;
+  status: string;
 
-    status: string;
+  createdAt: string;
 
-    createdAt: string;
+  address?: string;
 
-    address?: string;
+  evidences: {
+    imageUrl: string;
+  }[];
 
-    evidences: {
+  user?: {
+    firstName: string;
 
-        imageUrl: string;
-
-    }[];
-
-    user?: {
-
-        firstName: string;
-
-        lastName: string;
-    };
+    lastName: string;
+  };
 };
 
 export default function MyReportsPage() {
+  const navigate = useNavigate();
 
-    const navigate =
-        useNavigate();
+  const [searchParams] = useSearchParams();
 
-    const [searchParams] =
-        useSearchParams();
+  const highlightedReportId = searchParams.get("highlight");
 
-    const highlightedReportId =
-        searchParams.get("highlight");
+  const [reports, setReports] = useState<Report[]>([]);
 
-    const [reports, setReports] =
-        useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    const [loading, setLoading] =
-        useState(true);
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
 
-    useEffect(() => {
-
-        const fetchReports =
-            async () => {
-
-                try {
-
-                    const userId =
-                        localStorage.getItem(
-                            "userId"
-                        );
-
-                    if (!userId) {
-                        return;
-                    }
-
-                    const response =
-                        await fetch(
-
-                            `${API_URL}/api/reports/user/${userId}`
-                        );
-
-                    const data =
-                        await response.json();
-
-                    setReports(data);
-
-                } catch (error) {
-
-                    console.error(error);
-
-                } finally {
-
-                    setLoading(false);
-                }
-            };
-
-        fetchReports();
-
-    }, []);
-
-    const getRelativeTime = (
-        date: string
-    ) => {
-
-        const now =
-            new Date().getTime();
-
-        const created =
-            new Date(date).getTime();
-
-        const diff =
-            now - created;
-
-        const minutes =
-            Math.floor(
-                diff / 1000 / 60
-            );
-
-        const hours =
-            Math.floor(
-                minutes / 60
-            );
-
-        const days =
-            Math.floor(
-                hours / 24
-            );
-
-        if (minutes < 60) {
-
-            return `Hace ${minutes} min`;
+        if (!userId) {
+          return;
         }
 
-        if (hours < 24) {
+        const response = await fetch(`${API_URL}/api/reports/user/${userId}`);
 
-            return `Hace ${hours} horas`;
-        }
+        const data = await response.json();
 
-        return `Hace ${days} días`;
+        setReports(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    if (loading) {
+    fetchReports();
+  }, []);
 
-        return (
+  const getRelativeTime = (date: string) => {
+    const now = new Date().getTime();
 
-            <div className="
+    const created = new Date(date).getTime();
+
+    const diff = now - created;
+
+    const minutes = Math.floor(diff / 1000 / 60);
+
+    const hours = Math.floor(minutes / 60);
+
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 60) {
+      return `Hace ${minutes} min`;
+    }
+
+    if (hours < 24) {
+      return `Hace ${hours} horas`;
+    }
+
+    return `Hace ${days} días`;
+  };
+
+  if (loading) {
+    return (
+      <div
+        className="
                 min-h-screen
                 flex
                 items-center
                 justify-center
                 text-3xl
                 font-bold
-            ">
-                Cargando reportes...
-            </div>
-        );
-    }
+            "
+      >
+        Cargando reportes...
+      </div>
+    );
+  }
 
-    return (
-
-        <div className="
+  return (
+    <div
+      className="
             min-h-screen
             bg-[#F5F7FA]
             p-6
             lg:p-10
-        ">
-
-            <div className="
+        "
+    >
+      <div
+        className="
                 max-w-7xl
                 mx-auto
-            ">
-                <button
+            "
+      >
+        <button
+          onClick={() => navigate("/home")}
 
-                    onClick={() =>
-                        navigate("/home")
-                    }
-
-                    className="
+          className="
                         mb-8
                         text-blue-700
                         font-semibold
                         hover:underline
                     "
-                >
-                    ← Volver al inicio
-                </button>
+        >
+          ← Volver al inicio
+        </button>
 
-                <h1 className="
+        <h1
+          className="
                     text-5xl
                     font-bold
                     mb-4
-                ">
-                    Mis reportes
-                </h1>
+                "
+        >
+          Mis reportes
+        </h1>
 
-                <p className="
+        <p
+          className="
                     text-gray-500
                     text-xl
                     mb-10
-                ">
-                    Consulta el estado de
-                    tus reportes
-                </p>
+                "
+        >
+          Consulta el estado de tus reportes
+        </p>
 
-                {
-                    reports.length === 0
-                        ? (
-
-                            <div className="
+        {reports.length === 0 ? (
+          <div
+            className="
                                 bg-white
                                 rounded-3xl
                                 p-10
                                 shadow-sm
                                 border
-                            ">
-
-                                No tienes reportes aún.
-
-                            </div>
-                        )
-
-                        : (
-
-                            <div className="
+                            "
+          >
+            No tienes reportes aún.
+          </div>
+        ) : (
+          <div
+            className="
                                 space-y-6
-                            ">
+                            "
+          >
+            {reports.map((report) => {
+              const isHighlighted = report.id === highlightedReportId;
 
-                                {
-                                    reports.map((report) => {
-
-                                        const isHighlighted =
-                                            report.id === highlightedReportId;
-
-                                        return (
-
-                                            <div
-                                                key={report.id}
-                                                className={`
+              return (
+                <div
+                  key={report.id}
+                  className={`
                                                     bg-white
                                                     rounded-3xl
                                                     border
@@ -253,40 +191,33 @@ export default function MyReportsPage() {
                                                     gap-6
                                                     shadow-sm
                                                     transition
-                                                    ${isHighlighted
+                                                    ${
+                                                      isHighlighted
                                                         ? "ring-4 ring-blue-500 border-blue-500 bg-blue-50"
                                                         : ""
                                                     }
                                                 `}
-                                            >
-
-                                                <img
-                                                    src={
-                                                        report.evidences?.[0]
-                                                            ?.imageUrl ||
-
-                                                        "https://placehold.co/600x400"
-                                                    }
-                                                    alt={
-                                                        report.problemType
-                                                    }
-                                                    className="
+                >
+                  <img
+                    src={report.evidences?.[0]?.imageUrl || "https://placehold.co/600x400"}
+                    alt={report.problemType}
+                    className="
                                                         w-full
                                                         md:w-[220px]
                                                         h-[180px]
                                                         object-cover
                                                         rounded-2xl
                                                     "
-                                                />
+                  />
 
-                                                <div className="
+                  <div
+                    className="
                                                     flex-1
-                                                ">
-
-                                                    {
-                                                        isHighlighted && (
-
-                                                            <div className="
+                                                "
+                  >
+                    {isHighlighted && (
+                      <div
+                        className="
                                                                 mb-4
                                                                 bg-blue-100
                                                                 text-blue-700
@@ -294,68 +225,60 @@ export default function MyReportsPage() {
                                                                 py-3
                                                                 rounded-xl
                                                                 font-semibold
-                                                            ">
-                                                                Cambio reciente: este reporte ahora está como {
-                                                                    statusLabels[
-                                                                        report.status
-                                                                    ]
-                                                                }.
-                                                            </div>
-                                                        )
-                                                    }
+                                                            "
+                      >
+                        Cambio reciente: este reporte ahora está como {statusLabels[report.status]}.
+                      </div>
+                    )}
 
-                                                    <div className="
+                    <div
+                      className="
                                                         flex
                                                         items-start
                                                         justify-between
                                                         gap-4
-                                                    ">
-
-                                                        <div>
-
-                                                            <h2 className="
+                                                    "
+                    >
+                      <div>
+                        <h2
+                          className="
                                                                 text-3xl
                                                                 font-bold
-                                                            ">
-                                                                {report.title || report.problemType}
-                                                            </h2>
+                                                            "
+                        >
+                          {report.title || report.problemType}
+                        </h2>
 
-                                                            <div className="
+                        <div
+                          className="
                                                                 mt-2
                                                                 flex
                                                                 items-center
                                                                 gap-3
                                                                 flex-wrap
-                                                            ">
-
-                                                                <p className="
+                                                            "
+                        >
+                          <p
+                            className="
                                                                     font-semibold
                                                                     text-gray-700
-                                                                ">
+                                                                "
+                          >
+                            {`${report.user?.firstName || ""} ${report.user?.lastName || ""}`}
+                          </p>
 
-                                                                    {
-                                                                        `${report.user?.firstName || ""} ${report.user?.lastName || ""}`
-                                                                    }
-
-                                                                </p>
-
-                                                                <p className="
+                          <p
+                            className="
                                                                     text-gray-500
-                                                                ">
+                                                                "
+                          >
+                            {getRelativeTime(report.createdAt)}
+                          </p>
+                        </div>
+                      </div>
 
-                                                                    {
-                                                                        getRelativeTime(
-                                                                            report.createdAt
-                                                                        )
-                                                                    }
-
-                                                                </p>
-
-                                                            </div>
-
-                                                        </div>
-
-                                                        <span className="
+                      <span
+                        className="
                                                             bg-yellow-100
                                                             text-yellow-700
                                                             px-4
@@ -363,73 +286,57 @@ export default function MyReportsPage() {
                                                             rounded-full
                                                             text-sm
                                                             font-semibold
-                                                        ">
+                                                        "
+                      >
+                        {statusLabels[report.status]}
+                      </span>
+                    </div>
 
-                                                            {
-                                                                statusLabels[
-                                                                    report.status
-                                                                ]
-                                                            }
-
-                                                        </span>
-
-                                                    </div>
-
-                                                    <p className="
+                    <p
+                      className="
                                                         mt-6
                                                         text-gray-600
                                                         text-lg
                                                         line-clamp-3
-                                                    ">
+                                                    "
+                    >
+                      {report.description}
+                    </p>
 
-                                                        {
-                                                            report.description
-                                                        }
-
-                                                    </p>
-
-                                                    <div className="
+                    <div
+                      className="
                                                         mt-5
                                                         bg-gray-50
                                                         rounded-2xl
                                                         p-4
-                                                    ">
-
-                                                        <p className="
+                                                    "
+                    >
+                      <p
+                        className="
                                                             text-sm
                                                             text-gray-500
                                                             mb-1
-                                                        ">
-                                                            Ubicación
-                                                        </p>
+                                                        "
+                      >
+                        Ubicación
+                      </p>
 
-                                                        <p className="
+                      <p
+                        className="
                                                             text-gray-700
                                                             font-medium
-                                                        ">
-
-                                                            {
-                                                                report.address
-                                                                || "Ubicación no disponible"
-                                                            }
-
-                                                        </p>
-
-                                                    </div>
-
-                                                </div>
-
-                                            </div>
-                                        );
-                                    })
-                                }
-
-                            </div>
-                        )
-                }
-
-            </div>
-
-        </div>
-    );
+                                                        "
+                      >
+                        {report.address || "Ubicación no disponible"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

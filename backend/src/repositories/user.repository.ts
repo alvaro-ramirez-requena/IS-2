@@ -26,20 +26,16 @@ export class UserRepository {
     });
   }
 
-    async findById(
-      id: string
-    ) {
-      return await prisma
-        .user
-        .findUnique({
-          where: {
-            id,
-          },
-          include: {
-            municipality: true,
-          },
-        });
-    }
+  async findById(id: string) {
+    return await prisma.user.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        municipality: true,
+      },
+    });
+  }
 
   async findByVerificationToken(hashedToken: string) {
     return await prisma.user.findFirst({
@@ -64,11 +60,7 @@ export class UserRepository {
       },
     });
   }
-  async updateVerificationToken(
-    userId: string,
-    hashedToken: string,
-    expiresAt: Date
-  ) {
+  async updateVerificationToken(userId: string, hashedToken: string, expiresAt: Date) {
     return await prisma.user.update({
       where: {
         id: userId,
@@ -80,11 +72,7 @@ export class UserRepository {
       },
     });
   }
-  async updatePasswordResetToken(
-    userId: string,
-    hashedToken: string,
-    expiresAt: Date
-  ) {
+  async updatePasswordResetToken(userId: string, hashedToken: string, expiresAt: Date) {
     return await prisma.user.update({
       where: {
         id: userId,
@@ -120,18 +108,13 @@ export class UserRepository {
     });
   }
 
-
-
   async findByRole(role: Role) {
     return await prisma.user.findMany({
       where: { role },
     });
   }
 
-  async updateAvailability(
-    userId: string,
-    availability: boolean
-  ) {
+  async updateAvailability(userId: string, availability: boolean) {
     return await prisma.technicianProfile.upsert({
       where: {
         userId,
@@ -146,5 +129,4 @@ export class UserRepository {
       },
     });
   }
-
 }

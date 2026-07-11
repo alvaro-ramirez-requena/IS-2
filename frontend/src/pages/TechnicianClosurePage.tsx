@@ -1,261 +1,185 @@
-import {
-    useEffect,
-    useMemo,
-    useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import {
-    useNavigate,
-    useParams,
-} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-import {
-    statusLabels,
-} from "../utils/reportLabels";
+import { statusLabels } from "../utils/reportLabels";
 
-import {
-    TechnicalClosureService,
-} from "../services/technicalClosure.service";
+import { TechnicalClosureService } from "../services/technicalClosure.service";
 
-import {
-    OperationalCatalogService,
-} from "../services/operationalCatalog.service";
+import { OperationalCatalogService } from "../services/operationalCatalog.service";
 
-import type {
-    ClosureReason,
-} from "../services/operationalCatalog.service";
+import type { ClosureReason } from "../services/operationalCatalog.service";
 
-const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 type Report = {
+  id: string;
+  title: string;
+  problemType: string;
+  description: string;
+  status: string;
+  address?: string;
+  priority?: string;
+  evidences?: {
+    imageUrl: string;
+  }[];
+  municipality?: {
     id: string;
-    title: string;
-    problemType: string;
-    description: string;
-    status: string;
-    address?: string;
-    priority?: string;
-    evidences?: {
-        imageUrl: string;
+    name: string;
+  } | null;
+  fieldWork?: {
+    arrivedAt?: string | null;
+    closedAt?: string | null;
+    notes?: string | null;
+    distanceMeters?: number | null;
+    evidences: {
+      id: string;
+      imageUrl: string;
+      phase: "BEFORE" | "AFTER";
     }[];
-    municipality?: {
-        id: string;
-        name: string;
-    } | null;
-    fieldWork?: {
-        arrivedAt?: string | null;
-        closedAt?: string | null;
-        notes?: string | null;
-        distanceMeters?: number | null;
-        evidences: {
-            id: string;
-            imageUrl: string;
-            phase: "BEFORE" | "AFTER";
-        }[];
-    } | null;
-    technicalAttentions?: {
-        id: string;
-        actionTaken: string;
-        technicalResult: string;
-        observations?: string | null;
-        createdAt: string;
-    }[];
+  } | null;
+  technicalAttentions?: {
+    id: string;
+    actionTaken: string;
+    technicalResult: string;
+    observations?: string | null;
+    createdAt: string;
+  }[];
 };
 
-function fileToBase64(
-    file: File
-) {
-    return new Promise<string>(
-        (resolve, reject) => {
-            const reader =
-                new FileReader();
+function fileToBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
 
-            reader.onload =
-                () => {
-                    const image =
-                        new Image();
+    reader.onload = () => {
+      const image = new Image();
 
-                    image.onload =
-                        () => {
-                            const maxWidth =
-                                1000;
+      image.onload = () => {
+        const maxWidth = 1000;
 
-                            const scale =
-                                Math.min(
-                                    1,
-                                    maxWidth / image.width
-                                );
+        const scale = Math.min(1, maxWidth / image.width);
 
-                            const canvas =
-                                document.createElement("canvas");
+        const canvas = document.createElement("canvas");
 
-                            canvas.width =
-                                image.width * scale;
+        canvas.width = image.width * scale;
 
-                            canvas.height =
-                                image.height * scale;
+        canvas.height = image.height * scale;
 
-                            const context =
-                                canvas.getContext("2d");
+        const context = canvas.getContext("2d");
 
-                            if (!context) {
-                                reject(
-                                    new Error(
-                                        "No se pudo procesar la imagen."
-                                    )
-                                );
-                                return;
-                            }
-
-                            context.drawImage(
-                                image,
-                                0,
-                                0,
-                                canvas.width,
-                                canvas.height
-                            );
-
-                            resolve(
-                                canvas.toDataURL(
-                                    "image/jpeg",
-                                    0.75
-                                )
-                            );
-                        };
-
-                    image.onerror =
-                        () => reject(
-                            new Error(
-                                "No se pudo cargar la imagen."
-                            )
-                        );
-
-                    image.src =
-                        String(reader.result);
-                };
-
-            reader.onerror =
-                () => reject(
-                    new Error(
-                        "No se pudo leer la imagen."
-                    )
-                );
-
-            reader.readAsDataURL(file);
+        if (!context) {
+          reject(new Error("No se pudo procesar la imagen."));
+          return;
         }
-    );
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        resolve(canvas.toDataURL("image/jpeg", 0.75));
+      };
+
+      image.onerror = () => reject(new Error("No se pudo cargar la imagen."));
+
+      image.src = String(reader.result);
+    };
+
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
+
+    reader.readAsDataURL(file);
+  });
 }
 
-function formatDateTime(
-    value?: string | null
-) {
-    if (!value) {
-        return "No registrado";
-    }
+function formatDateTime(value?: string | null) {
+  if (!value) {
+    return "No registrado";
+  }
 
-    return new Date(value)
-        .toLocaleString();
+  return new Date(value).toLocaleString();
 }
 
 function CheckIcon() {
-    return (
-        <svg
-            aria-hidden="true"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-        >
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.3}
-                d="M5 12.5l4 4L19 6.5"
-            />
-        </svg>
-    );
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.3} d="M5 12.5l4 4L19 6.5" />
+    </svg>
+  );
 }
 
 function CameraIcon() {
-    return (
-        <svg
-            aria-hidden="true"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-        >
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.8}
-                d="M4 7.5h3l1.5-2h7l1.5 2h3a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2v-8a2 2 0 012-2z"
-            />
-            <circle
-                cx="12"
-                cy="13"
-                r="3.25"
-                strokeWidth={1.8}
-            />
-        </svg>
-    );
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-6 w-6"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M4 7.5h3l1.5-2h7l1.5 2h3a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2v-8a2 2 0 012-2z"
+      />
+      <circle cx="12" cy="13" r="3.25" strokeWidth={1.8} />
+    </svg>
+  );
 }
 
-function InfoItem({
-    label,
-    value,
-}: {
-    label: string;
-    value: string;
-}) {
-    return (
-        <div className="
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className="
             rounded-2xl
             border
             border-slate-200
             bg-slate-50
             p-4
-        ">
-            <p className="
+        "
+    >
+      <p
+        className="
                 text-xs
                 font-semibold
                 uppercase
                 tracking-wide
                 text-slate-400
-            ">
-                {label}
-            </p>
+            "
+      >
+        {label}
+      </p>
 
-            <p className="
+      <p
+        className="
                 mt-2
                 break-words
                 text-sm
                 font-semibold
                 leading-relaxed
                 text-slate-800
-            ">
-                {value}
-            </p>
-        </div>
-    );
+            "
+      >
+        {value}
+      </p>
+    </div>
+  );
 }
 
-function RequirementItem({
-    complete,
-    label,
-}: {
-    complete: boolean;
-    label: string;
-}) {
-    return (
-        <div className="
+function RequirementItem({ complete, label }: { complete: boolean; label: string }) {
+  return (
+    <div
+      className="
             flex
             items-center
             gap-3
-        ">
-            <span className={`
+        "
+    >
+      <span
+        className={`
                 flex
                 h-6
                 w-6
@@ -265,71 +189,75 @@ function RequirementItem({
                 rounded-full
                 border
                 ${
-                    complete
-                        ? "border-emerald-200 bg-emerald-100 text-emerald-700"
-                        : "border-slate-200 bg-slate-100 text-slate-400"
+                  complete
+                    ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+                    : "border-slate-200 bg-slate-100 text-slate-400"
                 }
-            `}>
-                {complete && (
-                    <svg
-                        aria-hidden="true"
-                        className="h-3.5 w-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2.5}
-                            d="M5 12.5l4 4L19 6.5"
-                        />
-                    </svg>
-                )}
-            </span>
+            `}
+      >
+        {complete && (
+          <svg
+            aria-hidden="true"
+            className="h-3.5 w-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2.5}
+              d="M5 12.5l4 4L19 6.5"
+            />
+          </svg>
+        )}
+      </span>
 
-            <span className={`
+      <span
+        className={`
                 text-sm
-                ${
-                    complete
-                        ? "font-medium text-emerald-800"
-                        : "text-slate-500"
-                }
-            `}>
-                {label}
-            </span>
-        </div>
-    );
+                ${complete ? "font-medium text-emerald-800" : "text-slate-500"}
+            `}
+      >
+        {label}
+      </span>
+    </div>
+  );
 }
 
 function EvidenceGroup({
-    title,
-    evidences,
+  title,
+  evidences,
 }: {
-    title: string;
-    evidences: {
-        id: string;
-        imageUrl: string;
-    }[];
+  title: string;
+  evidences: {
+    id: string;
+    imageUrl: string;
+  }[];
 }) {
-    return (
-        <div>
-            <div className="
+  return (
+    <div>
+      <div
+        className="
                 mb-3
                 flex
                 items-center
                 justify-between
                 gap-3
-            ">
-                <p className="
+            "
+      >
+        <p
+          className="
                     text-sm
                     font-semibold
                     text-slate-700
-                ">
-                    {title}
-                </p>
+                "
+        >
+          {title}
+        </p>
 
-                <span className="
+        <span
+          className="
                     rounded-full
                     bg-slate-100
                     px-2.5
@@ -337,24 +265,27 @@ function EvidenceGroup({
                     text-xs
                     font-semibold
                     text-slate-500
-                ">
-                    {evidences.length}
-                </span>
-            </div>
+                "
+        >
+          {evidences.length}
+        </span>
+      </div>
 
-            {evidences.length > 0 ? (
-                <div className="
+      {evidences.length > 0 ? (
+        <div
+          className="
                     grid
                     grid-cols-2
                     gap-3
-                ">
-                    {evidences.map((evidence) => (
-                        <a
-                            key={evidence.id}
-                            href={evidence.imageUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="
+                "
+        >
+          {evidences.map((evidence) => (
+            <a
+              key={evidence.id}
+              href={evidence.imageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="
                                 group
                                 overflow-hidden
                                 rounded-xl
@@ -362,11 +293,11 @@ function EvidenceGroup({
                                 border-slate-200
                                 bg-slate-100
                             "
-                        >
-                            <img
-                                src={evidence.imageUrl}
-                                alt={title}
-                                className="
+            >
+              <img
+                src={evidence.imageUrl}
+                alt={title}
+                className="
                                     h-28
                                     w-full
                                     object-cover
@@ -374,12 +305,13 @@ function EvidenceGroup({
                                     duration-300
                                     group-hover:scale-105
                                 "
-                            />
-                        </a>
-                    ))}
-                </div>
-            ) : (
-                <div className="
+              />
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div
+          className="
                     rounded-xl
                     border
                     border-dashed
@@ -390,332 +322,226 @@ function EvidenceGroup({
                     text-center
                     text-xs
                     text-slate-400
-                ">
-                    No se registraron evidencias.
-                </div>
-            )}
+                "
+        >
+          No se registraron evidencias.
         </div>
-    );
+      )}
+    </div>
+  );
 }
 
 export default function TechnicianClosurePage() {
-    const navigate =
-        useNavigate();
+  const navigate = useNavigate();
 
-    const { id } =
-        useParams();
+  const { id } = useParams();
 
-    const [report, setReport] =
-        useState<Report | null>(null);
+  const [report, setReport] = useState<Report | null>(null);
 
-    const [selectedClosureReasonId, setSelectedClosureReasonId] =
-        useState("");
+  const [selectedClosureReasonId, setSelectedClosureReasonId] = useState("");
 
-    const [selectedResult, setSelectedResult] =
-        useState("");
+  const [selectedResult, setSelectedResult] = useState("");
 
-    const [observations, setObservations] =
-        useState("");
+  const [observations, setObservations] = useState("");
 
-    const [followUpNotes, setFollowUpNotes] =
-        useState("");
+  const [followUpNotes, setFollowUpNotes] = useState("");
 
-    const [closureEvidenceUrl, setClosureEvidenceUrl] =
-        useState("");
+  const [closureEvidenceUrl, setClosureEvidenceUrl] = useState("");
 
-    const [loading, setLoading] =
-        useState(true);
+  const [loading, setLoading] = useState(true);
 
-    const [saving, setSaving] =
-        useState(false);
+  const [saving, setSaving] = useState(false);
 
-    const [error, setError] =
-        useState("");
+  const [error, setError] = useState("");
 
-    const [successMessage, setSuccessMessage] =
-        useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-    const [closureReasons, setClosureReasons] =
-        useState<ClosureReason[]>([]);
+  const [closureReasons, setClosureReasons] = useState<ClosureReason[]>([]);
 
-    const [loadingReasons, setLoadingReasons] =
-        useState(true);
+  const [loadingReasons, setLoadingReasons] = useState(true);
 
+  const technicianId = localStorage.getItem("userId") || "";
 
-    const technicianId =
-        localStorage.getItem("userId") || "";
+  const latestAttention = useMemo(() => {
+    return report?.technicalAttentions?.[0];
+  }, [report]);
 
-    const latestAttention =
-        useMemo(() => {
-            return report
-                ?.technicalAttentions
-                ?.[0];
-        }, [report]);
+  const selectedClosureReason = useMemo(() => {
+    return closureReasons.find((reason) => reason.id === selectedClosureReasonId);
+  }, [closureReasons, selectedClosureReasonId]);
 
-    const selectedClosureReason =
-        useMemo(() => {
-            return closureReasons.find(
-                (reason) =>
-                    reason.id === selectedClosureReasonId
-            );
-        }, [
-            closureReasons,
-            selectedClosureReasonId,
-        ]);
+  const requiresFollowUp = useMemo(() => {
+    if (!selectedClosureReason) {
+      return false;
+    }
 
-    const requiresFollowUp =
-        useMemo(() => {
-            if (!selectedClosureReason) {
-                return false;
-            }
+    const value = selectedClosureReason.name
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
 
-            const value =
-                selectedClosureReason.name
-                    .toUpperCase()
-                    .normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, "");
+    return value.includes("SEGUIMIENTO");
+  }, [selectedClosureReason]);
 
-            return value.includes("SEGUIMIENTO");
-        }, [selectedClosureReason]);
+  const beforeEvidences =
+    report?.fieldWork?.evidences?.filter((evidence) => evidence.phase === "BEFORE") || [];
 
-    const beforeEvidences =
-        report?.fieldWork?.evidences
-            ?.filter((evidence) =>
-                evidence.phase === "BEFORE"
-            ) || [];
+  const afterEvidences =
+    report?.fieldWork?.evidences?.filter((evidence) => evidence.phase === "AFTER") || [];
 
-    const afterEvidences =
-        report?.fieldWork?.evidences
-            ?.filter((evidence) =>
-                evidence.phase === "AFTER"
-            ) || [];
+  useEffect(() => {
+    const fetchReport = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-    useEffect(() => {
-        const fetchReport =
-            async () => {
-                try {
-                    setLoading(true);
-                    setError("");
+        const response = await fetch(`${API_URL}/api/reports/${id}`);
 
-                    const response =
-                        await fetch(
-                            `${API_URL}/api/reports/${id}`
-                        );
+        const data = await response.json();
 
-                    const data =
-                        await response.json();
+        if (!response.ok) {
+          throw new Error(data?.message || "No se pudo cargar el reporte.");
+        }
 
-                    if (!response.ok) {
-                        throw new Error(
-                            data?.message ||
-                            "No se pudo cargar el reporte."
-                        );
-                    }
-
-                    setReport(data);
-
-                } catch (error: any) {
-                    setError(
-                        error.message ||
-                        "No se pudo cargar el cierre técnico."
-                    );
-
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-        fetchReport();
-    }, [id]);
-
-
-    
-    useEffect(() => {
-        const loadClosureReasons =
-            async () => {
-                try {
-                    setLoadingReasons(true);
-
-                    const data =
-                        await OperationalCatalogService
-                            .getActiveClosureReasons();
-
-                    setClosureReasons(data);
-
-                } catch (error) {
-                    console.error(
-                        "No se pudieron cargar los motivos de cierre.",
-                        error
-                    );
-
-                } finally {
-                    setLoadingReasons(false);
-                }
-            };
-
-        loadClosureReasons();
-    }, []);
-
-    const handleEvidenceChange =
-        async (
-            event: React.ChangeEvent<HTMLInputElement>
-        ) => {
-            const file =
-                event.target.files?.[0];
-
-            if (!file) {
-                return;
-            }
-
-            try {
-                setError("");
-
-                const imageUrl =
-                    await fileToBase64(file);
-
-                setClosureEvidenceUrl(
-                    imageUrl
-                );
-
-            } catch (error: any) {
-                setError(
-                    error.message ||
-                    "No se pudo cargar la evidencia de cierre."
-                );
-
-            } finally {
-                event.target.value = "";
-            }
-        };
-
-    const canSubmit =
-        selectedClosureReasonId &&
-        selectedResult.trim() &&
-        observations.trim() &&
-        (
-            !requiresFollowUp ||
-            followUpNotes.trim()
-        ) &&
-        !saving;
-
-    const closureRequirements = {
-        reason:
-            Boolean(selectedClosureReasonId),
-
-        observations:
-            Boolean(observations.trim()),
-
-        followUp:
-            !requiresFollowUp ||
-            Boolean(followUpNotes.trim()),
+        setReport(data);
+      } catch (error: any) {
+        setError(error.message || "No se pudo cargar el cierre técnico.");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const completedRequirements =
-        Object.values(
-            closureRequirements
-        ).filter(Boolean).length;
+    fetchReport();
+  }, [id]);
 
-    const completionPercentage =
-        Math.round(
-            (
-                completedRequirements /
-                3
-            ) * 100
-        );
+  useEffect(() => {
+    const loadClosureReasons = async () => {
+      try {
+        setLoadingReasons(true);
 
-    const handleSubmit =
-        async (
-            event: React.FormEvent
-        ) => {
-            event.preventDefault();
+        const data = await OperationalCatalogService.getActiveClosureReasons();
 
-            if (!id || !report) {
-                return;
-            }
+        setClosureReasons(data);
+      } catch (error) {
+        console.error("No se pudieron cargar los motivos de cierre.", error);
+      } finally {
+        setLoadingReasons(false);
+      }
+    };
 
-            if (!technicianId) {
-                setError(
-                    "No se encontró el técnico en sesión."
-                );
-                return;
-            }
+    loadClosureReasons();
+  }, []);
 
-            if (!canSubmit) {
-                setError(
-                    "Completa el resultado técnico y las observaciones de cierre."
-                );
-                return;
-            }
+  const handleEvidenceChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
 
-            const confirmed =
-                window.confirm(
-                    "¿Deseas registrar el cierre operativo? El reporte pasará a Resuelto."
-                );
+    if (!file) {
+      return;
+    }
 
-            if (!confirmed) {
-                return;
-            }
+    try {
+      setError("");
 
-            try {
-                setSaving(true);
-                setError("");
-                setSuccessMessage("");
-                await TechnicalClosureService
-                    .createClosure({
-                        reportId:
-                            id,
+      const imageUrl = await fileToBase64(file);
 
-                        technicianId,
+      setClosureEvidenceUrl(imageUrl);
+    } catch (error: any) {
+      setError(error.message || "No se pudo cargar la evidencia de cierre.");
+    } finally {
+      event.target.value = "";
+    }
+  };
 
-                        result:
-                            selectedResult,
+  const canSubmit =
+    selectedClosureReasonId &&
+    selectedResult.trim() &&
+    observations.trim() &&
+    (!requiresFollowUp || followUpNotes.trim()) &&
+    !saving;
 
-                        closureReasonId:
-                            selectedClosureReasonId,
+  const closureRequirements = {
+    reason: Boolean(selectedClosureReasonId),
 
-                        observations,
+    observations: Boolean(observations.trim()),
 
-                        closureEvidenceUrl:
-                            closureEvidenceUrl ||
-                            undefined,
+    followUp: !requiresFollowUp || Boolean(followUpNotes.trim()),
+  };
 
-                        followUpNotes:
-                            followUpNotes ||
-                            undefined,
-                    });
+  const completedRequirements = Object.values(closureRequirements).filter(Boolean).length;
 
-                setSuccessMessage(
-                    "Cierre técnico registrado correctamente."
-                );
+  const completionPercentage = Math.round((completedRequirements / 3) * 100);
 
-                setTimeout(() => {
-                    navigate(
-                        `/technician/reports/${id}`
-                    );
-                }, 1000);
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-            } catch (error: any) {
-                setError(
-                    error.message ||
-                    "No se pudo registrar el cierre técnico."
-                );
+    if (!id || !report) {
+      return;
+    }
 
-            } finally {
-                setSaving(false);
-            }
-        };
+    if (!technicianId) {
+      setError("No se encontró el técnico en sesión.");
+      return;
+    }
 
-        if (loading) {
-        return (
-            <div className="
+    if (!canSubmit) {
+      setError("Completa el resultado técnico y las observaciones de cierre.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "¿Deseas registrar el cierre operativo? El reporte pasará a Resuelto."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+      setSuccessMessage("");
+      await TechnicalClosureService.createClosure({
+        reportId: id,
+
+        technicianId,
+
+        result: selectedResult,
+
+        closureReasonId: selectedClosureReasonId,
+
+        observations,
+
+        closureEvidenceUrl: closureEvidenceUrl || undefined,
+
+        followUpNotes: followUpNotes || undefined,
+      });
+
+      setSuccessMessage("Cierre técnico registrado correctamente.");
+
+      setTimeout(() => {
+        navigate(`/technician/reports/${id}`);
+      }, 1000);
+    } catch (error: any) {
+      setError(error.message || "No se pudo registrar el cierre técnico.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div
+        className="
                 min-h-screen
                 bg-slate-50
                 flex
                 items-center
                 justify-center
                 px-6
-            ">
-                <div className="
+            "
+      >
+        <div
+          className="
                     rounded-3xl
                     border
                     border-slate-200
@@ -724,8 +550,10 @@ export default function TechnicianClosurePage() {
                     py-8
                     text-center
                     shadow-sm
-                ">
-                    <div className="
+                "
+        >
+          <div
+            className="
                         mx-auto
                         mb-4
                         h-10
@@ -735,38 +563,46 @@ export default function TechnicianClosurePage() {
                         border-4
                         border-emerald-100
                         border-t-emerald-600
-                    " />
+                    "
+          />
 
-                    <p className="
+          <p
+            className="
                         font-semibold
                         text-slate-800
-                    ">
-                        Cargando cierre operativo
-                    </p>
+                    "
+          >
+            Cargando cierre operativo
+          </p>
 
-                    <p className="
+          <p
+            className="
                         mt-1
                         text-sm
                         text-slate-500
-                    ">
-                        Recuperando la atención y las evidencias registradas.
-                    </p>
-                </div>
-            </div>
-        );
-    }
+                    "
+          >
+            Recuperando la atención y las evidencias registradas.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-    if (!report) {
-        return (
-            <div className="
+  if (!report) {
+    return (
+      <div
+        className="
                 min-h-screen
                 bg-slate-50
                 flex
                 items-center
                 justify-center
                 px-6
-            ">
-                <div className="
+            "
+      >
+        <div
+          className="
                     w-full
                     max-w-md
                     rounded-3xl
@@ -776,8 +612,10 @@ export default function TechnicianClosurePage() {
                     p-8
                     text-center
                     shadow-sm
-                ">
-                    <div className="
+                "
+        >
+          <div
+            className="
                         mx-auto
                         flex
                         h-14
@@ -789,37 +627,37 @@ export default function TechnicianClosurePage() {
                         text-xl
                         font-bold
                         text-red-600
-                    ">
-                        !
-                    </div>
+                    "
+          >
+            !
+          </div>
 
-                    <h1 className="
+          <h1
+            className="
                         mt-4
                         text-xl
                         font-bold
                         text-slate-900
-                    ">
-                        Reporte no encontrado
-                    </h1>
+                    "
+          >
+            Reporte no encontrado
+          </h1>
 
-                    <p className="
+          <p
+            className="
                         mt-2
                         text-sm
                         leading-relaxed
                         text-slate-500
-                    ">
-                        {error ||
-                            "No se pudo recuperar la información necesaria para realizar el cierre."}
-                    </p>
+                    "
+          >
+            {error || "No se pudo recuperar la información necesaria para realizar el cierre."}
+          </p>
 
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate(
-                                "/technician"
-                            )
-                        }
-                        className="
+          <button
+            type="button"
+            onClick={() => navigate("/technician")}
+            className="
                             mt-6
                             w-full
                             rounded-xl
@@ -831,21 +669,24 @@ export default function TechnicianClosurePage() {
                             transition
                             hover:bg-emerald-700
                         "
-                    >
-                        Volver al panel técnico
-                    </button>
-                </div>
-            </div>
-        );
-    }
+          >
+            Volver al panel técnico
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-    return (
-        <div className="
+  return (
+    <div
+      className="
             min-h-screen
             bg-slate-50
-        ">
-            {/* Barra superior */}
-            <header className="
+        "
+    >
+      {/* Barra superior */}
+      <header
+        className="
                 sticky
                 top-0
                 z-30
@@ -854,8 +695,10 @@ export default function TechnicianClosurePage() {
                 bg-[#064E3B]
                 text-white
                 shadow-sm
-            ">
-                <div className="
+            "
+      >
+        <div
+          className="
                     mx-auto
                     flex
                     max-w-7xl
@@ -865,15 +708,12 @@ export default function TechnicianClosurePage() {
                     px-5
                     py-4
                     lg:px-8
-                ">
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate(
-                                `/technician/reports/${report.id}/fieldwork`
-                            )
-                        }
-                        className="
+                "
+        >
+          <button
+            type="button"
+            onClick={() => navigate(`/technician/reports/${report.id}/fieldwork`)}
+            className="
                             inline-flex
                             items-center
                             gap-2
@@ -886,34 +726,33 @@ export default function TechnicianClosurePage() {
                             transition
                             hover:bg-white/10
                         "
-                    >
-                        <span aria-hidden="true">
-                            ←
-                        </span>
+          >
+            <span aria-hidden="true">←</span>
+            Volver a trazabilidad
+          </button>
 
-                        Volver a trazabilidad
-                    </button>
-
-                    <div className="
+          <div
+            className="
                         hidden
                         items-center
                         gap-2
                         sm:flex
-                    ">
-                        <span className="
+                    "
+          >
+            <span
+              className="
                             text-xl
                             font-bold
                             tracking-tight
                             text-white
-                        ">
-                            reporta
-                            <span className="text-[#FACC15]">
-                                Ya
-                            </span>
-                        </span>
+                        "
+            >
+              reporta
+              <span className="text-[#FACC15]">Ya</span>
+            </span>
 
-
-                        <span className="
+            <span
+              className="
                             rounded-full
                             bg-emerald-50
                             px-3
@@ -921,41 +760,51 @@ export default function TechnicianClosurePage() {
                             text-xs
                             font-semibold
                             text-emerald-700
-                        ">
-                            Cierre técnico
-                        </span>
-                    </div>
-                </div>
-            </header>
+                        "
+            >
+              Cierre técnico
+            </span>
+          </div>
+        </div>
+      </header>
 
-            <main className="
+      <main
+        className="
                 mx-auto
                 max-w-7xl
                 px-5
                 py-8
                 lg:px-8
                 lg:py-10
-            ">
-                {/* Encabezado */}
-                <section className="
+            "
+      >
+        {/* Encabezado */}
+        <section
+          className="
                     overflow-hidden
                     rounded-3xl
                     border
                     border-slate-200
                     bg-white
                     shadow-sm
-                ">
-                    <div className="
+                "
+        >
+          <div
+            className="
                         grid
                         grid-cols-1
                         lg:grid-cols-[minmax(0,1fr)_380px]
-                    ">
-                        <div className="
+                    "
+          >
+            <div
+              className="
                             p-6
                             sm:p-8
                             lg:p-10
-                        ">
-                            <span className="
+                        "
+            >
+              <span
+                className="
                                 inline-flex
                                 rounded-full
                                 bg-emerald-50
@@ -966,11 +815,13 @@ export default function TechnicianClosurePage() {
                                 uppercase
                                 tracking-wide
                                 text-emerald-700
-                            ">
-                                Cierre operativo
-                            </span>
+                            "
+              >
+                Cierre operativo
+              </span>
 
-                            <h1 className="
+              <h1
+                className="
                                 mt-5
                                 max-w-4xl
                                 text-3xl
@@ -980,23 +831,28 @@ export default function TechnicianClosurePage() {
                                 text-slate-950
                                 sm:text-4xl
                                 lg:text-5xl
-                            ">
-                                Registrar resultado técnico
-                            </h1>
+                            "
+              >
+                Registrar resultado técnico
+              </h1>
 
-                            <p className="
+              <p
+                className="
                                 mt-4
                                 max-w-3xl
                                 text-base
                                 leading-7
                                 text-slate-500
                                 sm:text-lg
-                            ">
-                                Selecciona el resultado final, registra las observaciones y confirma el cierre operativo del reporte.
-                            </p>
-                        </div>
+                            "
+              >
+                Selecciona el resultado final, registra las observaciones y confirma el cierre
+                operativo del reporte.
+              </p>
+            </div>
 
-                        <div className="
+            <div
+              className="
                             border-t
                             border-slate-200
                             bg-[#064E3B]
@@ -1005,123 +861,145 @@ export default function TechnicianClosurePage() {
                             lg:border-l
                             lg:border-t-0
                             lg:p-8
-                        ">
-                            <p className="
+                        "
+            >
+              <p
+                className="
                                 text-xs
                                 font-semibold
                                 uppercase
                                 tracking-widest
                                 text-emerald-200
-                            ">
-                                Reporte a cerrar
-                            </p>
+                            "
+              >
+                Reporte a cerrar
+              </p>
 
-                            <h2 className="
+              <h2
+                className="
                                 mt-3
                                 text-xl
                                 font-bold
                                 leading-snug
-                            ">
-                                {report.title}
-                            </h2>
+                            "
+              >
+                {report.title}
+              </h2>
 
-                            <p className="
+              <p
+                className="
                                 mt-2
                                 text-sm
                                 text-white/65
-                            ">
-                                {report.problemType}
-                            </p>
+                            "
+              >
+                {report.problemType}
+              </p>
 
-                            <div className="
+              <div
+                className="
                                 mt-6
                                 grid
                                 grid-cols-2
                                 gap-3
-                            ">
-                                <div className="
+                            "
+              >
+                <div
+                  className="
                                     rounded-xl
                                     bg-white/10
                                     p-3
-                                ">
-                                    <p className="
+                                "
+                >
+                  <p
+                    className="
                                         text-xs
                                         uppercase
                                         tracking-wide
                                         text-white/45
-                                    ">
-                                        Estado
-                                    </p>
+                                    "
+                  >
+                    Estado
+                  </p>
 
-                                    <p className="
+                  <p
+                    className="
                                         mt-1
                                         text-sm
                                         font-semibold
-                                    ">
-                                        {statusLabels[
-                                            report.status
-                                        ] ||
-                                            report.status}
-                                    </p>
-                                </div>
+                                    "
+                  >
+                    {statusLabels[report.status] || report.status}
+                  </p>
+                </div>
 
-                                <div className="
+                <div
+                  className="
                                     rounded-xl
                                     bg-white/10
                                     p-3
-                                ">
-                                    <p className="
+                                "
+                >
+                  <p
+                    className="
                                         text-xs
                                         uppercase
                                         tracking-wide
                                         text-white/45
-                                    ">
-                                        Prioridad
-                                    </p>
+                                    "
+                  >
+                    Prioridad
+                  </p>
 
-                                    <p className="
+                  <p
+                    className="
                                         mt-1
                                         text-sm
                                         font-semibold
-                                    ">
-                                        {report.priority ||
-                                            "No definida"}
-                                    </p>
-                                </div>
-                            </div>
+                                    "
+                  >
+                    {report.priority || "No definida"}
+                  </p>
+                </div>
+              </div>
 
-                            <div className="
+              <div
+                className="
                                 mt-3
                                 rounded-xl
                                 bg-white/10
                                 p-3
-                            ">
-                                <p className="
+                            "
+              >
+                <p
+                  className="
                                     text-xs
                                     uppercase
                                     tracking-wide
                                     text-white/45
-                                ">
-                                    Municipalidad
-                                </p>
+                                "
+                >
+                  Municipalidad
+                </p>
 
-                                <p className="
+                <p
+                  className="
                                     mt-1
                                     text-sm
                                     font-semibold
                                     leading-relaxed
-                                ">
-                                    {report.municipality
-                                        ?.name ||
-                                        "No definida"}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                                "
+                >
+                  {report.municipality?.name || "No definida"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-                {/* Progreso */}
-                <section className="
+        {/* Progreso */}
+        <section
+          className="
                     mt-6
                     rounded-3xl
                     border
@@ -1130,69 +1008,79 @@ export default function TechnicianClosurePage() {
                     p-5
                     shadow-sm
                     sm:p-6
-                ">
-                    <div className="
+                "
+        >
+          <div
+            className="
                         flex
                         flex-col
                         gap-4
                         sm:flex-row
                         sm:items-center
                         sm:justify-between
-                    ">
-                        <div>
-                            <h2 className="
+                    "
+          >
+            <div>
+              <h2
+                className="
                                 text-lg
                                 font-bold
                                 text-slate-900
-                            ">
-                                Preparación del cierre
-                            </h2>
+                            "
+              >
+                Preparación del cierre
+              </h2>
 
-                            <p className="
+              <p
+                className="
                                 mt-1
                                 text-sm
                                 text-slate-500
-                            ">
-                                {completedRequirements} de 3 requisitos completados.
-                            </p>
-                        </div>
+                            "
+              >
+                {completedRequirements} de 3 requisitos completados.
+              </p>
+            </div>
 
-                        <span className="
+            <span
+              className="
                             text-2xl
                             font-bold
                             text-emerald-700
-                        ">
-                            {completionPercentage}%
-                        </span>
-                    </div>
+                        "
+            >
+              {completionPercentage}%
+            </span>
+          </div>
 
-                    <div className="
+          <div
+            className="
                         mt-4
                         h-2.5
                         overflow-hidden
                         rounded-full
                         bg-slate-100
-                    ">
-                        <div
-                            className="
+                    "
+          >
+            <div
+              className="
                                 h-full
                                 rounded-full
                                 bg-emerald-600
                                 transition-all
                                 duration-500
                             "
-                            style={{
-                                width:
-                                    `${completionPercentage}%`,
-                            }}
-                        />
-                    </div>
-                </section>
+              style={{
+                width: `${completionPercentage}%`,
+              }}
+            />
+          </div>
+        </section>
 
-                {error && (
-                    <div
-                        role="alert"
-                        className="
+        {error && (
+          <div
+            role="alert"
+            className="
                             mt-6
                             flex
                             items-start
@@ -1206,8 +1094,9 @@ export default function TechnicianClosurePage() {
                             text-sm
                             text-red-700
                         "
-                    >
-                        <span className="
+          >
+            <span
+              className="
                             flex
                             h-7
                             w-7
@@ -1217,26 +1106,23 @@ export default function TechnicianClosurePage() {
                             rounded-full
                             bg-red-100
                             font-bold
-                        ">
-                            !
-                        </span>
+                        "
+            >
+              !
+            </span>
 
-                        <div>
-                            <p className="font-semibold">
-                                No se pudo completar la operación
-                            </p>
+            <div>
+              <p className="font-semibold">No se pudo completar la operación</p>
 
-                            <p className="mt-1">
-                                {error}
-                            </p>
-                        </div>
-                    </div>
-                )}
+              <p className="mt-1">{error}</p>
+            </div>
+          </div>
+        )}
 
-                {successMessage && (
-                    <div
-                        role="status"
-                        className="
+        {successMessage && (
+          <div
+            role="status"
+            className="
                             mt-6
                             flex
                             items-start
@@ -1250,8 +1136,9 @@ export default function TechnicianClosurePage() {
                             text-sm
                             text-emerald-700
                         "
-                    >
-                        <span className="
+          >
+            <span
+              className="
                             flex
                             h-7
                             w-7
@@ -1261,39 +1148,39 @@ export default function TechnicianClosurePage() {
                             rounded-full
                             bg-emerald-600
                             text-white
-                        ">
-                            <CheckIcon />
-                        </span>
+                        "
+            >
+              <CheckIcon />
+            </span>
 
-                        <div>
-                            <p className="font-semibold">
-                                Cierre registrado
-                            </p>
+            <div>
+              <p className="font-semibold">Cierre registrado</p>
 
-                            <p className="mt-1">
-                                {successMessage}
-                            </p>
-                        </div>
-                    </div>
-                )}
+              <p className="mt-1">{successMessage}</p>
+            </div>
+          </div>
+        )}
 
-                <div className="
+        <div
+          className="
                     mt-6
                     grid
                     grid-cols-1
                     gap-6
                     xl:grid-cols-[minmax(0,1fr)_340px]
-                ">
-                    {/* Formulario */}
-                    <form
-                        onSubmit={handleSubmit}
-                        className="
+                "
+        >
+          {/* Formulario */}
+          <form
+            onSubmit={handleSubmit}
+            className="
                             min-w-0
                             space-y-6
                         "
-                    >
-                        {/* Resultado */}
-                        <section className="
+          >
+            {/* Resultado */}
+            <section
+              className="
                             rounded-3xl
                             border
                             border-slate-200
@@ -1301,13 +1188,17 @@ export default function TechnicianClosurePage() {
                             p-6
                             shadow-sm
                             sm:p-8
-                        ">
-                            <div className="
+                        "
+            >
+              <div
+                className="
                                 flex
                                 items-start
                                 gap-4
-                            ">
-                                <span className={`
+                            "
+              >
+                <span
+                  className={`
                                     flex
                                     h-10
                                     w-10
@@ -1318,46 +1209,52 @@ export default function TechnicianClosurePage() {
                                     text-sm
                                     font-bold
                                     ${
-                                        selectedClosureReasonId
-                                            ? "bg-emerald-600 text-white"
-                                            : "bg-[#064E3B] text-white"
+                                      selectedClosureReasonId
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-[#064E3B] text-white"
                                     }
-                                `}>
-                                    {selectedClosureReasonId
-                                        ? "✓"
-                                        : "1"}
-                                </span>
+                                `}
+                >
+                  {selectedClosureReasonId ? "✓" : "1"}
+                </span>
 
-                                <div>
-                                    <h2 className="
+                <div>
+                  <h2
+                    className="
                                         text-xl
                                         font-bold
                                         text-slate-900
                                         sm:text-2xl
-                                    ">
-                                        Resultado técnico final
-                                    </h2>
+                                    "
+                  >
+                    Resultado técnico final
+                  </h2>
 
-                                    <p className="
+                  <p
+                    className="
                                         mt-1
                                         text-sm
                                         leading-relaxed
                                         text-slate-500
-                                    ">
-                                        Selecciona el motivo que representa el resultado final de la intervención.
-                                    </p>
-                                </div>
-                            </div>
+                                    "
+                  >
+                    Selecciona el motivo que representa el resultado final de la intervención.
+                  </p>
+                </div>
+              </div>
 
-                            <div className="
+              <div
+                className="
                                 mt-6
                                 grid
                                 grid-cols-1
                                 gap-4
                                 md:grid-cols-2
-                            ">
-                                {loadingReasons ? (
-                                    <div className="
+                            "
+              >
+                {loadingReasons ? (
+                  <div
+                    className="
                                         md:col-span-2
                                         flex
                                         items-center
@@ -1369,8 +1266,10 @@ export default function TechnicianClosurePage() {
                                         p-5
                                         text-sm
                                         text-slate-500
-                                    ">
-                                        <div className="
+                                    "
+                  >
+                    <div
+                      className="
                                             h-5
                                             w-5
                                             animate-spin
@@ -1378,12 +1277,13 @@ export default function TechnicianClosurePage() {
                                             border-2
                                             border-slate-200
                                             border-t-emerald-600
-                                        " />
-
-                                        Cargando resultados técnicos...
-                                    </div>
-                                ) : closureReasons.length === 0 ? (
-                                    <div className="
+                                        "
+                    />
+                    Cargando resultados técnicos...
+                  </div>
+                ) : closureReasons.length === 0 ? (
+                  <div
+                    className="
                                         md:col-span-2
                                         rounded-2xl
                                         border
@@ -1393,22 +1293,18 @@ export default function TechnicianClosurePage() {
                                         text-sm
                                         font-semibold
                                         text-red-700
-                                    ">
-                                        No existen resultados técnicos activos configurados.
-                                    </div>
-                                ) : (
-                                    closureReasons.map(
-                                        (reason) => {
-                                            const selected =
-                                                selectedClosureReasonId ===
-                                                reason.id;
+                                    "
+                  >
+                    No existen resultados técnicos activos configurados.
+                  </div>
+                ) : (
+                  closureReasons.map((reason) => {
+                    const selected = selectedClosureReasonId === reason.id;
 
-                                            return (
-                                                <label
-                                                    key={
-                                                        reason.id
-                                                    }
-                                                    className={`
+                    return (
+                      <label
+                        key={reason.id}
+                        className={`
                                                         relative
                                                         cursor-pointer
                                                         rounded-2xl
@@ -1416,41 +1312,36 @@ export default function TechnicianClosurePage() {
                                                         p-5
                                                         transition
                                                         ${
-                                                            selected
-                                                                ? "border-emerald-600 bg-emerald-50 shadow-sm"
-                                                                : "border-slate-200 bg-slate-50 hover:border-emerald-300 hover:bg-emerald-50/50"
+                                                          selected
+                                                            ? "border-emerald-600 bg-emerald-50 shadow-sm"
+                                                            : "border-slate-200 bg-slate-50 hover:border-emerald-300 hover:bg-emerald-50/50"
                                                         }
                                                     `}
-                                                >
-                                                    <input
-                                                        type="radio"
-                                                        name="result"
-                                                        value={
-                                                            reason.id
-                                                        }
-                                                        checked={
-                                                            selected
-                                                        }
-                                                        onChange={() => {
-                                                            setSelectedClosureReasonId(
-                                                                reason.id
-                                                            );
+                      >
+                        <input
+                          type="radio"
+                          name="result"
+                          value={reason.id}
+                          checked={selected}
+                          onChange={() => {
+                            setSelectedClosureReasonId(reason.id);
 
-                                                            setSelectedResult(
-                                                                reason.name
-                                                            );
-                                                        }}
-                                                        className="
+                            setSelectedResult(reason.name);
+                          }}
+                          className="
                                                             sr-only
                                                         "
-                                                    />
+                        />
 
-                                                    <div className="
+                        <div
+                          className="
                                                         flex
                                                         items-start
                                                         gap-3
-                                                    ">
-                                                        <span className={`
+                                                    "
+                        >
+                          <span
+                            className={`
                                                             mt-0.5
                                                             flex
                                                             h-6
@@ -1461,56 +1352,62 @@ export default function TechnicianClosurePage() {
                                                             rounded-full
                                                             border-2
                                                             ${
-                                                                selected
-                                                                    ? "border-emerald-600 bg-emerald-600"
-                                                                    : "border-slate-300 bg-white"
+                                                              selected
+                                                                ? "border-emerald-600 bg-emerald-600"
+                                                                : "border-slate-300 bg-white"
                                                             }
-                                                        `}>
-                                                            {selected && (
-                                                                <span className="
+                                                        `}
+                          >
+                            {selected && (
+                              <span
+                                className="
                                                                     h-2.5
                                                                     w-2.5
                                                                     rounded-full
                                                                     bg-white
-                                                                " />
-                                                            )}
-                                                        </span>
+                                                                "
+                              />
+                            )}
+                          </span>
 
-                                                        <div className="min-w-0">
-                                                            <p className={`
+                          <div className="min-w-0">
+                            <p
+                              className={`
                                                                 font-semibold
                                                                 leading-snug
                                                                 ${
-                                                                    selected
-                                                                        ? "text-emerald-900"
-                                                                        : "text-slate-900"
+                                                                  selected
+                                                                    ? "text-emerald-900"
+                                                                    : "text-slate-900"
                                                                 }
-                                                            `}>
-                                                                {reason.name}
-                                                            </p>
+                                                            `}
+                            >
+                              {reason.name}
+                            </p>
 
-                                                            <p className="
+                            <p
+                              className="
                                                                 mt-2
                                                                 text-sm
                                                                 leading-relaxed
                                                                 text-slate-500
-                                                            ">
-                                                                {reason.description ||
-                                                                    "Sin descripción."}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </label>
-                                            );
-                                        }
-                                    )
-                                )}
-                            </div>
-                        </section>
+                                                            "
+                            >
+                              {reason.description || "Sin descripción."}
+                            </p>
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+            </section>
 
-                        {/* Seguimiento */}
-                        {requiresFollowUp && (
-                            <section className="
+            {/* Seguimiento */}
+            {requiresFollowUp && (
+              <section
+                className="
                                 rounded-3xl
                                 border
                                 border-amber-200
@@ -1518,13 +1415,17 @@ export default function TechnicianClosurePage() {
                                 p-6
                                 shadow-sm
                                 sm:p-8
-                            ">
-                                <div className="
+                            "
+              >
+                <div
+                  className="
                                     flex
                                     items-start
                                     gap-4
-                                ">
-                                    <span className={`
+                                "
+                >
+                  <span
+                    className={`
                                         flex
                                         h-10
                                         w-10
@@ -1535,47 +1436,45 @@ export default function TechnicianClosurePage() {
                                         text-sm
                                         font-bold
                                         ${
-                                            followUpNotes.trim()
-                                                ? "bg-emerald-600 text-white"
-                                                : "bg-amber-500 text-white"
+                                          followUpNotes.trim()
+                                            ? "bg-emerald-600 text-white"
+                                            : "bg-amber-500 text-white"
                                         }
-                                    `}>
-                                        {followUpNotes.trim()
-                                            ? "✓"
-                                            : "!"}
-                                    </span>
+                                    `}
+                  >
+                    {followUpNotes.trim() ? "✓" : "!"}
+                  </span>
 
-                                    <div>
-                                        <h2 className="
+                  <div>
+                    <h2
+                      className="
                                             text-xl
                                             font-bold
                                             text-slate-900
-                                        ">
-                                            Seguimiento requerido
-                                        </h2>
+                                        "
+                    >
+                      Seguimiento requerido
+                    </h2>
 
-                                        <p className="
+                    <p
+                      className="
                                             mt-1
                                             text-sm
                                             leading-relaxed
                                             text-amber-800
-                                        ">
-                                            El motivo seleccionado requiere indicar la actividad pendiente o una nueva visita.
-                                        </p>
-                                    </div>
-                                </div>
+                                        "
+                    >
+                      El motivo seleccionado requiere indicar la actividad pendiente o una nueva
+                      visita.
+                    </p>
+                  </div>
+                </div>
 
-                                <textarea
-                                    value={
-                                        followUpNotes
-                                    }
-                                    onChange={(event) =>
-                                        setFollowUpNotes(
-                                            event.target.value
-                                        )
-                                    }
-                                    placeholder="Describe la tarea complementaria, nueva visita o seguimiento requerido."
-                                    className="
+                <textarea
+                  value={followUpNotes}
+                  onChange={(event) => setFollowUpNotes(event.target.value)}
+                  placeholder="Describe la tarea complementaria, nueva visita o seguimiento requerido."
+                  className="
                                         mt-6
                                         min-h-36
                                         w-full
@@ -1595,20 +1494,23 @@ export default function TechnicianClosurePage() {
                                         focus:ring-2
                                         focus:ring-amber-100
                                     "
-                                />
+                />
 
-                                <p className="
+                <p
+                  className="
                                     mt-2
                                     text-xs
                                     text-amber-700
-                                ">
-                                    {followUpNotes.trim().length} caracteres
-                                </p>
-                            </section>
-                        )}
+                                "
+                >
+                  {followUpNotes.trim().length} caracteres
+                </p>
+              </section>
+            )}
 
-                        {/* Observaciones */}
-                        <section className="
+            {/* Observaciones */}
+            <section
+              className="
                             rounded-3xl
                             border
                             border-slate-200
@@ -1616,13 +1518,17 @@ export default function TechnicianClosurePage() {
                             p-6
                             shadow-sm
                             sm:p-8
-                        ">
-                            <div className="
+                        "
+            >
+              <div
+                className="
                                 flex
                                 items-start
                                 gap-4
-                            ">
-                                <span className={`
+                            "
+              >
+                <span
+                  className={`
                                     flex
                                     h-10
                                     w-10
@@ -1633,46 +1539,46 @@ export default function TechnicianClosurePage() {
                                     text-sm
                                     font-bold
                                     ${
-                                        observations.trim()
-                                            ? "bg-emerald-600 text-white"
-                                            : "bg-[#064E3B] text-white"
+                                      observations.trim()
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-[#064E3B] text-white"
                                     }
-                                `}>
-                                    {observations.trim()
-                                        ? "✓"
-                                        : "2"}
-                                </span>
+                                `}
+                >
+                  {observations.trim() ? "✓" : "2"}
+                </span>
 
-                                <div>
-                                    <h2 className="
+                <div>
+                  <h2
+                    className="
                                         text-xl
                                         font-bold
                                         text-slate-900
                                         sm:text-2xl
-                                    ">
-                                        Observaciones de cierre
-                                    </h2>
+                                    "
+                  >
+                    Observaciones de cierre
+                  </h2>
 
-                                    <p className="
+                  <p
+                    className="
                                         mt-1
                                         text-sm
                                         leading-relaxed
                                         text-slate-500
-                                    ">
-                                        Explica el motivo del cierre, las condiciones encontradas y las acciones finales.
-                                    </p>
-                                </div>
-                            </div>
+                                    "
+                  >
+                    Explica el motivo del cierre, las condiciones encontradas y las acciones
+                    finales.
+                  </p>
+                </div>
+              </div>
 
-                            <textarea
-                                value={observations}
-                                onChange={(event) =>
-                                    setObservations(
-                                        event.target.value
-                                    )
-                                }
-                                placeholder="Ejemplo: Se verificó la incidencia, se realizó la intervención correspondiente y se dejó el área en condiciones adecuadas..."
-                                className="
+              <textarea
+                value={observations}
+                onChange={(event) => setObservations(event.target.value)}
+                placeholder="Ejemplo: Se verificó la incidencia, se realizó la intervención correspondiente y se dejó el área en condiciones adecuadas..."
+                className="
                                     mt-6
                                     min-h-48
                                     w-full
@@ -1692,33 +1598,40 @@ export default function TechnicianClosurePage() {
                                     focus:ring-2
                                     focus:ring-emerald-100
                                 "
-                            />
+              />
 
-                            <div className="
+              <div
+                className="
                                 mt-2
                                 flex
                                 items-center
                                 justify-between
                                 gap-3
-                            ">
-                                <span className="
+                            "
+              >
+                <span
+                  className="
                                     text-xs
                                     text-slate-400
-                                ">
-                                    Campo obligatorio
-                                </span>
+                                "
+                >
+                  Campo obligatorio
+                </span>
 
-                                <span className="
+                <span
+                  className="
                                     text-xs
                                     text-slate-400
-                                ">
-                                    {observations.trim().length} caracteres
-                                </span>
-                            </div>
-                        </section>
+                                "
+                >
+                  {observations.trim().length} caracteres
+                </span>
+              </div>
+            </section>
 
-                        {/* Evidencia */}
-                        <section className="
+            {/* Evidencia */}
+            <section
+              className="
                             rounded-3xl
                             border
                             border-slate-200
@@ -1726,13 +1639,17 @@ export default function TechnicianClosurePage() {
                             p-6
                             shadow-sm
                             sm:p-8
-                        ">
-                            <div className="
+                        "
+            >
+              <div
+                className="
                                 flex
                                 items-start
                                 gap-4
-                            ">
-                                <span className="
+                            "
+              >
+                <span
+                  className="
                                     flex
                                     h-10
                                     w-10
@@ -1744,36 +1661,41 @@ export default function TechnicianClosurePage() {
                                     text-sm
                                     font-bold
                                     text-white
-                                ">
-                                    3
-                                </span>
+                                "
+                >
+                  3
+                </span>
 
-                                <div>
-                                    <h2 className="
+                <div>
+                  <h2
+                    className="
                                         text-xl
                                         font-bold
                                         text-slate-900
                                         sm:text-2xl
-                                    ">
-                                        Evidencia de cierre
-                                    </h2>
+                                    "
+                  >
+                    Evidencia de cierre
+                  </h2>
 
-                                    <p className="
+                  <p
+                    className="
                                         mt-1
                                         text-sm
                                         leading-relaxed
                                         text-slate-500
-                                    ">
-                                        Puedes adjuntar una fotografía adicional que sustente el cierre operativo.
-                                    </p>
-                                </div>
-                            </div>
+                                    "
+                  >
+                    Puedes adjuntar una fotografía adicional que sustente el cierre operativo.
+                  </p>
+                </div>
+              </div>
 
-                            {!closureEvidenceUrl ? (
-                                <>
-                                    <label
-                                        htmlFor="closure-evidence"
-                                        className="
+              {!closureEvidenceUrl ? (
+                <>
+                  <label
+                    htmlFor="closure-evidence"
+                    className="
                                             mt-6
                                             flex
                                             min-h-40
@@ -1793,69 +1715,69 @@ export default function TechnicianClosurePage() {
                                             hover:border-emerald-400
                                             hover:bg-emerald-50
                                         "
-                                    >
-                                        <CameraIcon />
+                  >
+                    <CameraIcon />
 
-                                        <p className="
+                    <p
+                      className="
                                             mt-3
                                             text-sm
                                             font-semibold
-                                        ">
-                                            Seleccionar fotografía
-                                        </p>
+                                        "
+                    >
+                      Seleccionar fotografía
+                    </p>
 
-                                        <p className="
+                    <p
+                      className="
                                             mt-1
                                             text-xs
                                             text-emerald-700/70
-                                        ">
-                                            JPG, PNG o fotografía tomada desde el dispositivo
-                                        </p>
-                                    </label>
+                                        "
+                    >
+                      JPG, PNG o fotografía tomada desde el dispositivo
+                    </p>
+                  </label>
 
-                                    <input
-                                        id="closure-evidence"
-                                        type="file"
-                                        accept="image/*"
-                                        capture="environment"
-                                        onChange={
-                                            handleEvidenceChange
-                                        }
-                                        className="sr-only"
-                                    />
-                                </>
-                            ) : (
-                                <div className="
+                  <input
+                    id="closure-evidence"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleEvidenceChange}
+                    className="sr-only"
+                  />
+                </>
+              ) : (
+                <div
+                  className="
                                     mt-6
                                     overflow-hidden
                                     rounded-2xl
                                     border
                                     border-slate-200
                                     bg-slate-50
-                                ">
-                                    <div className="
+                                "
+                >
+                  <div
+                    className="
                                         relative
-                                    ">
-                                        <img
-                                            src={
-                                                closureEvidenceUrl
-                                            }
-                                            alt="Evidencia de cierre"
-                                            className="
+                                    "
+                  >
+                    <img
+                      src={closureEvidenceUrl}
+                      alt="Evidencia de cierre"
+                      className="
                                                 h-72
                                                 w-full
                                                 object-cover
                                             "
-                                        />
+                    />
 
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setClosureEvidenceUrl(
-                                                    ""
-                                                )
-                                            }
-                                            className="
+                    <button
+                      type="button"
+                      onClick={() => setClosureEvidenceUrl("")}
+                      className="
                                                 absolute
                                                 right-3
                                                 top-3
@@ -1872,30 +1794,35 @@ export default function TechnicianClosurePage() {
                                                 transition
                                                 hover:bg-red-700
                                             "
-                                            aria-label="Eliminar evidencia de cierre"
-                                            title="Eliminar evidencia"
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
+                      aria-label="Eliminar evidencia de cierre"
+                      title="Eliminar evidencia"
+                    >
+                      ×
+                    </button>
+                  </div>
 
-                                    <div className="
+                  <div
+                    className="
                                         flex
                                         items-center
                                         justify-between
                                         gap-4
                                         px-5
                                         py-4
-                                    ">
-                                        <span className="
+                                    "
+                  >
+                    <span
+                      className="
                                             text-sm
                                             font-semibold
                                             text-slate-700
-                                        ">
-                                            Evidencia preparada
-                                        </span>
+                                        "
+                    >
+                      Evidencia preparada
+                    </span>
 
-                                        <span className="
+                    <span
+                      className="
                                             rounded-full
                                             bg-emerald-100
                                             px-3
@@ -1903,16 +1830,18 @@ export default function TechnicianClosurePage() {
                                             text-xs
                                             font-semibold
                                             text-emerald-700
-                                        ">
-                                            Lista para enviar
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
-                        </section>
+                                        "
+                    >
+                      Lista para enviar
+                    </span>
+                  </div>
+                </div>
+              )}
+            </section>
 
-                        {/* Acción final */}
-                        <section className="
+            {/* Acción final */}
+            <section
+              className="
                             rounded-3xl
                             border
                             border-slate-200
@@ -1920,56 +1849,63 @@ export default function TechnicianClosurePage() {
                             p-6
                             shadow-sm
                             sm:p-8
-                        ">
-                            <div className="
+                        "
+            >
+              <div
+                className="
                                 flex
                                 flex-col
                                 gap-3
                                 sm:flex-row
                                 sm:items-center
                                 sm:justify-between
-                            ">
-                                <div>
-                                    <h2 className="
+                            "
+              >
+                <div>
+                  <h2
+                    className="
                                         text-xl
                                         font-bold
                                         text-slate-900
-                                    ">
-                                        Confirmar cierre operativo
-                                    </h2>
+                                    "
+                  >
+                    Confirmar cierre operativo
+                  </h2>
 
-                                    <p className="
+                  <p
+                    className="
                                         mt-1
                                         text-sm
                                         leading-relaxed
                                         text-slate-500
-                                    ">
-                                        Al confirmar, el reporte cambiará al estado Resuelto.
-                                    </p>
-                                </div>
+                                    "
+                  >
+                    Al confirmar, el reporte cambiará al estado Resuelto.
+                  </p>
+                </div>
 
-                                <span className={`
+                <span
+                  className={`
                                     rounded-full
                                     px-3
                                     py-1.5
                                     text-xs
                                     font-semibold
                                     ${
-                                        canSubmit
-                                            ? "bg-emerald-100 text-emerald-700"
-                                            : "bg-slate-100 text-slate-500"
+                                      canSubmit
+                                        ? "bg-emerald-100 text-emerald-700"
+                                        : "bg-slate-100 text-slate-500"
                                     }
-                                `}>
-                                    {canSubmit
-                                        ? "Listo para cerrar"
-                                        : "Faltan datos"}
-                                </span>
-                            </div>
+                                `}
+                >
+                  {canSubmit ? "Listo para cerrar" : "Faltan datos"}
+                </span>
+              </div>
 
-                            <button
-                                type="submit"
-                                disabled={!canSubmit}
-                                className="
+              <button
+                type="submit"
+                disabled={!canSubmit}
+                className="
                                     mt-6
                                     w-full
                                     rounded-2xl
@@ -1986,187 +1922,170 @@ export default function TechnicianClosurePage() {
                                     disabled:bg-slate-300
                                     disabled:text-white
                                 "
-                            >
-                                {saving
-                                    ? "Registrando cierre..."
-                                    : "Registrar cierre operativo"}
-                            </button>
-                        </section>
-                    </form>
+              >
+                {saving ? "Registrando cierre..." : "Registrar cierre operativo"}
+              </button>
+            </section>
+          </form>
 
-                    {/* Resumen lateral */}
-                    <aside className="
+          {/* Resumen lateral */}
+          <aside
+            className="
                         space-y-6
                         xl:sticky
                         xl:top-24
                         xl:self-start
-                    ">
-                        <section className="
+                    "
+          >
+            <section
+              className="
                             rounded-3xl
                             border
                             border-slate-200
                             bg-white
                             p-5
                             shadow-sm
-                        ">
-                            <h2 className="
+                        "
+            >
+              <h2
+                className="
                                 text-lg
                                 font-bold
                                 text-slate-900
-                            ">
-                                Requisitos del cierre
-                            </h2>
+                            "
+              >
+                Requisitos del cierre
+              </h2>
 
-                            <p className="
+              <p
+                className="
                                 mt-1
                                 text-sm
                                 leading-relaxed
                                 text-slate-500
-                            ">
-                                Completa los datos requeridos antes de confirmar.
-                            </p>
+                            "
+              >
+                Completa los datos requeridos antes de confirmar.
+              </p>
 
-                            <div className="
+              <div
+                className="
                                 mt-5
                                 space-y-4
-                            ">
-                                <RequirementItem
-                                    complete={
-                                        closureRequirements.reason
-                                    }
-                                    label="Resultado técnico seleccionado"
-                                />
+                            "
+              >
+                <RequirementItem
+                  complete={closureRequirements.reason}
+                  label="Resultado técnico seleccionado"
+                />
 
-                                <RequirementItem
-                                    complete={
-                                        closureRequirements.observations
-                                    }
-                                    label="Observaciones registradas"
-                                />
+                <RequirementItem
+                  complete={closureRequirements.observations}
+                  label="Observaciones registradas"
+                />
 
-                                <RequirementItem
-                                    complete={
-                                        closureRequirements.followUp
-                                    }
-                                    label={
-                                        requiresFollowUp
-                                            ? "Notas de seguimiento registradas"
-                                            : "No requiere seguimiento"
-                                    }
-                                />
-                            </div>
-                        </section>
+                <RequirementItem
+                  complete={closureRequirements.followUp}
+                  label={
+                    requiresFollowUp
+                      ? "Notas de seguimiento registradas"
+                      : "No requiere seguimiento"
+                  }
+                />
+              </div>
+            </section>
 
-                        <section className="
+            <section
+              className="
                             rounded-3xl
                             border
                             border-slate-200
                             bg-white
                             p-5
                             shadow-sm
-                        ">
-                            <h2 className="
+                        "
+            >
+              <h2
+                className="
                                 text-lg
                                 font-bold
                                 text-slate-900
-                            ">
-                                Resumen operativo
-                            </h2>
+                            "
+              >
+                Resumen operativo
+              </h2>
 
-                            <div className="
+              <div
+                className="
                                 mt-5
                                 grid
                                 grid-cols-1
                                 gap-3
-                            ">
-                                <InfoItem
-                                    label="Llegada"
-                                    value={formatDateTime(
-                                        report.fieldWork
-                                            ?.arrivedAt
-                                    )}
-                                />
+                            "
+              >
+                <InfoItem label="Llegada" value={formatDateTime(report.fieldWork?.arrivedAt)} />
 
-                                <InfoItem
-                                    label="Cierre de visita"
-                                    value={formatDateTime(
-                                        report.fieldWork
-                                            ?.closedAt
-                                    )}
-                                />
+                <InfoItem
+                  label="Cierre de visita"
+                  value={formatDateTime(report.fieldWork?.closedAt)}
+                />
 
-                                <InfoItem
-                                    label="Distancia"
-                                    value={
-                                        report.fieldWork
-                                            ?.distanceMeters !==
-                                            null &&
-                                        report.fieldWork
-                                            ?.distanceMeters !==
-                                            undefined
-                                            ? `${report.fieldWork.distanceMeters.toFixed(
-                                                0
-                                            )} metros`
-                                            : "No calculada"
-                                    }
-                                />
+                <InfoItem
+                  label="Distancia"
+                  value={
+                    report.fieldWork?.distanceMeters !== null &&
+                    report.fieldWork?.distanceMeters !== undefined
+                      ? `${report.fieldWork.distanceMeters.toFixed(0)} metros`
+                      : "No calculada"
+                  }
+                />
 
-                                <InfoItem
-                                    label="Notas de campo"
-                                    value={
-                                        report.fieldWork
-                                            ?.notes ||
-                                        "Sin notas registradas"
-                                    }
-                                />
-                            </div>
-                        </section>
+                <InfoItem
+                  label="Notas de campo"
+                  value={report.fieldWork?.notes || "Sin notas registradas"}
+                />
+              </div>
+            </section>
 
-                        <section className="
+            <section
+              className="
                             rounded-3xl
                             border
                             border-slate-200
                             bg-white
                             p-5
                             shadow-sm
-                        ">
-                            <h2 className="
+                        "
+            >
+              <h2
+                className="
                                 text-lg
                                 font-bold
                                 text-slate-900
-                            ">
-                                Atención técnica previa
-                            </h2>
+                            "
+              >
+                Atención técnica previa
+              </h2>
 
-                            {latestAttention ? (
-                                <div className="
+              {latestAttention ? (
+                <div
+                  className="
                                     mt-5
                                     space-y-4
-                                ">
-                                    <InfoItem
-                                        label="Acción"
-                                        value={
-                                            latestAttention.actionTaken
-                                        }
-                                    />
+                                "
+                >
+                  <InfoItem label="Acción" value={latestAttention.actionTaken} />
 
-                                    <InfoItem
-                                        label="Resultado preliminar"
-                                        value={
-                                            latestAttention.technicalResult
-                                        }
-                                    />
+                  <InfoItem label="Resultado preliminar" value={latestAttention.technicalResult} />
 
-                                    <InfoItem
-                                        label="Observaciones"
-                                        value={
-                                            latestAttention.observations ||
-                                            "Sin observaciones"
-                                        }
-                                    />
-                                </div>
-                            ) : (
-                                <div className="
+                  <InfoItem
+                    label="Observaciones"
+                    value={latestAttention.observations || "Sin observaciones"}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="
                                     mt-4
                                     rounded-2xl
                                     border
@@ -2177,59 +2096,58 @@ export default function TechnicianClosurePage() {
                                     text-center
                                     text-sm
                                     text-slate-500
-                                ">
-                                    No hay atención técnica previa registrada.
-                                </div>
-                            )}
-                        </section>
+                                "
+                >
+                  No hay atención técnica previa registrada.
+                </div>
+              )}
+            </section>
 
-                        <section className="
+            <section
+              className="
                             rounded-3xl
                             border
                             border-slate-200
                             bg-white
                             p-5
                             shadow-sm
-                        ">
-                            <h2 className="
+                        "
+            >
+              <h2
+                className="
                                 text-lg
                                 font-bold
                                 text-slate-900
-                            ">
-                                Evidencias de campo
-                            </h2>
+                            "
+              >
+                Evidencias de campo
+              </h2>
 
-                            <p className="
+              <p
+                className="
                                 mt-1
                                 text-sm
                                 leading-relaxed
                                 text-slate-500
-                            ">
-                                Fotografías registradas durante la trazabilidad.
-                            </p>
+                            "
+              >
+                Fotografías registradas durante la trazabilidad.
+              </p>
 
-                            <div className="
+              <div
+                className="
                                 mt-5
                                 space-y-6
-                            ">
-                                <EvidenceGroup
-                                    title="Antes"
-                                    evidences={
-                                        beforeEvidences
-                                    }
-                                />
+                            "
+              >
+                <EvidenceGroup title="Antes" evidences={beforeEvidences} />
 
-                                <EvidenceGroup
-                                    title="Después"
-                                    evidences={
-                                        afterEvidences
-                                    }
-                                />
-                            </div>
-                        </section>
-                    </aside>
-                </div>
-            </main>
+                <EvidenceGroup title="Después" evidences={afterEvidences} />
+              </div>
+            </section>
+          </aside>
         </div>
-    );
+      </main>
+    </div>
+  );
 }

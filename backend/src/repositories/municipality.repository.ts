@@ -10,8 +10,7 @@ export class MunicipalityRepository {
   }
 
   async findOrCreateByName(name: string) {
-    const existingMunicipality =
-      await this.findByName(name);
+    const existingMunicipality = await this.findByName(name);
 
     if (existingMunicipality) {
       return existingMunicipality;

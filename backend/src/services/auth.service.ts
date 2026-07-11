@@ -10,8 +10,7 @@ export class AuthService {
   private userRepository = new UserRepository();
   private emailService = new EmailService();
   private validateStrongPassword(password: string) {
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
     if (!passwordRegex.test(password)) {
       throw new Error(
@@ -19,13 +18,7 @@ export class AuthService {
       );
     }
   }
-  async register(data: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    password: string;
-  }) {
-
+  async register(data: { email: string; firstName: string; lastName: string; password: string }) {
     if (!isValidEmailFormat(data.email)) {
       throw new Error("El formato del correo electrónico no es válido");
     }
@@ -36,7 +29,7 @@ export class AuthService {
       throw new Error("El dominio del correo no existe o no puede recibir correos");
     }
 
-  const existingUser = await this.userRepository.findByEmail(data.email);
+    const existingUser = await this.userRepository.findByEmail(data.email);
 
     if (existingUser) {
       if (!existingUser.emailVerified) {
@@ -76,8 +69,7 @@ export class AuthService {
     await this.emailService.sendVerificationEmail(data.email, token);
 
     return {
-      message:
-        "Si esta cuenta existe, te llegará una verificación a tu correo.",
+      message: "Si esta cuenta existe, te llegará una verificación a tu correo.",
     };
   }
 
@@ -138,25 +130,24 @@ export class AuthService {
     };
   }
   async forgotPassword(email: string) {
-  const user = await this.userRepository.findByEmail(email);
+    const user = await this.userRepository.findByEmail(email);
 
-  if (user) {
-    const { token, hashedToken } = generateEmailToken();
+    if (user) {
+      const { token, hashedToken } = generateEmailToken();
 
-    await this.userRepository.updatePasswordResetToken(
-      user.id,
-      hashedToken,
-      new Date(Date.now() + 60 * 60 * 1000)
-    );
+      await this.userRepository.updatePasswordResetToken(
+        user.id,
+        hashedToken,
+        new Date(Date.now() + 60 * 60 * 1000)
+      );
 
-    await this.emailService.sendPasswordResetEmail(user.email, token);
+      await this.emailService.sendPasswordResetEmail(user.email, token);
+    }
+
+    return {
+      message: "Si el correo existe, te llegará un enlace para restablecer tu contraseña.",
+    };
   }
-
-  return {
-    message:
-      "Si el correo existe, te llegará un enlace para restablecer tu contraseña.",
-  };
-}
 
   async resetPassword(token: string, newPassword: string) {
     this.validateStrongPassword(newPassword);

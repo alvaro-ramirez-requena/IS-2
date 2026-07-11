@@ -1,16 +1,9 @@
-import {
-  Priority,
-  Status,
-} from "@prisma/client";
+import { Priority, Status } from "@prisma/client";
 
-import {
-  prisma,
-} from "../config/prisma";
+import { prisma } from "../config/prisma";
 
 export class OperatorMonitoringRepository {
-  async findOperatorById(
-    operatorId: string
-  ) {
+  async findOperatorById(operatorId: string) {
     return await prisma.user.findUnique({
       where: {
         id: operatorId,
@@ -22,9 +15,7 @@ export class OperatorMonitoringRepository {
     });
   }
 
-  async findTechniciansByMunicipality(
-    municipalityId: string
-  ) {
+  async findTechniciansByMunicipality(municipalityId: string) {
     return await prisma.user.findMany({
       where: {
         role: "TECHNICIAN",
@@ -61,34 +52,29 @@ export class OperatorMonitoringRepository {
     technicianId?: string;
     priority?: Priority;
   }) {
-    const monitoredStatuses:
-      Status[] = [
-        Status.ASSIGNED,
-        Status.IN_TRANSIT,
-        Status.IN_PROGRESS,
-        Status.RESOLVED,
-      ];
+    const monitoredStatuses: Status[] = [
+      Status.ASSIGNED,
+      Status.IN_TRANSIT,
+      Status.IN_PROGRESS,
+      Status.RESOLVED,
+    ];
 
     return await prisma.reportAssignment.findMany({
       where: {
         active: true,
 
-        technicianId:
-          data.technicianId || undefined,
+        technicianId: data.technicianId || undefined,
 
         report: {
-          municipalityId:
-            data.municipalityId,
+          municipalityId: data.municipalityId,
 
-          status:
-            data.status
-              ? data.status
-              : {
-                  in: monitoredStatuses,
-                },
+          status: data.status
+            ? data.status
+            : {
+                in: monitoredStatuses,
+              },
 
-          priority:
-            data.priority || undefined,
+          priority: data.priority || undefined,
         },
       },
 

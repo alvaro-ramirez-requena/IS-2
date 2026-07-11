@@ -1,10 +1,6 @@
-import {
-  Status,
-} from "@prisma/client";
+import { Status } from "@prisma/client";
 
-import {
-  prisma,
-} from "../config/prisma";
+import { prisma } from "../config/prisma";
 
 type CreateTechnicalClosureInput = {
   reportId: string;
@@ -18,9 +14,7 @@ type CreateTechnicalClosureInput = {
 };
 
 export class TechnicalClosureRepository {
-  async findClosureReasonById(
-    closureReasonId: string
-  ) {
+  async findClosureReasonById(closureReasonId: string) {
     return await prisma.closureReason.findUnique({
       where: {
         id: closureReasonId,
@@ -28,109 +22,110 @@ export class TechnicalClosureRepository {
     });
   }
 
-  async create(
-    data: CreateTechnicalClosureInput
-  ) {
+  async create(data: CreateTechnicalClosureInput) {
     return await prisma.$transaction(async (tx) => {
-      const closure =
-        await tx.technicalClosure.create({
-          data: {
-            reportId:
-              data.reportId,
+      const closure = await tx.technicalClosure.create({
+        data: {
+          reportId: data.reportId,
 
-            technicianId:
-              data.technicianId,
+          technicianId: data.technicianId,
 
-            result:
-              data.result,
+          result: data.result,
 
-            closureReasonId:
-              data.closureReasonId,
+          closureReasonId: data.closureReasonId,
 
-            observations:
-              data.observations,
+          observations: data.observations,
 
-            closureEvidenceUrl:
-              data.closureEvidenceUrl,
+          closureEvidenceUrl: data.closureEvidenceUrl,
 
-            followUpRequired:
-              data.followUpRequired ?? false,
+          followUpRequired: data.followUpRequired ?? false,
 
-            followUpNotes:
-              data.followUpNotes,
-          },
+          followUpNotes: data.followUpNotes,
+        },
 
-          include: {
-            closureReason: true,
+        include: {
+          closureReason: true,
 
-            technician: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
-              },
+          technician: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
             },
           },
-        });
+        },
+      });
 
-      const resolvedReport =
-        await tx.report.update({
+      const resolvedReport = await tx.report.update({
+        where: {
+          id: data.reportId,
+        },
+
+        data: {
+          status: Status.RESOLVED,
+
+          resolvedAt: new Date(),
+        },
+      });
+
+      const otherActiveAssignments = await tx.reportAssignment.count({
+        where: {
+          technicianId: data.technicianId,
+
+          reportId: {
+            not: data.reportId,
+          },
+
+          active: true,
+
+          report: {
+            status: {
+              in: [Status.ASSIGNED, Status.IN_TRANSIT, Status.IN_PROGRESS],
+            },
+          },
+        },
+      });
+
+      if (otherActiveAssignments === 0) {
+        await tx.technicianProfile.updateMany({
           where: {
-            id: data.reportId,
+            userId: data.technicianId,
           },
 
           data: {
-            status:
-              Status.RESOLVED,
-
-            resolvedAt:
-              new Date(),
+            available: true,
           },
         });
+      }
 
-      const followers =
-        await tx.reportFollow.findMany({
-          where: {
-            reportId:
-              resolvedReport.id,
-          },
-        });
+      const followers = await tx.reportFollow.findMany({
+        where: {
+          reportId: resolvedReport.id,
+        },
+      });
 
-      const userIdsToNotify =
-        Array.from(
-          new Set([
-            resolvedReport.userId,
-            ...followers.map(
-              (follow) =>
-                follow.userId
-            ),
-          ])
-        );
+      const userIdsToNotify = Array.from(
+        new Set([resolvedReport.userId, ...followers.map((follow) => follow.userId)])
+      );
 
       await tx.notification.createMany({
-        data:
-          userIdsToNotify.map((userId) => ({
-            userId,
+        data: userIdsToNotify.map((userId) => ({
+          userId,
 
-            reportId:
-              resolvedReport.id,
+          reportId: resolvedReport.id,
 
-            title:
-              "Reporte resuelto",
+          title: "Reporte resuelto",
 
-            message:
-              `El reporte "${resolvedReport.title}" fue marcado como resuelto por el técnico.`,
-          })),
+          message: `El reporte "${resolvedReport.title}" fue marcado como resuelto por el técnico.`,
+        })),
       });
 
       return closure;
     });
   }
 
-  async findByReportId(
-    reportId: string
-  ) {
+  async findByReportId(reportId: string) {
     return await prisma.technicalClosure.findUnique({
       where: {
         reportId,

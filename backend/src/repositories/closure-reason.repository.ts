@@ -20,10 +20,7 @@ export class ClosureReasonRepository {
     });
   }
 
-  async create(data: {
-    name: string;
-    description?: string;
-  }) {
+  async create(data: { name: string; description?: string }) {
     return await prisma.closureReason.create({
       data: {
         name: data.name,

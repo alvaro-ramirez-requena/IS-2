@@ -15,8 +15,7 @@ const catalog = [
   },
   {
     name: "Seguridad ciudadana",
-    description:
-      "Incidencias relacionadas con seguridad, convivencia y orden público.",
+    description: "Incidencias relacionadas con seguridad, convivencia y orden público.",
     problemTypes: [
       "Robos y asaltos",
       "Consumo de alcohol en la vía pública",
@@ -53,30 +52,28 @@ const catalog = [
 
 async function main() {
   for (const categoryData of catalog) {
-    const category =
-      await prisma.category.upsert({
-        where: {
-          name: categoryData.name,
-        },
-        update: {
-          description: categoryData.description,
-          active: true,
-        },
-        create: {
-          name: categoryData.name,
-          description: categoryData.description,
-          active: true,
-        },
-      });
+    const category = await prisma.category.upsert({
+      where: {
+        name: categoryData.name,
+      },
+      update: {
+        description: categoryData.description,
+        active: true,
+      },
+      create: {
+        name: categoryData.name,
+        description: categoryData.description,
+        active: true,
+      },
+    });
 
     for (const problemTypeName of categoryData.problemTypes) {
-      const existingProblemType =
-        await prisma.problemType.findFirst({
-          where: {
-            name: problemTypeName,
-            categoryId: category.id,
-          },
-        });
+      const existingProblemType = await prisma.problemType.findFirst({
+        where: {
+          name: problemTypeName,
+          categoryId: category.id,
+        },
+      });
 
       if (existingProblemType) {
         await prisma.problemType.update({
@@ -91,8 +88,7 @@ async function main() {
         await prisma.problemType.create({
           data: {
             name: problemTypeName,
-            description:
-              `Tipo de problema asociado a ${category.name}.`,
+            description: `Tipo de problema asociado a ${category.name}.`,
             categoryId: category.id,
             active: true,
           },
@@ -101,9 +97,7 @@ async function main() {
     }
   }
 
-  console.log(
-    "Catálogo operativo base cargado correctamente."
-  );
+  console.log("Catálogo operativo base cargado correctamente.");
 }
 
 main()

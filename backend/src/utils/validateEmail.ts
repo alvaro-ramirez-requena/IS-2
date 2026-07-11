@@ -14,8 +14,14 @@ export async function hasValidEmailDomain(email: string) {
 
   // Dominios conocidos que siempre se aceptan sin consulta DNS
   const trustedDomains = [
-    "gmail.com", "hotmail.com", "outlook.com", "yahoo.com",
-    "ulima.edu.pe", "aloe.ulima.edu.pe", "live.com", "icloud.com"
+    "gmail.com",
+    "hotmail.com",
+    "outlook.com",
+    "yahoo.com",
+    "ulima.edu.pe",
+    "aloe.ulima.edu.pe",
+    "live.com",
+    "icloud.com",
   ];
 
   if (trustedDomains.includes(domain.toLowerCase())) {
