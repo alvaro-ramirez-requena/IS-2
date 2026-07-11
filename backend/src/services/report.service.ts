@@ -88,8 +88,14 @@ export class ReportService {
     let address: string | undefined =
       data.address;
 
-    let municipalityId: string | undefined =
-      undefined;
+    let district: string | null =
+      null;
+
+    let province: string | null =
+      null;
+
+    let department: string | null =
+      null;
 
     if (
       data.latitude !== undefined &&
@@ -106,20 +112,32 @@ export class ReportService {
         locationDetails.address ||
         undefined;
 
-      municipalityId =
-        await resolveMunicipalityIdFromLocation({
-          district:
-            locationDetails.district,
+      district =
+        locationDetails.district;
 
-          province:
-            locationDetails.province,
+      province =
+        locationDetails.province;
 
-          department:
-            locationDetails.department,
-
-          address,
-        });
+      department =
+        locationDetails.department;
     }
+
+    const municipalityId =
+      await resolveMunicipalityIdFromLocation({
+        district,
+        province,
+        department,
+        address,
+      });
+
+    console.log("Ubicación usada para resolver municipalidad:", {
+      address,
+      district,
+      province,
+      department,
+    });
+
+    console.log("Municipality ID asignado:", municipalityId);
 
     const reportData =
       ReportFactory.create({
@@ -143,7 +161,7 @@ export class ReportService {
 
     return report;
   }
-
+  
   async getReportsWithLocation() {
     return await this.reportRepository.findReportsWithLocation();
   }
