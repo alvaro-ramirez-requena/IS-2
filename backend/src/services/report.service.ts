@@ -85,6 +85,15 @@ export class ReportService {
 
     imageUrls: string[];
   }) {
+    const user =
+      await this.userRepository.findById(data.userId);
+
+    if (!user) {
+      throw new Error(
+        "La sesión del usuario no es válida. Cierre sesión e inicie sesión nuevamente."
+      );
+    }
+
     let address: string | undefined =
       data.address;
 
@@ -131,13 +140,31 @@ export class ReportService {
       });
 
     console.log("Ubicación usada para resolver municipalidad:", {
+      latitude:
+        data.latitude,
+
+      longitude:
+        data.longitude,
+
       address,
+
       district,
+
       province,
+
       department,
     });
 
-    console.log("Municipality ID asignado:", municipalityId);
+    console.log(
+      "Municipality ID asignado:",
+      municipalityId
+    );
+
+    if (!municipalityId) {
+      throw new Error(
+        "No se pudo asignar una municipalidad al reporte. Verifique que la ubicación pertenezca a una municipalidad registrada y que GOOGLE_MAPS_API_KEY esté configurado en el backend."
+      );
+    }
 
     const reportData =
       ReportFactory.create({
@@ -161,7 +188,7 @@ export class ReportService {
 
     return report;
   }
-  
+
   async getReportsWithLocation() {
     return await this.reportRepository.findReportsWithLocation();
   }
