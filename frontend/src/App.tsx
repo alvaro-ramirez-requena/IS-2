@@ -24,6 +24,8 @@ import TechnicianClosurePage from "./pages/TechnicianClosurePage";
 
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminTechnicianSkillsPage from "./pages/AdminTechnicianSkillsPage";
+import AdminMunicipalityOperatorsPage from "./pages/AdminMunicipalityOperatorsPage";
+import AdminReportRetentionPage from "./pages/AdminReportRetentionPage";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -141,10 +143,28 @@ export default function App() {
         />
 
         <Route
+          path="/admin/municipalities-operators"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <AdminMunicipalityOperatorsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/admin/catalog"
           element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
               <OperatorCatalogPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/report-retention"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <AdminReportRetentionPage />
             </ProtectedRoute>
           }
         />

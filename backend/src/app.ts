@@ -17,10 +17,11 @@ import technicalAttentionRoutes from "./routes/technical-attention.routes";
 import fieldWorkRoutes from "./routes/fieldwork.routes";
 import technicalClosureRoutes from "./routes/technical-closure.routes";
 import operatorMonitoringRoutes from "./routes/operator-monitoring.routes";
-
+import adminManagementRoutes from "./routes/admin-management.routes";
 import chatbotRoutes from "./routes/chatbot.routes";
 import aiRoutes from "./routes/ai.routes";
 import technicianSkillRoutes from "./routes/technician-skill.routes";
+import reportRetentionRoutes from "./routes/report-retention.routes";
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use(express.json({ limit: "25mb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/admin-management", adminManagementRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/report-follows", reportFollowRoutes);
 app.use("/api/notifications", notificationRoutes);
@@ -44,6 +46,7 @@ app.use("/api/fieldwork", fieldWorkRoutes);
 app.use("/api/technical-closures", technicalClosureRoutes);
 app.use("/api/operator-monitoring", operatorMonitoringRoutes);
 app.use("/api/technician-skills", technicianSkillRoutes);
+app.use("/api/report-retention", reportRetentionRoutes);
 
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/ai", aiRoutes);

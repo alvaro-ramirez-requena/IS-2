@@ -2,6 +2,51 @@ import {
     useNavigate,
 } from "react-router-dom";
 
+const adminOptions = [
+    {
+        title: "Catálogo operativo",
+        description:
+            "Administra categorías y tipos de problema usados por los reportes ciudadanos.",
+        path: "/admin/catalog",
+        icon: "C",
+    },
+    {
+        title: "Gestión de SLA",
+        description:
+            "Configura tiempos objetivo según la prioridad del reporte.",
+        path: "/admin/sla",
+        icon: "S",
+    },
+    {
+        title: "Motivos de cierre",
+        description:
+            "Administra los resultados posibles del cierre operativo técnico.",
+        path: "/admin/closure-reasons",
+        icon: "M",
+    },
+    {
+        title: "Habilidades técnicas",
+        description:
+            "Administra las habilidades que pueden seleccionar los técnicos durante su postulación.",
+        path: "/admin/technician-skills",
+        icon: "H",
+    },
+    {
+        title: "Municipalidades y operadores",
+        description:
+            "Registra municipalidades y crea operadores asociados para gestionar reportes.",
+        path: "/admin/municipalities-operators",
+        icon: "O",
+    },
+    {
+        title: "Retención de reportes",
+        description:
+            "Configura cuántos días permanecen visibles los reportes resueltos.",
+        path: "/admin/report-retention",
+        icon: "R",
+    },
+];
+
 export default function AdminDashboardPage() {
     const navigate =
         useNavigate();
@@ -57,81 +102,27 @@ export default function AdminDashboardPage() {
                     <nav className="
                         space-y-4
                     ">
-                        <button
-                            onClick={() =>
-                                navigate("/admin/catalog")
-                            }
-                            className="
-                                w-full
-                                text-left
-                                rounded-xl
-                                px-4
-                                py-4
-                                font-semibold
-                                bg-white/10
-                                hover:bg-white/20
-                                transition
-                            "
-                        >
-                            Catálogo operativo
-                        </button>
-
-                        <button
-                            onClick={() =>
-                                navigate("/admin/sla")
-                            }
-                            className="
-                                w-full
-                                text-left
-                                rounded-xl
-                                px-4
-                                py-4
-                                font-semibold
-                                bg-white/10
-                                hover:bg-white/20
-                                transition
-                            "
-                        >
-                            Gestión de SLA
-                        </button>
-
-                        <button
-                            onClick={() =>
-                                navigate("/admin/closure-reasons")
-                            }
-                            className="
-                                w-full
-                                text-left
-                                rounded-xl
-                                px-4
-                                py-4
-                                font-semibold
-                                bg-white/10
-                                hover:bg-white/20
-                                transition
-                            "
-                        >
-                            Motivos de cierre
-                        </button>
-
-                        <button
-                            onClick={() =>
-                                navigate("/admin/technician-skills")
-                            }
-                            className="
-                                w-full
-                                text-left
-                                rounded-xl
-                                px-4
-                                py-4
-                                font-semibold
-                                bg-white/10
-                                hover:bg-white/20
-                                transition
-                            "
-                        >
-                            Habilidades técnicas
-                        </button>
+                        {adminOptions.map((option) => (
+                            <button
+                                key={option.path}
+                                onClick={() =>
+                                    navigate(option.path)
+                                }
+                                className="
+                                    w-full
+                                    text-left
+                                    rounded-xl
+                                    px-4
+                                    py-4
+                                    font-semibold
+                                    bg-white/10
+                                    hover:bg-white/20
+                                    transition
+                                "
+                            >
+                                {option.title}
+                            </button>
+                        ))}
                     </nav>
                 </div>
 
@@ -184,132 +175,60 @@ export default function AdminDashboardPage() {
                     grid
                     grid-cols-1
                     md:grid-cols-2
-                    xl:grid-cols-4
+                    xl:grid-cols-3
                     gap-6
                 ">
-                    <button
-                        onClick={() =>
-                            navigate("/admin/catalog")
-                        }
-                        className="
-                            bg-white
-                            border
-                            rounded-3xl
-                            p-8
-                            text-left
-                            hover:shadow-md
-                            transition
-                        "
-                    >
-                        <h3 className="
-                            text-2xl
-                            font-bold
-                            text-[#03152E]
-                            mb-3
-                        ">
-                            Catálogo operativo
-                        </h3>
+                    {adminOptions.map((option) => (
+                        <button
+                            key={option.path}
+                            onClick={() =>
+                                navigate(option.path)
+                            }
+                            className="
+                                bg-white
+                                border
+                                rounded-3xl
+                                p-8
+                                text-left
+                                hover:shadow-md
+                                hover:-translate-y-1
+                                transition
+                                min-h-[220px]
+                            "
+                        >
+                            <div className="
+                                w-14
+                                h-14
+                                rounded-2xl
+                                bg-blue-50
+                                text-blue-700
+                                flex
+                                items-center
+                                justify-center
+                                font-black
+                                text-xl
+                                mb-6
+                            ">
+                                {option.icon}
+                            </div>
 
-                        <p className="
-                            text-gray-500
-                        ">
-                            Administra categorías y tipos de problema usados
-                            por los reportes ciudadanos.
-                        </p>
-                    </button>
+                            <h3 className="
+                                text-2xl
+                                font-bold
+                                text-[#03152E]
+                                mb-3
+                            ">
+                                {option.title}
+                            </h3>
 
-                    <button
-                        onClick={() =>
-                            navigate("/admin/sla")
-                        }
-                        className="
-                            bg-white
-                            border
-                            rounded-3xl
-                            p-8
-                            text-left
-                            hover:shadow-md
-                            transition
-                        "
-                    >
-                        <h3 className="
-                            text-2xl
-                            font-bold
-                            text-[#03152E]
-                            mb-3
-                        ">
-                            Gestión de SLA
-                        </h3>
-
-                        <p className="
-                            text-gray-500
-                        ">
-                            Configura tiempos objetivo según la prioridad del
-                            reporte.
-                        </p>
-                    </button>
-
-                    <button
-                        onClick={() =>
-                            navigate("/admin/closure-reasons")
-                        }
-                        className="
-                            bg-white
-                            border
-                            rounded-3xl
-                            p-8
-                            text-left
-                            hover:shadow-md
-                            transition
-                        "
-                    >
-                        <h3 className="
-                            text-2xl
-                            font-bold
-                            text-[#03152E]
-                            mb-3
-                        ">
-                            Motivos de cierre
-                        </h3>
-
-                        <p className="
-                            text-gray-500
-                        ">
-                            Administra los resultados posibles del cierre
-                            operativo técnico.
-                        </p>
-                    </button>
-
-                    <button
-                        onClick={() =>
-                            navigate("/admin/technician-skills")
-                        }
-                        className="
-                            bg-white
-                            border
-                            rounded-3xl
-                            p-8
-                            text-left
-                            hover:shadow-md
-                            transition
-                        "
-                    >
-                        <h3 className="
-                            text-2xl
-                            font-bold
-                            text-[#03152E]
-                            mb-3
-                        ">
-                            Habilidades técnicas
-                        </h3>
-
-                        <p className="
-                            text-gray-500
-                        ">
-                            Administra las habilidades que pueden seleccionar
-                            los técnicos durante su postulación.
-                        </p>
-                    </button>
+                            <p className="
+                                text-gray-500
+                                leading-relaxed
+                            ">
+                                {option.description}
+                            </p>
+                        </button>
+                    ))}
                 </div>
             </main>
         </div>

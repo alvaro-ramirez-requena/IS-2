@@ -1,6 +1,10 @@
 import { prisma } from "../config/prisma";
 
-import { Status, ReportCategory, Priority } from "@prisma/client";
+import {
+  Status,
+  ReportCategory,
+  Priority,
+} from "@prisma/client";
 
 type CreateReportInput = {
   title: string;
@@ -30,133 +34,199 @@ type CreateReportInput = {
   municipalityId?: string;
 };
 
-const normalizeReportCategory = (category?: ReportCategory | string): ReportCategory => {
-  if (!category) {
+const activeVisibleStatuses: Status[] = [
+  Status.APPROVED,
+  Status.PRIORITIZED,
+  Status.ASSIGNED,
+  Status.IN_TRANSIT,
+  Status.IN_PROGRESS,
+];
+
+const normalizeReportCategory =
+  (
+    category?: ReportCategory | string
+  ): ReportCategory => {
+    if (!category) {
+      return ReportCategory.INFRASTRUCTURE;
+    }
+
+    const value =
+      String(category).toUpperCase();
+
+    if (
+      value === ReportCategory.SECURITY ||
+      value.includes("SEGURIDAD")
+    ) {
+      return ReportCategory.SECURITY;
+    }
+
+    if (
+      value === ReportCategory.ENVIRONMENT ||
+      value.includes("AMBIENTE") ||
+      value.includes("LIMPIEZA")
+    ) {
+      return ReportCategory.ENVIRONMENT;
+    }
+
+    if (
+      value === ReportCategory.MOBILITY ||
+      value.includes("MOVILIDAD") ||
+      value.includes("TRÁNSITO") ||
+      value.includes("TRANSITO")
+    ) {
+      return ReportCategory.MOBILITY;
+    }
+
+    if (
+      value === ReportCategory.INFRASTRUCTURE ||
+      value.includes("INFRAESTRUCTURA") ||
+      value.includes("SERVICIOS")
+    ) {
+      return ReportCategory.INFRASTRUCTURE;
+    }
+
     return ReportCategory.INFRASTRUCTURE;
-  }
+  };
 
-  const value = String(category).toUpperCase();
+const getResolvedVisibilityDate =
+  async () => {
+    const configuration =
+      await prisma.reportRetentionConfiguration.findFirst({
+        orderBy: {
+          createdAt:
+            "asc",
+        },
+      });
 
-  if (value === ReportCategory.SECURITY || value.includes("SEGURIDAD")) {
-    return ReportCategory.SECURITY;
-  }
+    const retentionDays =
+      configuration?.days ??
+      30;
 
-  if (
-    value === ReportCategory.ENVIRONMENT ||
-    value.includes("AMBIENTE") ||
-    value.includes("LIMPIEZA")
-  ) {
-    return ReportCategory.ENVIRONMENT;
-  }
+    const resolvedVisibilityDate =
+      new Date();
 
-  if (
-    value === ReportCategory.MOBILITY ||
-    value.includes("MOVILIDAD") ||
-    value.includes("TRÁNSITO") ||
-    value.includes("TRANSITO")
-  ) {
-    return ReportCategory.MOBILITY;
-  }
+    resolvedVisibilityDate.setDate(
+      resolvedVisibilityDate.getDate() -
+      retentionDays
+    );
 
-  if (
-    value === ReportCategory.INFRASTRUCTURE ||
-    value.includes("INFRAESTRUCTURA") ||
-    value.includes("SERVICIOS")
-  ) {
-    return ReportCategory.INFRASTRUCTURE;
-  }
-
-  return ReportCategory.INFRASTRUCTURE;
-};
-
-const getResolvedVisibilityDate = () => {
-  const thirtyDaysAgo = new Date();
-
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-  return thirtyDaysAgo;
-};
+    return resolvedVisibilityDate;
+  };
 
 export class ReportRepository {
-  async create(data: CreateReportInput) {
+  async create(
+    data: CreateReportInput
+  ) {
     return await prisma.report.create({
       data: {
-        title: data.title,
+        title:
+          data.title,
 
-        category: normalizeReportCategory(data.category),
+        category:
+          normalizeReportCategory(data.category),
 
-        problemType: data.problemType,
+        problemType:
+          data.problemType,
 
-        categoryId: data.categoryId,
+        categoryId:
+          data.categoryId,
 
-        problemTypeId: data.problemTypeId,
+        problemTypeId:
+          data.problemTypeId,
 
-        description: data.description,
+        description:
+          data.description,
 
-        latitude: data.latitude,
+        latitude:
+          data.latitude,
 
-        longitude: data.longitude,
+        longitude:
+          data.longitude,
 
-        address: data.address,
+        address:
+          data.address,
 
-        isAnonymous: data.isAnonymous ?? false,
+        isAnonymous:
+          data.isAnonymous ?? false,
 
-        userId: data.userId,
+        userId:
+          data.userId,
 
-        status: data.status,
+        status:
+          data.status,
 
-        municipalityId: data.municipalityId,
+        municipalityId:
+          data.municipalityId,
       },
     });
   }
 
   async createEvidences(
     reportId: string,
-
     imageUrls: string[]
   ) {
     return await prisma.reportEvidence.createMany({
-      data: imageUrls.map((imageUrl) => ({
-        reportId,
-
-        imageUrl,
-      })),
+      data:
+        imageUrls.map((imageUrl) => ({
+          reportId,
+          imageUrl,
+        })),
     });
   }
 
-  async findByUser(userId: string) {
+  async findByUser(
+    userId: string
+  ) {
     return await prisma.report.findMany({
-      where: { userId },
+      where: {
+        userId,
+      },
 
       include: {
-        evidences: true,
+        evidences:
+          true,
 
         user: {
           select: {
-            firstName: true,
-            lastName: true,
+            firstName:
+              true,
+
+            lastName:
+              true,
           },
         },
+
+        municipality:
+          true,
       },
 
       orderBy: {
-        createdAt: "desc",
+        createdAt:
+          "desc",
       },
     });
   }
 
-  async findByCategory(category: ReportCategory) {
+  async findByCategory(
+    category: ReportCategory
+  ) {
     return await prisma.report.findMany({
-      where: { category },
+      where: {
+        category,
+      },
 
       orderBy: {
-        createdAt: "desc",
+        createdAt:
+          "desc",
       },
     });
   }
 
-  async findByProblemType(problemType: string) {
-    const resolvedVisibilityDate = getResolvedVisibilityDate();
+  async findByProblemType(
+    problemType: string
+  ) {
+    const resolvedVisibilityDate =
+      await getResolvedVisibilityDate();
 
     return await prisma.report.findMany({
       where: {
@@ -165,91 +235,127 @@ export class ReportRepository {
         OR: [
           {
             status: {
-              in: ["APPROVED", "PRIORITIZED", "ASSIGNED", "IN_PROGRESS"],
+              in:
+                activeVisibleStatuses,
             },
           },
           {
-            status: "RESOLVED",
+            status:
+              Status.RESOLVED,
+
             resolvedAt: {
-              gte: resolvedVisibilityDate,
+              gte:
+                resolvedVisibilityDate,
             },
           },
         ],
       },
 
       include: {
-        evidences: true,
+        evidences:
+          true,
+
         user: {
           select: {
-            firstName: true,
-            lastName: true,
+            firstName:
+              true,
+
+            lastName:
+              true,
           },
         },
+
+        municipality:
+          true,
       },
 
       orderBy: {
-        createdAt: "desc",
+        createdAt:
+          "desc",
       },
     });
   }
+
   async getTopProblems() {
-    const resolvedVisibilityDate = getResolvedVisibilityDate();
+    const resolvedVisibilityDate =
+      await getResolvedVisibilityDate();
 
     return await prisma.report.groupBy({
-      by: ["problemType"],
+      by: [
+        "problemType",
+      ],
 
       where: {
         OR: [
           {
             status: {
-              in: ["APPROVED", "PRIORITIZED", "ASSIGNED", "IN_PROGRESS"],
+              in:
+                activeVisibleStatuses,
             },
           },
           {
-            status: "RESOLVED",
+            status:
+              Status.RESOLVED,
+
             resolvedAt: {
-              gte: resolvedVisibilityDate,
+              gte:
+                resolvedVisibilityDate,
             },
           },
         ],
       },
 
       _count: {
-        problemType: true,
+        problemType:
+          true,
       },
 
       orderBy: {
         _count: {
-          problemType: "desc",
+          problemType:
+            "desc",
         },
       },
     });
   }
 
-  async findByStatus(status: Status) {
+  async findByStatus(
+    status: Status
+  ) {
     return await prisma.report.findMany({
       where: {
         status,
       },
 
       include: {
-        evidences: true,
+        evidences:
+          true,
 
         user: {
           select: {
-            firstName: true,
-            lastName: true,
+            firstName:
+              true,
+
+            lastName:
+              true,
           },
         },
+
+        municipality:
+          true,
       },
 
       orderBy: {
-        createdAt: "desc",
+        createdAt:
+          "desc",
       },
     });
   }
 
-  async findByStatusAndMunicipality(status: Status, municipalityId: string) {
+  async findByStatusAndMunicipality(
+    status: Status,
+    municipalityId: string
+  ) {
     return await prisma.report.findMany({
       where: {
         status,
@@ -257,25 +363,34 @@ export class ReportRepository {
       },
 
       include: {
-        evidences: true,
+        evidences:
+          true,
 
         user: {
           select: {
-            firstName: true,
-            lastName: true,
+            firstName:
+              true,
+
+            lastName:
+              true,
           },
         },
 
-        municipality: true,
+        municipality:
+          true,
       },
 
       orderBy: {
-        createdAt: "desc",
+        createdAt:
+          "desc",
       },
     });
   }
 
-  async updateStatus(id: string, status: Status) {
+  async updateStatus(
+    id: string,
+    status: Status
+  ) {
     return await prisma.report.update({
       where: {
         id,
@@ -284,51 +399,70 @@ export class ReportRepository {
       data: {
         status,
 
-        resolvedAt: status === "RESOLVED" ? new Date() : null,
+        resolvedAt:
+          status === Status.RESOLVED
+            ? new Date()
+            : null,
       },
     });
   }
 
   async findReportsWithLocation() {
-    const resolvedVisibilityDate = getResolvedVisibilityDate();
+    const resolvedVisibilityDate =
+      await getResolvedVisibilityDate();
 
     return await prisma.report.findMany({
       where: {
         latitude: {
-          not: null,
+          not:
+            null,
         },
 
         longitude: {
-          not: null,
+          not:
+            null,
         },
 
         OR: [
           {
             status: {
-              in: ["APPROVED", "PRIORITIZED", "ASSIGNED", "IN_PROGRESS"],
+              in:
+                activeVisibleStatuses,
             },
           },
           {
-            status: "RESOLVED",
+            status:
+              Status.RESOLVED,
+
             resolvedAt: {
-              gte: resolvedVisibilityDate,
+              gte:
+                resolvedVisibilityDate,
             },
           },
         ],
       },
 
       include: {
-        evidences: true,
+        evidences:
+          true,
+
         user: {
           select: {
-            firstName: true,
-            lastName: true,
+            firstName:
+              true,
+
+            lastName:
+              true,
           },
         },
+
+        municipality:
+          true,
       },
 
       orderBy: {
-        createdAt: "desc",
+        createdAt:
+          "desc",
       },
     });
   }
@@ -346,57 +480,98 @@ export class ReportRepository {
     }
   ) {
     return await prisma.report.update({
-      where: { id },
-      data: {
-        impact: data.impact,
-        probability: data.probability,
-        priority: data.priority,
-        operationalType: data.operationalType,
-        targetDate: data.targetDate,
-        justification: data.justification,
-        status: data.status,
+      where: {
+        id,
       },
+
+      data: {
+        impact:
+          data.impact,
+
+        probability:
+          data.probability,
+
+        priority:
+          data.priority,
+
+        operationalType:
+          data.operationalType,
+
+        targetDate:
+          data.targetDate,
+
+        justification:
+          data.justification,
+
+        status:
+          data.status,
+      },
+
       include: {
-        evidences: true,
+        evidences:
+          true,
+
         user: {
           select: {
-            firstName: true,
-            lastName: true,
+            firstName:
+              true,
+
+            lastName:
+              true,
           },
         },
+
+        municipality:
+          true,
       },
     });
   }
 
-  async findById(id: string) {
+  async findById(
+    id: string
+  ) {
     return await prisma.report.findUnique({
       where: {
         id,
       },
 
       include: {
-        evidences: true,
+        evidences:
+          true,
 
         user: {
           select: {
-            firstName: true,
-            lastName: true,
+            firstName:
+              true,
+
+            lastName:
+              true,
           },
         },
 
-        municipality: true,
+        municipality:
+          true,
 
         assignments: {
           include: {
             technician: {
               select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
+                id:
+                  true,
+
+                firstName:
+                  true,
+
+                lastName:
+                  true,
+
+                email:
+                  true,
+
                 technicianProfile: {
                   include: {
-                    municipality: true,
+                    municipality:
+                      true,
                   },
                 },
               },
@@ -406,22 +581,32 @@ export class ReportRepository {
 
         fieldWork: {
           include: {
-            evidences: true,
+            evidences:
+              true,
           },
         },
 
-        technicalAttentions: true,
+        technicalAttentions:
+          true,
 
         technicalClosure: {
           include: {
-            closureReason: true,
+            closureReason:
+              true,
 
             technician: {
               select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
+                id:
+                  true,
+
+                firstName:
+                  true,
+
+                lastName:
+                  true,
+
+                email:
+                  true,
               },
             },
           },
