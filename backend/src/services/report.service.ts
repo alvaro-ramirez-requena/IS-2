@@ -12,11 +12,11 @@ import { NotificationService } from "./notification.service";
 
 import { ReportFollowRepository } from "../repositories/report-follow.repository";
 
-import { MunicipalityRepository } from "../repositories/municipality.repository";
-
-import { resolveMunicipalityNameFromLocation } from "../utils/municipalityResolver";
-
 import { UserRepository } from "../repositories/user.repository";
+
+import {
+  resolveMunicipalityIdFromLocation,
+} from "../utils/municipalityResolver";
 
 export class ReportService {
   private reportRepository = new ReportRepository();
@@ -24,8 +24,6 @@ export class ReportService {
   private notificationService = new NotificationService();
 
   private reportFollowRepository = new ReportFollowRepository();
-
-  private municipalityRepository = new MunicipalityRepository();
 
   private userRepository = new UserRepository();
 
@@ -58,7 +56,10 @@ export class ReportService {
 
     const targetDate = new Date();
 
-    targetDate.setHours(targetDate.getHours() + slaConfiguration.responseHours);
+    targetDate.setHours(
+      targetDate.getHours() +
+      slaConfiguration.responseHours
+    );
 
     return targetDate;
   }
@@ -84,57 +85,53 @@ export class ReportService {
 
     imageUrls: string[];
   }) {
-    let address: string | undefined = data.address;
+    let address: string | undefined =
+      data.address;
 
-    let district: string | null = null;
+    let municipalityId: string | undefined =
+      undefined;
 
-    let province: string | null = null;
+    if (
+      data.latitude !== undefined &&
+      data.longitude !== undefined
+    ) {
+      const locationDetails =
+        await GeocodingService.getLocationDetails(
+          data.latitude,
+          data.longitude
+        );
 
-    let department: string | null = null;
+      address =
+        address ||
+        locationDetails.address ||
+        undefined;
 
-    if (data.latitude !== undefined && data.longitude !== undefined) {
-      const locationDetails = await GeocodingService.getLocationDetails(
-        data.latitude,
-        data.longitude
-      );
+      municipalityId =
+        await resolveMunicipalityIdFromLocation({
+          district:
+            locationDetails.district,
 
-      address = address || locationDetails.address || undefined;
+          province:
+            locationDetails.province,
 
-      district = locationDetails.district;
+          department:
+            locationDetails.department,
 
-      province = locationDetails.province;
-
-      department = locationDetails.department;
+          address,
+        });
     }
 
-    if (!address && data.latitude !== undefined && data.longitude !== undefined) {
-      address = await GeocodingService.getAddress(data.latitude, data.longitude);
-    }
+    const reportData =
+      ReportFactory.create({
+        ...data,
 
-    const municipalityName = resolveMunicipalityNameFromLocation({
-      district,
-      province,
-      department,
-      address,
-    });
+        address,
 
-    let municipalityId: string | undefined = undefined;
+        municipalityId,
+      });
 
-    if (municipalityName) {
-      const municipality = await this.municipalityRepository.findOrCreateByName(municipalityName);
-
-      municipalityId = municipality.id;
-    }
-
-    const reportData = ReportFactory.create({
-      ...data,
-
-      address,
-
-      municipalityId,
-    });
-
-    const report = await this.reportRepository.create(reportData);
+    const report =
+      await this.reportRepository.create(reportData);
 
     if (data.imageUrls.length > 0) {
       await this.reportRepository.createEvidences(
@@ -171,8 +168,12 @@ export class ReportService {
     return await this.reportRepository.findByStatus(status);
   }
 
-  async getReportsByStatusForOperator(operatorId: string, status: Status) {
-    const operator = await this.userRepository.findById(operatorId);
+  async getReportsByStatusForOperator(
+    operatorId: string,
+    status: Status
+  ) {
+    const operator =
+      await this.userRepository.findById(operatorId);
 
     if (!operator) {
       throw new Error("Operador no encontrado");
@@ -183,24 +184,39 @@ export class ReportService {
     }
 
     if (!operator.municipalityId) {
-      throw new Error("El operador no tiene una municipalidad asignada");
+      throw new Error(
+        "El operador no tiene una municipalidad asignada"
+      );
     }
 
-    return await this.reportRepository.findByStatusAndMunicipality(status, operator.municipalityId);
+    return await this.reportRepository.findByStatusAndMunicipality(
+      status,
+      operator.municipalityId
+    );
   }
 
-  async updateReportStatus(id: string, status: Status) {
-    const previousReport = await this.reportRepository.findById(id);
+  async updateReportStatus(
+    id: string,
+    status: Status
+  ) {
+    const previousReport =
+      await this.reportRepository.findById(id);
 
     if (!previousReport) {
       throw new Error("Reporte no encontrado");
     }
 
-    const updatedReport = await this.reportRepository.updateStatus(id, status);
+    const updatedReport =
+      await this.reportRepository.updateStatus(
+        id,
+        status
+      );
 
-    const followers = await this.reportFollowRepository.findFollowersByReport(id);
+    const followers =
+      await this.reportFollowRepository.findFollowersByReport(id);
 
-    const userIdsToNotify = new Set<string>();
+    const userIdsToNotify =
+      new Set<string>();
 
     userIdsToNotify.add(previousReport.userId);
 
@@ -208,17 +224,22 @@ export class ReportService {
       userIdsToNotify.add(follower.userId);
     });
 
-    const statusText = this.getStatusLabel(status);
+    const statusText =
+      this.getStatusLabel(status);
 
-    const notifications = Array.from(userIdsToNotify).map((userId) => ({
-      userId,
+    const notifications =
+      Array.from(userIdsToNotify).map((userId) => ({
+        userId,
 
-      reportId: id,
+        reportId:
+          id,
 
-      title: "Cambio de estado en reporte",
+        title:
+          "Cambio de estado en reporte",
 
-      message: `El reporte "${previousReport.title || previousReport.problemType}" cambió a ${statusText}.`,
-    }));
+        message:
+          `El reporte "${previousReport.title || previousReport.problemType}" cambió a ${statusText}.`,
+      }));
 
     await this.notificationService.createMany(notifications);
 
@@ -226,7 +247,8 @@ export class ReportService {
   }
 
   async getReportById(id: string) {
-    const report = await this.reportRepository.findById(id);
+    const report =
+      await this.reportRepository.findById(id);
 
     if (!report) {
       throw new Error("Reporte no encontrado");
@@ -245,14 +267,20 @@ export class ReportService {
       justification: string;
     }
   ) {
-    const report = await this.reportRepository.findById(id);
+    const report =
+      await this.reportRepository.findById(id);
 
     if (!report) {
       throw new Error("Reporte no encontrado");
     }
 
-    if (report.status !== Status.APPROVED && report.status !== Status.PRIORITIZED) {
-      throw new Error("Solo se pueden priorizar reportes aprobados.");
+    if (
+      report.status !== Status.APPROVED &&
+      report.status !== Status.PRIORITIZED
+    ) {
+      throw new Error(
+        "Solo se pueden priorizar reportes aprobados."
+      );
     }
 
     if (!data.operationalType?.trim()) {
@@ -263,72 +291,94 @@ export class ReportService {
       throw new Error("La justificación es obligatoria.");
     }
 
-    let computedPriority: Priority = Priority.BAJO;
+    let computedPriority: Priority =
+      Priority.BAJO;
 
     if (
       (data.impact === "ALTO" && data.probability === "ALTO") ||
       (data.impact === "ALTO" && data.probability === "MEDIO") ||
       (data.impact === "MEDIO" && data.probability === "ALTO")
     ) {
-      computedPriority = Priority.ALTO;
+      computedPriority =
+        Priority.ALTO;
     } else if (
       (data.impact === "MEDIO" && data.probability === "MEDIO") ||
       (data.impact === "ALTO" && data.probability === "BAJO") ||
       (data.impact === "BAJO" && data.probability === "ALTO") ||
       (data.impact === "MEDIO" && data.probability === "BAJO")
     ) {
-      computedPriority = Priority.MEDIO;
+      computedPriority =
+        Priority.MEDIO;
     }
 
-    let targetDate = await this.calculateTargetDateByPriority(computedPriority);
+    let targetDate =
+      await this.calculateTargetDateByPriority(computedPriority);
 
     if (!targetDate && data.targetDate) {
-      const manualTargetDate = new Date(`${data.targetDate}T00:00:00`);
+      const manualTargetDate =
+        new Date(`${data.targetDate}T00:00:00`);
 
       if (Number.isNaN(manualTargetDate.getTime())) {
         throw new Error("La fecha objetivo no es válida.");
       }
 
-      targetDate = manualTargetDate;
+      targetDate =
+        manualTargetDate;
     }
 
     if (!targetDate) {
-      throw new Error(`No existe una configuración SLA para la prioridad ${computedPriority}.`);
+      throw new Error(
+        `No existe una configuración SLA para la prioridad ${computedPriority}.`
+      );
     }
 
-    const updatedReport = await this.reportRepository.updatePrioritization(id, {
-      impact: data.impact,
+    const updatedReport =
+      await this.reportRepository.updatePrioritization(id, {
+        impact:
+          data.impact,
 
-      probability: data.probability,
+        probability:
+          data.probability,
 
-      priority: computedPriority,
+        priority:
+          computedPriority,
 
-      operationalType: data.operationalType.trim(),
+        operationalType:
+          data.operationalType.trim(),
 
-      targetDate,
+        targetDate,
 
-      justification: data.justification.trim(),
+        justification:
+          data.justification.trim(),
 
-      status: Status.PRIORITIZED,
-    });
+        status:
+          Status.PRIORITIZED,
+      });
 
-    const followers = await this.reportFollowRepository.findFollowersByReport(id);
+    const followers =
+      await this.reportFollowRepository.findFollowersByReport(id);
 
-    const userIdsToNotify = new Set<string>();
+    const userIdsToNotify =
+      new Set<string>();
 
     userIdsToNotify.add(report.userId);
 
-    followers.forEach((follower) => userIdsToNotify.add(follower.userId));
+    followers.forEach((follower) =>
+      userIdsToNotify.add(follower.userId)
+    );
 
     await this.notificationService.createMany(
       Array.from(userIdsToNotify).map((userId) => ({
         userId,
 
-        reportId: id,
+        reportId:
+          id,
 
-        title: "Reporte priorizado",
+        title:
+          "Reporte priorizado",
 
-        message: `El reporte "${report.title || report.problemType}" fue priorizado como ${computedPriority}. Fecha objetivo: ${targetDate.toLocaleDateString("es-PE")}.`,
+        message:
+          `El reporte "${report.title || report.problemType}" fue priorizado como ${computedPriority}. Fecha objetivo: ${targetDate.toLocaleDateString("es-PE")}.`,
       }))
     );
 

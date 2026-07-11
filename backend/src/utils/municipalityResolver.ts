@@ -1,68 +1,152 @@
-export function normalizeText(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
+import { prisma } from "../config/prisma";
 
-export function resolveMunicipalityNameFromLocation(data: {
+export type MunicipalityLocationData = {
   district?: string | null;
   province?: string | null;
   department?: string | null;
   address?: string | null;
-}) {
-  const district = data.district ? normalizeText(data.district) : "";
+};
 
-  const province = data.province ? normalizeText(data.province) : "";
+export function normalizeText(value?: string | null) {
+  if (!value) {
+    return "";
+  }
 
-  const department = data.department ? normalizeText(data.department) : "";
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-  const address = data.address ? normalizeText(data.address) : "";
+function simplifyMunicipalityName(name?: string | null) {
+  return normalizeText(name)
+    .replace("municipalidad provincial del ", "")
+    .replace("municipalidad provincial de ", "")
+    .replace("municipalidad distrital del ", "")
+    .replace("municipalidad distrital de ", "")
+    .replace("municipalidad de ", "")
+    .replace("municipalidad del ", "")
+    .trim();
+}
 
-  const fullText = `${district} ${province} ${department} ${address}`;
+function calculateMatchScore(
+  locationData: MunicipalityLocationData,
+  municipality: {
+    name: string;
+    district?: string | null;
+    province?: string | null;
+    department?: string | null;
+  }
+) {
+  const district = normalizeText(locationData.district);
+  const province = normalizeText(locationData.province);
+  const department = normalizeText(locationData.department);
+  const address = normalizeText(locationData.address);
+
+  const fullText = normalizeText(
+    `${district} ${province} ${department} ${address}`
+  );
+
+  const municipalityName = normalizeText(municipality.name);
+  const municipalityDistrict = normalizeText(municipality.district);
+  const municipalityProvince = normalizeText(municipality.province);
+  const municipalityDepartment = normalizeText(municipality.department);
+  const simplifiedName = simplifyMunicipalityName(municipality.name);
+
+  let score = 0;
 
   if (
-    province === "callao" ||
-    department === "callao" ||
-    fullText.includes("callao") ||
-    fullText.includes("bellavista") ||
-    fullText.includes("la perla") ||
-    fullText.includes("la punta") ||
-    fullText.includes("carmen de la legua") ||
-    fullText.includes("ventanilla") ||
-    fullText.includes("mi peru")
+    district &&
+    municipalityDistrict &&
+    district === municipalityDistrict
   ) {
-    return "Municipalidad Provincial del Callao";
+    score += 100;
   }
 
   if (
-    district.includes("santiago de surco") ||
-    fullText.includes("santiago de surco") ||
-    fullText.includes("surco")
+    district &&
+    municipalityDistrict &&
+    (
+      district.includes(municipalityDistrict) ||
+      municipalityDistrict.includes(district)
+    )
   ) {
-    return "Municipalidad de Santiago de Surco";
+    score += 80;
   }
 
-  if (district.includes("miraflores") || fullText.includes("miraflores")) {
-    return "Municipalidad de Miraflores";
+  if (
+    municipalityDistrict &&
+    fullText.includes(municipalityDistrict)
+  ) {
+    score += 70;
   }
 
-  if (district.includes("san isidro") || fullText.includes("san isidro")) {
-    return "Municipalidad de San Isidro";
+  if (
+    simplifiedName &&
+    simplifiedName.length >= 4 &&
+    fullText.includes(simplifiedName)
+  ) {
+    score += 60;
   }
 
-  if (district.includes("lince") || fullText.includes("lince")) {
-    return "Municipalidad de Lince";
+  if (
+    municipalityName &&
+    fullText.includes(municipalityName)
+  ) {
+    score += 50;
   }
 
-  if (district.includes("san borja") || fullText.includes("san borja")) {
-    return "Municipalidad de San Borja";
+  if (
+    province &&
+    municipalityProvince &&
+    province === municipalityProvince
+  ) {
+    score += 10;
   }
 
-  if (district.includes("la molina") || fullText.includes("la molina")) {
-    return "Municipalidad de La Molina";
+  if (
+    department &&
+    municipalityDepartment &&
+    department === municipalityDepartment
+  ) {
+    score += 10;
   }
 
-  return null;
+  return score;
+}
+
+export async function resolveMunicipalityIdFromLocation(
+  locationData: MunicipalityLocationData
+) {
+  const municipalities = await prisma.municipality.findMany();
+
+  let bestMatch:
+    | {
+        id: string;
+        score: number;
+      }
+    | null = null;
+
+  for (const municipality of municipalities) {
+    const score = calculateMatchScore(
+      locationData,
+      municipality
+    );
+
+    if (!bestMatch || score > bestMatch.score) {
+      bestMatch = {
+        id: municipality.id,
+        score,
+      };
+    }
+  }
+
+  if (!bestMatch || bestMatch.score < 50) {
+    return undefined;
+  }
+
+  return bestMatch.id;
 }
