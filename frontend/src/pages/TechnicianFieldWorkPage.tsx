@@ -6,7 +6,6 @@ import {
 
 import type {
     ChangeEvent,
-    ReactNode,
 } from "react";
 
 import {
@@ -185,28 +184,6 @@ function getPriorityStyle(
             ""
         ] ||
         "border-slate-200 bg-slate-50 text-slate-700"
-    );
-}
-
-function SectionIcon({
-    children,
-}: {
-    children: ReactNode;
-}) {
-    return (
-        <div className="
-            flex
-            h-11
-            w-11
-            shrink-0
-            items-center
-            justify-center
-            rounded-xl
-            bg-emerald-50
-            text-emerald-700
-        ">
-            {children}
-        </div>
     );
 }
 
