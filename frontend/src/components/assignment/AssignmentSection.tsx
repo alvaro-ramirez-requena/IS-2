@@ -8,6 +8,7 @@ type AssignmentSectionProps = {
   reportId: string;
   reportTitle?: string;
   problemType?: string;
+  suggestedSkillName?: string;
   address?: string;
   priority?: string;
   municipalityId?: string;
@@ -141,6 +142,7 @@ export default function AssignmentSection({
   reportId,
   reportTitle,
   problemType,
+  suggestedSkillName,
   priority,
   municipalityId,
   municipalityName,
@@ -165,7 +167,16 @@ export default function AssignmentSection({
 
   const currentUserId = localStorage.getItem("userId") || "";
 
-  const suggestedSkill = getSuggestedSkillByProblemType(problemType);
+  const suggestedSkill =
+    suggestedSkillName ||
+    getSuggestedSkillByProblemType(problemType);
+
+  useEffect(() => {
+    if (suggestedSkill) {
+      setSpecialtyFilter(suggestedSkill);
+      setSelectedTechnicianId("");
+    }
+  }, [suggestedSkill]);
 
   useEffect(() => {
     const fetchTechnicians = async () => {
@@ -204,7 +215,10 @@ export default function AssignmentSection({
           return false;
         }
 
-        if (specialtyFilter && !profile.skills.includes(specialtyFilter)) {
+        if (
+          specialtyFilter &&
+          !technicianHasSkill(technician, specialtyFilter)
+        ) {
           return false;
         }
 
@@ -438,13 +452,19 @@ export default function AssignmentSection({
                             bg-white
                         "
           >
-            <option value="">Todas las especialidades</option>
+              <option value="">Todas las especialidades</option>
 
-            {specialties.map((specialty) => (
-              <option key={specialty} value={specialty}>
-                {specialty}
-              </option>
-            ))}
+              {suggestedSkill && !specialties.includes(suggestedSkill) && (
+                <option value={suggestedSkill}>
+                  {suggestedSkill}
+                </option>
+              )}
+
+              {specialties.map((specialty) => (
+                <option key={specialty} value={specialty}>
+                  {specialty}
+                </option>
+              ))}
           </select>
         </div>
 

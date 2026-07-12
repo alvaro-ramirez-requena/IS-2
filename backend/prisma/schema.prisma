@@ -177,8 +177,10 @@ model ProblemType {
 
   reports Report[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  suggestedSkillId String?
+  suggestedSkill   TechnicianSkill? @relation(fields: [suggestedSkillId], references: [id])
 }
 
 model ClosureReason {
@@ -210,8 +212,9 @@ model TechnicianSkill {
   description String?
   active      Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  problemTypes ProblemType[]
 }
 
 model ReportFollow {
@@ -451,8 +454,8 @@ model TechnicalClosure {
 }
 
 model ReportRetentionConfiguration {
-  id        String   @id @default(uuid())
-  days      Int      @default(30)
+  id   String @id @default(uuid())
+  days Int    @default(30)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import type { FormEvent } from "react";
 
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { OperationalCatalogService } from "../services/operationalCatalog.service";
 
@@ -18,7 +18,14 @@ type Tab = "CATEGORIES" | "CLOSURE" | "SLA";
 export default function OperatorCatalogPage() {
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<Tab>("CATEGORIES");
+  const location = useLocation();
+
+  const tab: Tab =
+    location.pathname.includes("/admin/sla")
+      ? "SLA"
+      : location.pathname.includes("/admin/closure-reasons")
+        ? "CLOSURE"
+        : "CATEGORIES";
 
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -320,7 +327,7 @@ export default function OperatorCatalogPage() {
           </div>
 
           <button
-            onClick={() => navigate("/operator")}
+            onClick={() => navigate("/admin")}
             className="
                             bg-white
                             border
@@ -368,64 +375,7 @@ export default function OperatorCatalogPage() {
           </div>
         )}
 
-        <div
-          className="
-                    flex
-                    flex-wrap
-                    gap-3
-                "
-        >
-          <button
-            onClick={() => setTab("CATEGORIES")}
-            className={`
-                            px-5
-                            py-3
-                            rounded-xl
-                            font-bold
-                            ${
-                              tab === "CATEGORIES"
-                                ? "bg-[#03152E] text-white"
-                                : "bg-white border text-[#03152E]"
-                            }
-                        `}
-          >
-            Categorías y problemas
-          </button>
 
-          <button
-            onClick={() => setTab("CLOSURE")}
-            className={`
-                            px-5
-                            py-3
-                            rounded-xl
-                            font-bold
-                            ${
-                              tab === "CLOSURE"
-                                ? "bg-[#03152E] text-white"
-                                : "bg-white border text-[#03152E]"
-                            }
-                        `}
-          >
-            Resultados técnicos
-          </button>
-
-          <button
-            onClick={() => setTab("SLA")}
-            className={`
-                            px-5
-                            py-3
-                            rounded-xl
-                            font-bold
-                            ${
-                              tab === "SLA"
-                                ? "bg-[#03152E] text-white"
-                                : "bg-white border text-[#03152E]"
-                            }
-                        `}
-          >
-            SLA por prioridad
-          </button>
-        </div>
 
         {tab === "CATEGORIES" && (
           <section

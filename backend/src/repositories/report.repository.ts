@@ -527,91 +527,104 @@ export class ReportRepository {
     });
   }
 
-  async findById(
-    id: string
-  ) {
-    return await prisma.report.findUnique({
-      where: {
-        id,
+async findById(
+  id: string
+) {
+  return await prisma.report.findUnique({
+    where: {
+      id,
+    },
+
+    include: {
+      evidences:
+        true,
+
+      user: {
+        select: {
+          firstName:
+            true,
+
+          lastName:
+            true,
+        },
       },
 
-      include: {
-        evidences:
-          true,
+      municipality:
+        true,
 
-        user: {
-          select: {
-            firstName:
-              true,
+      categoryRef:
+        true,
 
-            lastName:
-              true,
-          },
+      problemTypeRef: {
+        include: {
+          category:
+            true,
+
+          suggestedSkill:
+            true,
         },
+      },
 
-        municipality:
-          true,
+      assignments: {
+        include: {
+          technician: {
+            select: {
+              id:
+                true,
 
-        assignments: {
-          include: {
-            technician: {
-              select: {
-                id:
-                  true,
+              firstName:
+                true,
 
-                firstName:
-                  true,
+              lastName:
+                true,
 
-                lastName:
-                  true,
+              email:
+                true,
 
-                email:
-                  true,
-
-                technicianProfile: {
-                  include: {
-                    municipality:
-                      true,
-                  },
+              technicianProfile: {
+                include: {
+                  municipality:
+                    true,
                 },
               },
             },
           },
         },
+      },
 
-        fieldWork: {
-          include: {
-            evidences:
-              true,
-          },
+      fieldWork: {
+        include: {
+          evidences:
+            true,
         },
+      },
 
-        technicalAttentions:
-          true,
+      technicalAttentions:
+        true,
 
-        technicalClosure: {
-          include: {
-            closureReason:
-              true,
+      technicalClosure: {
+        include: {
+          closureReason:
+            true,
 
-            technician: {
-              select: {
-                id:
-                  true,
+          technician: {
+            select: {
+              id:
+                true,
 
-                firstName:
-                  true,
+              firstName:
+                true,
 
-                lastName:
-                  true,
+              lastName:
+                true,
 
-                email:
-                  true,
-              },
+              email:
+                true,
             },
           },
         },
       },
-    });
-  }
+    },
+  });
+}
 }

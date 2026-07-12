@@ -18,6 +18,19 @@ type Report = {
   id: string;
   title: string;
   problemType: string;
+
+  problemTypeRef?: {
+    id: string;
+    name: string;
+    suggestedSkillId?: string | null;
+    suggestedSkill?: {
+      id: string;
+      name: string;
+      description?: string | null;
+      active?: boolean;
+    } | null;
+  } | null;
+
   description: string;
   status: string;
 
@@ -976,17 +989,20 @@ export default function OperatorReportDetailPage() {
                         lg:p-8
                     "
           >
-            <AssignmentSection
-              reportId={report.id}
-              reportTitle={report.title}
-              problemType={report.problemType}
-              address={report.address}
-              priority={report.priority}
-              municipalityId={report.municipalityId || undefined}
-              municipalityName={report.municipality?.name || undefined}
-              isReassignment={report.status === "ASSIGNED"}
-              onAssigned={fetchReport}
-            />
+          <AssignmentSection
+            reportId={report.id}
+            reportTitle={report.title}
+            problemType={report.problemType}
+            suggestedSkillName={
+              report.problemTypeRef?.suggestedSkill?.name || undefined
+            }
+            address={report.address}
+            priority={report.priority}
+            municipalityId={report.municipalityId || undefined}
+            municipalityName={report.municipality?.name || undefined}
+            isReassignment={report.status === "ASSIGNED"}
+            onAssigned={fetchReport}
+          />
           </div>
         )}
       </div>

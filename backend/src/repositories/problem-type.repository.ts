@@ -29,16 +29,23 @@ export class ProblemTypeRepository {
     });
   }
 
-  async create(data: { name: string; description?: string; categoryId: string }) {
+  async create(data: {
+    name: string;
+    description?: string;
+    categoryId: string;
+    suggestedSkillId?: string;
+  }) {
     return await prisma.problemType.create({
       data: {
         name: data.name,
         description: data.description,
         categoryId: data.categoryId,
+        suggestedSkillId: data.suggestedSkillId || null,
         active: true,
       },
       include: {
         category: true,
+        suggestedSkill: true,
       },
     });
   }
