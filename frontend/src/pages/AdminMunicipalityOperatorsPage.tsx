@@ -884,36 +884,37 @@ export default function AdminMunicipalityOperatorsPage() {
                                             gap-4
                                             flex-wrap
                                         ">
-                                            <div>
-                                                <h3 className="
-                                                    font-bold
-                                                    text-[#03152E]
-                                                    text-lg
-                                                ">
-                                                    {municipality.name}
-                                                </h3>
+                                        <div>
+                                            <h3 className="
+                                                font-bold
+                                                text-[#03152E]
+                                                text-lg
+                                            ">
+                                                {municipality.name}
+                                            </h3>
 
+                                            <p className="
+                                                text-sm
+                                                text-gray-500
+                                                mt-1
+                                            ">
+                                                {municipality.district || "Sin distrito"}
+                                                {" · "}
+                                                {municipality.province || "Sin provincia"}
+                                                {" · "}
+                                                {municipality.department || "Sin departamento"}
+                                            </p>
+
+                                            {municipality.aliases && municipality.aliases.length > 0 && (
                                                 <p className="
-                                                    text-sm
+                                                    text-xs
                                                     text-gray-500
-                                                    mt-1
+                                                    mt-2
                                                 ">
-                                                    {municipality.district || "Sin distrito"}
-                                                    {" · "}
-                                                    {municipality.province || "Sin provincia"}
-                                                    {" · "}
-                                                    {municipality.department || "Sin departamento"}
-                                                    {municipality.aliases && municipality.aliases.length > 0 && (
-                                                        <p className="
-                                                            text-xs
-                                                            text-gray-500
-                                                            mt-2
-                                                        ">
-                                                            Alias: {municipality.aliases.join(", ")}
-                                                        </p>
-                                                    )}
+                                                    Alias: {municipality.aliases.join(", ")}
                                                 </p>
-                                            </div>
+                                            )}
+                                        </div>
 
                                             <span className="
                                                 px-3
