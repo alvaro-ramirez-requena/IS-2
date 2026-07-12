@@ -48,6 +48,7 @@ export default function AdminMunicipalityOperatorsPage() {
             district: "",
             province: "Lima",
             department: "Lima",
+            aliases: "",
         });
 
     const [operatorForm, setOperatorForm] =
@@ -146,6 +147,9 @@ export default function AdminMunicipalityOperatorsPage() {
 
                         department:
                             municipalityForm.department.trim(),
+
+                        aliases:
+                            municipalityForm.aliases.trim(),
                     });
 
                 setMessage(
@@ -157,6 +161,7 @@ export default function AdminMunicipalityOperatorsPage() {
                     district: "",
                     province: "Lima",
                     department: "Lima",
+                    aliases: "",
                 });
 
                 setOperatorForm((prev) => ({
@@ -500,6 +505,48 @@ export default function AdminMunicipalityOperatorsPage() {
                                         "
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="
+                                    block
+                                    text-sm
+                                    font-bold
+                                    text-gray-700
+                                    mb-2
+                                ">
+                                    Alias o zonas relacionadas
+                                </label>
+
+                                <input
+                                    value={municipalityForm.aliases}
+                                    onChange={(event) =>
+                                        setMunicipalityForm((prev) => ({
+                                            ...prev,
+                                            aliases:
+                                                event.target.value,
+                                        }))
+                                    }
+                                    className="
+                                        w-full
+                                        border
+                                        rounded-2xl
+                                        px-4
+                                        py-3
+                                        outline-none
+                                        focus:ring-2
+                                        focus:ring-blue-500
+                                    "
+                                    placeholder="Covida, Covida 2 Etapa, Pro, Antúnez de Mayolo"
+                                />
+
+                                <p className="
+                                    text-xs
+                                    text-gray-500
+                                    mt-2
+                                ">
+                                    Separe cada alias con comas. Estos nombres ayudan a asociar zonas que Google Maps devuelve en vez del distrito oficial.
+                                </p>
                             </div>
 
                             <button
@@ -856,6 +903,15 @@ export default function AdminMunicipalityOperatorsPage() {
                                                     {municipality.province || "Sin provincia"}
                                                     {" · "}
                                                     {municipality.department || "Sin departamento"}
+                                                    {municipality.aliases && municipality.aliases.length > 0 && (
+                                                        <p className="
+                                                            text-xs
+                                                            text-gray-500
+                                                            mt-2
+                                                        ">
+                                                            Alias: {municipality.aliases.join(", ")}
+                                                        </p>
+                                                    )}
                                                 </p>
                                             </div>
 

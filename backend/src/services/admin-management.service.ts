@@ -17,6 +17,7 @@ export class AdminManagementService {
     district?: string;
     province?: string;
     department?: string;
+    aliases?: string[] | string;
   }) {
     const name =
       data.name?.trim();
@@ -30,6 +31,14 @@ export class AdminManagementService {
     const department =
       data.department?.trim() || undefined;
 
+    const aliases =
+      Array.isArray(data.aliases)
+        ? data.aliases
+        : String(data.aliases || "")
+            .split(",")
+            .map((alias) => alias.trim())
+            .filter(Boolean);
+
     if (!name) {
       throw new Error(
         "El nombre de la municipalidad es obligatorio."
@@ -37,9 +46,7 @@ export class AdminManagementService {
     }
 
     const existingMunicipality =
-      await adminManagementRepository.findMunicipalityByName(
-        name
-      );
+      await adminManagementRepository.findMunicipalityByName(name);
 
     if (existingMunicipality) {
       throw new Error(
@@ -52,6 +59,7 @@ export class AdminManagementService {
       district,
       province,
       department,
+      aliases,
     });
   }
 

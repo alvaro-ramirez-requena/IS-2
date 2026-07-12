@@ -43,6 +43,7 @@ export class AdminManagementRepository {
     district?: string;
     province?: string;
     department?: string;
+    aliases?: string[];
   }) {
     return await prisma.municipality.create({
       data: {
@@ -57,6 +58,9 @@ export class AdminManagementRepository {
 
         department:
           data.department,
+
+        aliases:
+          data.aliases || [],
       },
     });
   }

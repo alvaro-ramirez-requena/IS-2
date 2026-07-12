@@ -8,11 +8,12 @@ const API_BASE =
         : `${API_URL}/api`;
 
 export type AdminMunicipality = {
-    id: string;
-    name: string;
-    district?: string | null;
-    province?: string | null;
-    department?: string | null;
+  id: string;
+  name: string;
+  district?: string | null;
+  province?: string | null;
+  department?: string | null;
+  aliases?: string[];
 };
 
 export type AdminOperator = {
@@ -78,30 +79,25 @@ export const AdminManagementService = {
     },
 
     async createMunicipality(data: {
-        name: string;
-        district?: string;
-        province?: string;
-        department?: string;
+    name: string;
+    district?: string;
+    province?: string;
+    department?: string;
+    aliases?: string;
     }) {
-        const response =
-            await fetch(
-                `${API_BASE}/admin-management/municipalities`,
-                {
-                    method:
-                        "POST",
+    const response = await fetch(
+        `${API_BASE}/admin-management/municipalities`,
+        {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+        }
+    );
 
-                    headers:
-                        getHeaders(),
-
-                    body:
-                        JSON.stringify(data),
-                }
-            );
-
-        return await parseResponse<AdminMunicipality>(
-            response,
-            "No se pudo crear la municipalidad."
-        );
+    return await parseResponse<AdminMunicipality>(
+        response,
+        "No se pudo crear la municipalidad."
+    );
     },
 
     async getOperators() {

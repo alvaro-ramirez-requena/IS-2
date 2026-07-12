@@ -106,6 +106,9 @@ export class ReportService {
     let department: string | null =
       null;
 
+    let searchText: string | null =
+      null;
+
     if (
       data.latitude !== undefined &&
       data.longitude !== undefined
@@ -129,6 +132,9 @@ export class ReportService {
 
       department =
         locationDetails.department;
+
+      searchText =
+        locationDetails.searchText;
     }
 
     const municipalityId =
@@ -137,6 +143,7 @@ export class ReportService {
         province,
         department,
         address,
+        searchText,
       });
 
     console.log("Ubicación usada para resolver municipalidad:", {
@@ -153,6 +160,8 @@ export class ReportService {
       province,
 
       department,
+
+      searchText,
     });
 
     console.log(

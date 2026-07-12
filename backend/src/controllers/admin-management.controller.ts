@@ -30,10 +30,7 @@ export class AdminManagementController {
     }
   }
 
-  static async createMunicipality(
-    req: Request,
-    res: Response
-  ) {
+  static async createMunicipality(req: Request, res: Response) {
     try {
       const municipality =
         await adminManagementService.createMunicipality({
@@ -48,10 +45,12 @@ export class AdminManagementController {
 
           department:
             req.body.department,
+
+          aliases:
+            req.body.aliases,
         });
 
       return res.status(201).json(municipality);
-
     } catch (error: any) {
       return res.status(400).json({
         message:

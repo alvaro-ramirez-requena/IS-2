@@ -327,23 +327,17 @@ enum Priority {
 }
 
 model Municipality {
-  id String @id @default(uuid())
-
-  name String @unique
-
-  district String?
-
-  province String?
-
+  id         String   @id @default(uuid())
+  name       String   @unique
+  district   String?
+  province   String?
   department String?
+  aliases    String[] @default([])
 
-  operators User[]
-
-  reports Report[]
-
+  operators              User[]
+  reports                Report[]
   technicianApplications TechnicianApplication[]
-
-  technicianProfiles TechnicianProfile[]
+  technicianProfiles     TechnicianProfile[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
