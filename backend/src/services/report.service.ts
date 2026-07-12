@@ -1,32 +1,18 @@
 import { ReportRepository } from "../repositories/report.repository";
-
 import { ReportFactory } from "../factories/report.factory";
-
 import { ReportCategory, Status, Priority } from "@prisma/client";
-
 import { prisma } from "../config/prisma";
-
 import { GeocodingService } from "./geocoding.service";
-
 import { NotificationService } from "./notification.service";
-
 import { ReportFollowRepository } from "../repositories/report-follow.repository";
-
 import { UserRepository } from "../repositories/user.repository";
-
-import {
-  resolveMunicipalityIdFromLocation,
-} from "../utils/municipalityResolver";
+import {resolveMunicipalityIdFromLocation,} from "../utils/municipalityResolver";
 
 export class ReportService {
   private reportRepository = new ReportRepository();
-
   private notificationService = new NotificationService();
-
   private reportFollowRepository = new ReportFollowRepository();
-
   private userRepository = new UserRepository();
-
   private getStatusLabel(status: Status) {
     const labels: Record<Status, string> = {
       REGISTERED: "Registrado",
@@ -39,10 +25,8 @@ export class ReportService {
       IN_PROGRESS: "En proceso",
       RESOLVED: "Resuelto",
     };
-
     return labels[status];
   }
-
   private async calculateTargetDateByPriority(priority: Priority) {
     const slaConfiguration = await prisma.slaConfiguration.findUnique({
       where: {
@@ -66,49 +50,28 @@ export class ReportService {
 
   async createReport(data: {
     title: string;
-
     category: ReportCategory;
-
     problemType: string;
-
     description: string;
-
     latitude?: number;
-
     longitude?: number;
-
     address?: string;
-
     isAnonymous?: boolean;
-
     userId: string;
-
     imageUrls: string[];
   }) {
     const user =
       await this.userRepository.findById(data.userId);
-
     if (!user) {
       throw new Error(
         "La sesión del usuario no es válida. Cierre sesión e inicie sesión nuevamente."
       );
     }
-
-    let address: string | undefined =
-      data.address;
-
-    let district: string | null =
-      null;
-
-    let province: string | null =
-      null;
-
-    let department: string | null =
-      null;
-
-    let searchText: string | null =
-      null;
-
+    let address: string | undefined = data.address;
+    let district: string | null = null;
+    let province: string | null = null;
+    let department: string | null = null;
+    let searchText: string | null = null;
     if (
       data.latitude !== undefined &&
       data.longitude !== undefined
@@ -119,22 +82,11 @@ export class ReportService {
           data.longitude
         );
 
-      address =
-        address ||
-        locationDetails.address ||
-        undefined;
-
-      district =
-        locationDetails.district;
-
-      province =
-        locationDetails.province;
-
-      department =
-        locationDetails.department;
-
-      searchText =
-        locationDetails.searchText;
+      address = address || locationDetails.address || undefined;
+      district = locationDetails.district;
+      province = locationDetails.province;
+      department = locationDetails.department;
+      searchText = locationDetails.searchText;
     }
 
     const municipalityId =
@@ -149,18 +101,12 @@ export class ReportService {
     console.log("Ubicación usada para resolver municipalidad:", {
       latitude:
         data.latitude,
-
       longitude:
         data.longitude,
-
       address,
-
       district,
-
       province,
-
       department,
-
       searchText,
     });
 
@@ -178,9 +124,7 @@ export class ReportService {
     const reportData =
       ReportFactory.create({
         ...data,
-
         address,
-
         municipalityId,
       });
 
@@ -190,127 +134,98 @@ export class ReportService {
     if (data.imageUrls.length > 0) {
       await this.reportRepository.createEvidences(
         report.id,
-
         data.imageUrls
       );
     }
-
     return report;
   }
-
   async getReportsWithLocation() {
     return await this.reportRepository.findReportsWithLocation();
   }
-
   async getReportsByUser(userId: string) {
     return await this.reportRepository.findByUser(userId);
   }
-
   async getReportsByCategory(category: ReportCategory) {
     return await this.reportRepository.findByCategory(category);
   }
-
   async getReportsByProblemType(problemType: string) {
     return await this.reportRepository.findByProblemType(problemType);
   }
-
   async getTopProblems() {
     return await this.reportRepository.getTopProblems();
   }
-
   async getReportsByStatus(status: Status) {
     return await this.reportRepository.findByStatus(status);
   }
-
   async getReportsByStatusForOperator(
     operatorId: string,
     status: Status
   ) {
     const operator =
       await this.userRepository.findById(operatorId);
-
     if (!operator) {
       throw new Error("Operador no encontrado");
     }
-
     if (operator.role !== "OPERATOR") {
       throw new Error("El usuario no es operador municipal");
     }
-
     if (!operator.municipalityId) {
       throw new Error(
         "El operador no tiene una municipalidad asignada"
       );
     }
-
     return await this.reportRepository.findByStatusAndMunicipality(
       status,
       operator.municipalityId
     );
   }
-
   async updateReportStatus(
     id: string,
     status: Status
   ) {
     const previousReport =
       await this.reportRepository.findById(id);
-
     if (!previousReport) {
       throw new Error("Reporte no encontrado");
     }
-
     const updatedReport =
       await this.reportRepository.updateStatus(
         id,
         status
       );
-
     const followers =
       await this.reportFollowRepository.findFollowersByReport(id);
-
     const userIdsToNotify =
       new Set<string>();
-
     userIdsToNotify.add(previousReport.userId);
-
     followers.forEach((follower) => {
       userIdsToNotify.add(follower.userId);
     });
-
     const statusText =
       this.getStatusLabel(status);
-
     const notifications =
       Array.from(userIdsToNotify).map((userId) => ({
         userId,
-
         reportId:
           id,
-
         title:
           "Cambio de estado en reporte",
-
         message:
           `El reporte "${previousReport.title || previousReport.problemType}" cambió a ${statusText}.`,
       }));
 
     await this.notificationService.createMany(notifications);
-
     return updatedReport;
   }
 
   async getReportById(id: string) {
     const report =
       await this.reportRepository.findById(id);
-
     if (!report) {
       throw new Error("Reporte no encontrado");
     }
-
     return report;
   }
-
   async prioritizeReport(
     id: string,
     data: {
