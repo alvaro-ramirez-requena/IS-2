@@ -24,6 +24,10 @@ export class ReportFactory {
       imageUrls: formData.imageUrls,
 
       userId,
+
+      categoryId: formData.categoryId,
+
+      problemTypeId: formData.problemTypeId,
     };
   }
 }

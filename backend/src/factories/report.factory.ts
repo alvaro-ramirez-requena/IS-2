@@ -4,6 +4,8 @@ type CreateReportDTO = {
   title: string;
   category: ReportCategory;
   problemType: string;
+  categoryId?: string;
+  problemTypeId?: string;
   description: string;
   latitude?: number;
   longitude?: number;
@@ -19,6 +21,8 @@ export class ReportFactory {
       title: data.title,
       category: data.category,
       problemType: data.problemType,
+      categoryId: data.categoryId,
+      problemTypeId: data.problemTypeId,
       description: data.description,
       latitude: data.latitude,
       longitude: data.longitude,

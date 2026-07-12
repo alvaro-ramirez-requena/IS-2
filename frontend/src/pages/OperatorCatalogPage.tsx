@@ -6,6 +6,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { OperationalCatalogService } from "../services/operationalCatalog.service";
 
+import {
+  TechnicianSkillService,
+} from "../services/technicianSkill.service";
+
+import type {
+  TechnicianSkill,
+} from "../services/technicianSkill.service";
+
 import type {
   Category,
   ClosureReason,
@@ -33,7 +41,11 @@ export default function OperatorCatalogPage() {
 
   const [closureReasons, setClosureReasons] = useState<ClosureReason[]>([]);
 
-  const [slaConfigurations, setSlaConfigurations] = useState<SlaConfiguration[]>([]);
+  const [slaConfigurations, setSlaConfigurations] =
+    useState<SlaConfiguration[]>([]);
+
+  const [technicianSkills, setTechnicianSkills] =
+    useState<TechnicianSkill[]>([]);
 
   const [categoryForm, setCategoryForm] = useState({
     id: "",
@@ -46,6 +58,7 @@ export default function OperatorCatalogPage() {
     name: "",
     description: "",
     categoryId: "",
+    suggestedSkillId: "",
   });
 
   const [closureForm, setClosureForm] = useState({
@@ -62,27 +75,49 @@ export default function OperatorCatalogPage() {
 
   const [successMessage, setSuccessMessage] = useState("");
 
+  const pageTitle =
+    tab === "SLA"
+      ? "Gestión de SLA"
+      : tab === "CLOSURE"
+        ? "Motivos de cierre"
+        : "Catálogo operativo del sistema";
+
+  const pageDescription =
+    tab === "SLA"
+      ? "Configura los tiempos objetivo según la prioridad del reporte."
+      : tab === "CLOSURE"
+        ? "Administra los resultados posibles del cierre operativo técnico."
+        : "Administra categorías, tipos de problema y especialidades sugeridas para la asignación técnica.";
+
   const loadCatalog = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const [categoriesData, problemTypesData, closureReasonsData, slaData] = await Promise.all([
+      const [
+        categoriesData,
+        problemTypesData,
+        closureReasonsData,
+        slaData,
+        technicianSkillsData,
+      ] = await Promise.all([
         OperationalCatalogService.getCategories(),
-
         OperationalCatalogService.getProblemTypes(),
-
         OperationalCatalogService.getClosureReasons(),
-
         OperationalCatalogService.getSlaConfigurations(),
+        TechnicianSkillService.getActive(),
       ]);
 
       setCategories(categoriesData);
       setProblemTypes(problemTypesData);
       setClosureReasons(closureReasonsData);
       setSlaConfigurations(slaData);
+      setTechnicianSkills(technicianSkillsData);
     } catch (error: any) {
-      setError(error.message || "No se pudo cargar el catálogo operativo.");
+      setError(
+        error.message ||
+          "No se pudo cargar el catálogo operativo."
+      );
     } finally {
       setLoading(false);
     }
@@ -95,6 +130,16 @@ export default function OperatorCatalogPage() {
   const resetMessages = () => {
     setError("");
     setSuccessMessage("");
+  };
+
+  const resetProblemTypeForm = () => {
+    setProblemTypeForm({
+      id: "",
+      name: "",
+      description: "",
+      categoryId: "",
+      suggestedSkillId: "",
+    });
   };
 
   const handleCategorySubmit = async (event: FormEvent) => {
@@ -110,21 +155,32 @@ export default function OperatorCatalogPage() {
       resetMessages();
 
       if (categoryForm.id) {
-        await OperationalCatalogService.updateCategory(categoryForm.id, {
-          name: categoryForm.name,
+        await OperationalCatalogService.updateCategory(
+          categoryForm.id,
+          {
+            name:
+              categoryForm.name,
 
-          description: categoryForm.description,
-        });
+            description:
+              categoryForm.description,
+          }
+        );
 
-        setSuccessMessage("Categoría actualizada correctamente.");
+        setSuccessMessage(
+          "Categoría actualizada correctamente."
+        );
       } else {
         await OperationalCatalogService.createCategory({
-          name: categoryForm.name,
+          name:
+            categoryForm.name,
 
-          description: categoryForm.description,
+          description:
+            categoryForm.description,
         });
 
-        setSuccessMessage("Categoría creada correctamente.");
+        setSuccessMessage(
+          "Categoría creada correctamente."
+        );
       }
 
       setCategoryForm({
@@ -135,7 +191,10 @@ export default function OperatorCatalogPage() {
 
       await loadCatalog();
     } catch (error: any) {
-      setError(error.message || "No se pudo guardar la categoría.");
+      setError(
+        error.message ||
+          "No se pudo guardar la categoría."
+      );
     } finally {
       setSaving(false);
     }
@@ -159,37 +218,54 @@ export default function OperatorCatalogPage() {
       resetMessages();
 
       if (problemTypeForm.id) {
-        await OperationalCatalogService.updateProblemType(problemTypeForm.id, {
-          name: problemTypeForm.name,
+        await OperationalCatalogService.updateProblemType(
+          problemTypeForm.id,
+          {
+            name:
+              problemTypeForm.name,
 
-          description: problemTypeForm.description,
+            description:
+              problemTypeForm.description,
 
-          categoryId: problemTypeForm.categoryId,
-        });
+            categoryId:
+              problemTypeForm.categoryId,
 
-        setSuccessMessage("Tipo de problema actualizado correctamente.");
+            suggestedSkillId:
+              problemTypeForm.suggestedSkillId || null,
+          }
+        );
+
+        setSuccessMessage(
+          "Tipo de problema actualizado correctamente."
+        );
       } else {
         await OperationalCatalogService.createProblemType({
-          name: problemTypeForm.name,
+          name:
+            problemTypeForm.name,
 
-          description: problemTypeForm.description,
+          description:
+            problemTypeForm.description,
 
-          categoryId: problemTypeForm.categoryId,
+          categoryId:
+            problemTypeForm.categoryId,
+
+          suggestedSkillId:
+            problemTypeForm.suggestedSkillId || undefined,
         });
 
-        setSuccessMessage("Tipo de problema creado correctamente.");
+        setSuccessMessage(
+          "Tipo de problema creado correctamente."
+        );
       }
 
-      setProblemTypeForm({
-        id: "",
-        name: "",
-        description: "",
-        categoryId: "",
-      });
+      resetProblemTypeForm();
 
       await loadCatalog();
     } catch (error: any) {
-      setError(error.message || "No se pudo guardar el tipo de problema.");
+      setError(
+        error.message ||
+          "No se pudo guardar el tipo de problema."
+      );
     } finally {
       setSaving(false);
     }
@@ -208,21 +284,32 @@ export default function OperatorCatalogPage() {
       resetMessages();
 
       if (closureForm.id) {
-        await OperationalCatalogService.updateClosureReason(closureForm.id, {
-          name: closureForm.name,
+        await OperationalCatalogService.updateClosureReason(
+          closureForm.id,
+          {
+            name:
+              closureForm.name,
 
-          description: closureForm.description,
-        });
+            description:
+              closureForm.description,
+          }
+        );
 
-        setSuccessMessage("Resultado técnico actualizado correctamente.");
+        setSuccessMessage(
+          "Resultado técnico actualizado correctamente."
+        );
       } else {
         await OperationalCatalogService.createClosureReason({
-          name: closureForm.name,
+          name:
+            closureForm.name,
 
-          description: closureForm.description,
+          description:
+            closureForm.description,
         });
 
-        setSuccessMessage("Resultado técnico creado correctamente.");
+        setSuccessMessage(
+          "Resultado técnico creado correctamente."
+        );
       }
 
       setClosureForm({
@@ -233,24 +320,38 @@ export default function OperatorCatalogPage() {
 
       await loadCatalog();
     } catch (error: any) {
-      setError(error.message || "No se pudo guardar el resultado técnico.");
+      setError(
+        error.message ||
+          "No se pudo guardar el resultado técnico."
+      );
     } finally {
       setSaving(false);
     }
   };
 
-  const handleUpdateSla = async (priority: "BAJO" | "MEDIO" | "ALTO", responseHours: number) => {
+  const handleUpdateSla = async (
+    priority: "BAJO" | "MEDIO" | "ALTO",
+    responseHours: number
+  ) => {
     try {
       setSaving(true);
       resetMessages();
 
-      await OperationalCatalogService.updateSla(priority, responseHours);
+      await OperationalCatalogService.updateSla(
+        priority,
+        responseHours
+      );
 
-      setSuccessMessage("Tiempo objetivo actualizado correctamente.");
+      setSuccessMessage(
+        "Tiempo objetivo actualizado correctamente."
+      );
 
       await loadCatalog();
     } catch (error: any) {
-      setError(error.message || "No se pudo actualizar el SLA.");
+      setError(
+        error.message ||
+          "No se pudo actualizar el SLA."
+      );
     } finally {
       setSaving(false);
     }
@@ -260,13 +361,13 @@ export default function OperatorCatalogPage() {
     return (
       <div
         className="
-                min-h-screen
-                flex
-                items-center
-                justify-center
-                text-3xl
-                font-bold
-            "
+          min-h-screen
+          flex
+          items-center
+          justify-center
+          text-3xl
+          font-bold
+        "
       >
         Cargando catálogo operativo...
       </div>
@@ -276,68 +377,67 @@ export default function OperatorCatalogPage() {
   return (
     <div
       className="
-            min-h-screen
-            bg-[#F5F7FA]
-            p-6
-            lg:p-8
-        "
+        min-h-screen
+        bg-[#F5F7FA]
+        p-6
+        lg:p-8
+      "
     >
       <div
         className="
-                max-w-7xl
-                mx-auto
-                space-y-8
-            "
+          max-w-7xl
+          mx-auto
+          space-y-8
+        "
       >
         <div
           className="
-                    flex
-                    flex-col
-                    lg:flex-row
-                    justify-between
-                    gap-4
-                    items-start
-                    lg:items-center
-                "
+            flex
+            flex-col
+            lg:flex-row
+            justify-between
+            gap-4
+            items-start
+            lg:items-center
+          "
         >
           <div>
             <h1
               className="
-                            text-4xl
-                            lg:text-5xl
-                            font-bold
-                            text-[#03152E]
-                            mt-2
-                        "
+                text-4xl
+                lg:text-5xl
+                font-bold
+                text-[#03152E]
+                mt-2
+              "
             >
-              Catálogo operativo del sistema
+              {pageTitle}
             </h1>
 
             <p
               className="
-                            text-gray-500
-                            mt-3
-                            text-lg
-                            max-w-3xl
-                        "
+                text-gray-500
+                mt-3
+                text-lg
+                max-w-3xl
+              "
             >
-              Administra categorías, tipos de problema, resultados técnicos y tiempos objetivo por
-              prioridad.
+              {pageDescription}
             </p>
           </div>
 
           <button
             onClick={() => navigate("/admin")}
             className="
-                            bg-white
-                            border
-                            rounded-xl
-                            px-5
-                            py-3
-                            font-bold
-                            text-[#03152E]
-                            hover:bg-gray-50
-                        "
+              bg-white
+              border
+              rounded-xl
+              px-5
+              py-3
+              font-bold
+              text-[#03152E]
+              hover:bg-gray-50
+            "
           >
             Volver al panel
           </button>
@@ -346,14 +446,14 @@ export default function OperatorCatalogPage() {
         {error && (
           <div
             className="
-                        bg-red-50
-                        border
-                        border-red-200
-                        text-red-700
-                        rounded-2xl
-                        p-4
-                        font-semibold
-                    "
+              bg-red-50
+              border
+              border-red-200
+              text-red-700
+              rounded-2xl
+              p-4
+              font-semibold
+            "
           >
             {error}
           </div>
@@ -362,45 +462,43 @@ export default function OperatorCatalogPage() {
         {successMessage && (
           <div
             className="
-                        bg-green-50
-                        border
-                        border-green-200
-                        text-green-700
-                        rounded-2xl
-                        p-4
-                        font-semibold
-                    "
+              bg-green-50
+              border
+              border-green-200
+              text-green-700
+              rounded-2xl
+              p-4
+              font-semibold
+            "
           >
             {successMessage}
           </div>
         )}
 
-
-
         {tab === "CATEGORIES" && (
           <section
             className="
-                        grid
-                        grid-cols-1
-                        xl:grid-cols-2
-                        gap-8
-                    "
+              grid
+              grid-cols-1
+              xl:grid-cols-2
+              gap-8
+            "
           >
             <div
               className="
-                            bg-white
-                            border
-                            rounded-3xl
-                            p-6
-                            space-y-6
-                        "
+                bg-white
+                border
+                rounded-3xl
+                p-6
+                space-y-6
+              "
             >
               <h2
                 className="
-                                text-2xl
-                                font-bold
-                                text-[#03152E]
-                            "
+                  text-2xl
+                  font-bold
+                  text-[#03152E]
+                "
               >
                 Gestión de categorías
               </h2>
@@ -408,24 +506,25 @@ export default function OperatorCatalogPage() {
               <form
                 onSubmit={handleCategorySubmit}
                 className="
-                                    space-y-4
-                                "
+                  space-y-4
+                "
               >
                 <input
                   value={categoryForm.name}
                   onChange={(event) =>
                     setCategoryForm((prev) => ({
                       ...prev,
-                      name: event.target.value,
+                      name:
+                        event.target.value,
                     }))
                   }
                   placeholder="Nombre de categoría"
                   className="
-                                        w-full
-                                        border
-                                        rounded-xl
-                                        p-3
-                                    "
+                    w-full
+                    border
+                    rounded-xl
+                    p-3
+                  "
                 />
 
                 <textarea
@@ -433,39 +532,44 @@ export default function OperatorCatalogPage() {
                   onChange={(event) =>
                     setCategoryForm((prev) => ({
                       ...prev,
-                      description: event.target.value,
+                      description:
+                        event.target.value,
                     }))
                   }
                   placeholder="Descripción"
                   className="
-                                        w-full
-                                        border
-                                        rounded-xl
-                                        p-3
-                                        min-h-[90px]
-                                    "
+                    w-full
+                    border
+                    rounded-xl
+                    p-3
+                    min-h-[90px]
+                  "
                 />
 
                 <div
                   className="
-                                    flex
-                                    gap-3
-                                "
+                    flex
+                    gap-3
+                  "
                 >
                   <button
                     type="submit"
                     disabled={saving}
                     className="
-                                            bg-blue-700
-                                            text-white
-                                            font-bold
-                                            rounded-xl
-                                            px-5
-                                            py-3
-                                            disabled:bg-gray-300
-                                        "
+                      bg-blue-700
+                      text-white
+                      font-bold
+                      rounded-xl
+                      px-5
+                      py-3
+                      disabled:bg-gray-300
+                    "
                   >
-                    {categoryForm.id ? "Actualizar categoría" : "Crear categoría"}
+                    {
+                      categoryForm.id
+                        ? "Actualizar categoría"
+                        : "Crear categoría"
+                    }
                   </button>
 
                   {categoryForm.id && (
@@ -479,13 +583,13 @@ export default function OperatorCatalogPage() {
                         })
                       }
                       className="
-                                                bg-white
-                                                border
-                                                font-bold
-                                                rounded-xl
-                                                px-5
-                                                py-3
-                                            "
+                        bg-white
+                        border
+                        font-bold
+                        rounded-xl
+                        px-5
+                        py-3
+                      "
                     >
                       Cancelar
                     </button>
@@ -495,56 +599,56 @@ export default function OperatorCatalogPage() {
 
               <div
                 className="
-                                space-y-3
-                            "
+                  space-y-3
+                "
               >
                 {categories.map((category) => (
                   <div
                     key={category.id}
                     className="
-                                            border
-                                            rounded-2xl
-                                            p-4
-                                            flex
-                                            justify-between
-                                            gap-4
-                                            items-start
-                                        "
+                      border
+                      rounded-2xl
+                      p-4
+                      flex
+                      justify-between
+                      gap-4
+                      items-start
+                    "
                   >
                     <div>
                       <p
                         className="
-                                                font-bold
-                                                text-[#03152E]
-                                            "
+                          font-bold
+                          text-[#03152E]
+                        "
                       >
                         {category.name}
                       </p>
 
                       <p
                         className="
-                                                text-sm
-                                                text-gray-500
-                                            "
+                          text-sm
+                          text-gray-500
+                        "
                       >
                         {category.description || "Sin descripción"}
                       </p>
 
                       <span
                         className={`
-                                                inline-block
-                                                mt-2
-                                                rounded-full
-                                                px-3
-                                                py-1
-                                                text-xs
-                                                font-bold
-                                                ${
-                                                  category.active
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-gray-100 text-gray-500"
-                                                }
-                                            `}
+                          inline-block
+                          mt-2
+                          rounded-full
+                          px-3
+                          py-1
+                          text-xs
+                          font-bold
+                          ${
+                            category.active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-500"
+                          }
+                        `}
                       >
                         {category.active ? "Activa" : "Inactiva"}
                       </span>
@@ -552,23 +656,28 @@ export default function OperatorCatalogPage() {
 
                     <div
                       className="
-                                            flex
-                                            flex-col
-                                            gap-2
-                                        "
+                        flex
+                        flex-col
+                        gap-2
+                      "
                     >
                       <button
                         onClick={() =>
                           setCategoryForm({
-                            id: category.id,
-                            name: category.name,
-                            description: category.description || "",
+                            id:
+                              category.id,
+
+                            name:
+                              category.name,
+
+                            description:
+                              category.description || "",
                           })
                         }
                         className="
-                                                    text-blue-700
-                                                    font-bold
-                                                "
+                          text-blue-700
+                          font-bold
+                        "
                       >
                         Editar
                       </button>
@@ -583,9 +692,9 @@ export default function OperatorCatalogPage() {
                           await loadCatalog();
                         }}
                         className="
-                                                    text-red-700
-                                                    font-bold
-                                                "
+                          text-red-700
+                          font-bold
+                        "
                       >
                         {category.active ? "Desactivar" : "Activar"}
                       </button>
@@ -597,19 +706,19 @@ export default function OperatorCatalogPage() {
 
             <div
               className="
-                            bg-white
-                            border
-                            rounded-3xl
-                            p-6
-                            space-y-6
-                        "
+                bg-white
+                border
+                rounded-3xl
+                p-6
+                space-y-6
+              "
             >
               <h2
                 className="
-                                text-2xl
-                                font-bold
-                                text-[#03152E]
-                            "
+                  text-2xl
+                  font-bold
+                  text-[#03152E]
+                "
               >
                 Gestión de tipos de problema
               </h2>
@@ -617,31 +726,37 @@ export default function OperatorCatalogPage() {
               <form
                 onSubmit={handleProblemTypeSubmit}
                 className="
-                                    space-y-4
-                                "
+                  space-y-4
+                "
               >
                 <select
                   value={problemTypeForm.categoryId}
                   onChange={(event) =>
                     setProblemTypeForm((prev) => ({
                       ...prev,
-                      categoryId: event.target.value,
+                      categoryId:
+                        event.target.value,
                     }))
                   }
                   className="
-                                        w-full
-                                        border
-                                        rounded-xl
-                                        p-3
-                                        bg-white
-                                    "
+                    w-full
+                    border
+                    rounded-xl
+                    p-3
+                    bg-white
+                  "
                 >
-                  <option value="">Selecciona una categoría</option>
+                  <option value="">
+                    Selecciona una categoría
+                  </option>
 
                   {categories
                     .filter((category) => category.active)
                     .map((category) => (
-                      <option key={category.id} value={category.id}>
+                      <option
+                        key={category.id}
+                        value={category.id}
+                      >
                         {category.name}
                       </option>
                     ))}
@@ -652,16 +767,17 @@ export default function OperatorCatalogPage() {
                   onChange={(event) =>
                     setProblemTypeForm((prev) => ({
                       ...prev,
-                      name: event.target.value,
+                      name:
+                        event.target.value,
                     }))
                   }
                   placeholder="Nombre del tipo de problema"
                   className="
-                                        w-full
-                                        border
-                                        rounded-xl
-                                        p-3
-                                    "
+                    w-full
+                    border
+                    rounded-xl
+                    p-3
+                  "
                 />
 
                 <textarea
@@ -669,60 +785,102 @@ export default function OperatorCatalogPage() {
                   onChange={(event) =>
                     setProblemTypeForm((prev) => ({
                       ...prev,
-                      description: event.target.value,
+                      description:
+                        event.target.value,
                     }))
                   }
                   placeholder="Descripción"
                   className="
-                                        w-full
-                                        border
-                                        rounded-xl
-                                        p-3
-                                        min-h-[90px]
-                                    "
+                    w-full
+                    border
+                    rounded-xl
+                    p-3
+                    min-h-[90px]
+                  "
                 />
+
+                <select
+                  value={problemTypeForm.suggestedSkillId}
+                  onChange={(event) =>
+                    setProblemTypeForm((prev) => ({
+                      ...prev,
+                      suggestedSkillId:
+                        event.target.value,
+                    }))
+                  }
+                  className="
+                    w-full
+                    border
+                    rounded-xl
+                    p-3
+                    bg-white
+                  "
+                >
+                  <option value="">
+                    Selecciona una especialidad sugerida
+                  </option>
+
+                  {technicianSkills.map((skill) => (
+                    <option
+                      key={skill.id}
+                      value={skill.id}
+                    >
+                      {skill.name}
+                    </option>
+                  ))}
+                </select>
+
+                {technicianSkills.length === 0 && (
+                  <p
+                    className="
+                      text-sm
+                      text-orange-600
+                      font-semibold
+                    "
+                  >
+                    No hay habilidades técnicas activas. Crea una habilidad en
+                    el módulo de Habilidades técnicas.
+                  </p>
+                )}
 
                 <div
                   className="
-                                    flex
-                                    gap-3
-                                "
+                    flex
+                    gap-3
+                  "
                 >
                   <button
                     type="submit"
                     disabled={saving}
                     className="
-                                            bg-blue-700
-                                            text-white
-                                            font-bold
-                                            rounded-xl
-                                            px-5
-                                            py-3
-                                            disabled:bg-gray-300
-                                        "
+                      bg-blue-700
+                      text-white
+                      font-bold
+                      rounded-xl
+                      px-5
+                      py-3
+                      disabled:bg-gray-300
+                    "
                   >
-                    {problemTypeForm.id ? "Actualizar tipo" : "Crear tipo"}
+                    {
+                      problemTypeForm.id
+                        ? "Actualizar tipo"
+                        : "Crear tipo"
+                    }
                   </button>
 
                   {problemTypeForm.id && (
                     <button
                       type="button"
-                      onClick={() =>
-                        setProblemTypeForm({
-                          id: "",
-                          name: "",
-                          description: "",
-                          categoryId: "",
-                        })
-                      }
+                      onClick={resetProblemTypeForm}
                       className="
-                                                bg-white
-                                                border
-                                                font-bold
-                                                rounded-xl
-                                                px-5
-                                                py-3
-                                            "
+                        bg-white
+                        border
+                        font-bold
+                        rounded-xl
+                        px-5
+                        py-3
+                      "
                     >
                       Cancelar
                     </button>
@@ -732,65 +890,76 @@ export default function OperatorCatalogPage() {
 
               <div
                 className="
-                                space-y-3
-                            "
+                  space-y-3
+                "
               >
                 {problemTypes.map((problemType) => (
                   <div
                     key={problemType.id}
                     className="
-                                            border
-                                            rounded-2xl
-                                            p-4
-                                            flex
-                                            justify-between
-                                            gap-4
-                                            items-start
-                                        "
+                      border
+                      rounded-2xl
+                      p-4
+                      flex
+                      justify-between
+                      gap-4
+                      items-start
+                    "
                   >
                     <div>
                       <p
                         className="
-                                                font-bold
-                                                text-[#03152E]
-                                            "
+                          font-bold
+                          text-[#03152E]
+                        "
                       >
                         {problemType.name}
                       </p>
 
                       <p
                         className="
-                                                text-sm
-                                                text-gray-500
-                                            "
+                          text-sm
+                          text-gray-500
+                        "
                       >
                         Categoría: {problemType.category?.name || "No definida"}
                       </p>
 
                       <p
                         className="
-                                                text-sm
-                                                text-gray-500
-                                            "
+                          text-sm
+                          text-blue-700
+                          font-semibold
+                        "
+                      >
+                        Especialidad sugerida:{" "}
+                        {problemType.suggestedSkill?.name || "No definida"}
+                      </p>
+
+                      <p
+                        className="
+                          text-sm
+                          text-gray-500
+                        "
                       >
                         {problemType.description || "Sin descripción"}
                       </p>
 
                       <span
                         className={`
-                                                inline-block
-                                                mt-2
-                                                rounded-full
-                                                px-3
-                                                py-1
-                                                text-xs
-                                                font-bold
-                                                ${
-                                                  problemType.active
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-gray-100 text-gray-500"
-                                                }
-                                            `}
+                          inline-block
+                          mt-2
+                          rounded-full
+                          px-3
+                          py-1
+                          text-xs
+                          font-bold
+                          ${
+                            problemType.active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-500"
+                          }
+                        `}
                       >
                         {problemType.active ? "Activo" : "Inactivo"}
                       </span>
@@ -798,24 +967,34 @@ export default function OperatorCatalogPage() {
 
                     <div
                       className="
-                                            flex
-                                            flex-col
-                                            gap-2
-                                        "
+                        flex
+                        flex-col
+                        gap-2
+                      "
                     >
                       <button
                         onClick={() =>
                           setProblemTypeForm({
-                            id: problemType.id,
-                            name: problemType.name,
-                            description: problemType.description || "",
-                            categoryId: problemType.categoryId,
+                            id:
+                              problemType.id,
+
+                            name:
+                              problemType.name,
+
+                            description:
+                              problemType.description || "",
+
+                            categoryId:
+                              problemType.categoryId,
+
+                            suggestedSkillId:
+                              problemType.suggestedSkillId || "",
                           })
                         }
                         className="
-                                                    text-blue-700
-                                                    font-bold
-                                                "
+                          text-blue-700
+                          font-bold
+                        "
                       >
                         Editar
                       </button>
@@ -830,9 +1009,9 @@ export default function OperatorCatalogPage() {
                           await loadCatalog();
                         }}
                         className="
-                                                    text-red-700
-                                                    font-bold
-                                                "
+                          text-red-700
+                          font-bold
+                        "
                       >
                         {problemType.active ? "Desactivar" : "Activar"}
                       </button>
@@ -847,27 +1026,27 @@ export default function OperatorCatalogPage() {
         {tab === "CLOSURE" && (
           <section
             className="
-                        grid
-                        grid-cols-1
-                        xl:grid-cols-[420px_1fr]
-                        gap-8
-                    "
+              grid
+              grid-cols-1
+              xl:grid-cols-[420px_1fr]
+              gap-8
+            "
           >
             <div
               className="
-                            bg-white
-                            border
-                            rounded-3xl
-                            p-6
-                            space-y-6
-                        "
+                bg-white
+                border
+                rounded-3xl
+                p-6
+                space-y-6
+              "
             >
               <h2
                 className="
-                                text-2xl
-                                font-bold
-                                text-[#03152E]
-                            "
+                  text-2xl
+                  font-bold
+                  text-[#03152E]
+                "
               >
                 Resultado técnico / motivo de cierre
               </h2>
@@ -875,24 +1054,25 @@ export default function OperatorCatalogPage() {
               <form
                 onSubmit={handleClosureSubmit}
                 className="
-                                    space-y-4
-                                "
+                  space-y-4
+                "
               >
                 <input
                   value={closureForm.name}
                   onChange={(event) =>
                     setClosureForm((prev) => ({
                       ...prev,
-                      name: event.target.value,
+                      name:
+                        event.target.value,
                     }))
                   }
                   placeholder="Ej. Resuelto en sitio"
                   className="
-                                        w-full
-                                        border
-                                        rounded-xl
-                                        p-3
-                                    "
+                    w-full
+                    border
+                    rounded-xl
+                    p-3
+                  "
                 />
 
                 <textarea
@@ -900,39 +1080,44 @@ export default function OperatorCatalogPage() {
                   onChange={(event) =>
                     setClosureForm((prev) => ({
                       ...prev,
-                      description: event.target.value,
+                      description:
+                        event.target.value,
                     }))
                   }
                   placeholder="Descripción del resultado técnico"
                   className="
-                                        w-full
-                                        border
-                                        rounded-xl
-                                        p-3
-                                        min-h-[110px]
-                                    "
+                    w-full
+                    border
+                    rounded-xl
+                    p-3
+                    min-h-[110px]
+                  "
                 />
 
                 <div
                   className="
-                                    flex
-                                    gap-3
-                                "
+                    flex
+                    gap-3
+                  "
                 >
                   <button
                     type="submit"
                     disabled={saving}
                     className="
-                                            bg-blue-700
-                                            text-white
-                                            font-bold
-                                            rounded-xl
-                                            px-5
-                                            py-3
-                                            disabled:bg-gray-300
-                                        "
+                      bg-blue-700
+                      text-white
+                      font-bold
+                      rounded-xl
+                      px-5
+                      py-3
+                      disabled:bg-gray-300
+                    "
                   >
-                    {closureForm.id ? "Actualizar resultado" : "Crear resultado"}
+                    {
+                      closureForm.id
+                        ? "Actualizar resultado"
+                        : "Crear resultado"
+                    }
                   </button>
 
                   {closureForm.id && (
@@ -946,13 +1131,13 @@ export default function OperatorCatalogPage() {
                         })
                       }
                       className="
-                                                bg-white
-                                                border
-                                                font-bold
-                                                rounded-xl
-                                                px-5
-                                                py-3
-                                            "
+                        bg-white
+                        border
+                        font-bold
+                        rounded-xl
+                        px-5
+                        py-3
+                      "
                     >
                       Cancelar
                     </button>
@@ -963,19 +1148,19 @@ export default function OperatorCatalogPage() {
 
             <div
               className="
-                            bg-white
-                            border
-                            rounded-3xl
-                            p-6
-                            space-y-3
-                        "
+                bg-white
+                border
+                rounded-3xl
+                p-6
+                space-y-3
+              "
             >
               <h2
                 className="
-                                text-2xl
-                                font-bold
-                                text-[#03152E]
-                            "
+                  text-2xl
+                  font-bold
+                  text-[#03152E]
+                "
               >
                 Catálogo de resultados técnicos
               </h2>
@@ -984,49 +1169,49 @@ export default function OperatorCatalogPage() {
                 <div
                   key={reason.id}
                   className="
-                                        border
-                                        rounded-2xl
-                                        p-4
-                                        flex
-                                        justify-between
-                                        gap-4
-                                        items-start
-                                    "
+                    border
+                    rounded-2xl
+                    p-4
+                    flex
+                    justify-between
+                    gap-4
+                    items-start
+                  "
                 >
                   <div>
                     <p
                       className="
-                                            font-bold
-                                            text-[#03152E]
-                                        "
+                        font-bold
+                        text-[#03152E]
+                      "
                     >
                       {reason.name}
                     </p>
 
                     <p
                       className="
-                                            text-sm
-                                            text-gray-500
-                                        "
+                        text-sm
+                        text-gray-500
+                      "
                     >
                       {reason.description || "Sin descripción"}
                     </p>
 
                     <span
                       className={`
-                                            inline-block
-                                            mt-2
-                                            rounded-full
-                                            px-3
-                                            py-1
-                                            text-xs
-                                            font-bold
-                                            ${
-                                              reason.active
-                                                ? "bg-green-100 text-green-700"
-                                                : "bg-gray-100 text-gray-500"
-                                            }
-                                        `}
+                        inline-block
+                        mt-2
+                        rounded-full
+                        px-3
+                        py-1
+                        text-xs
+                        font-bold
+                        ${
+                          reason.active
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-500"
+                        }
+                      `}
                     >
                       {reason.active ? "Activo" : "Inactivo"}
                     </span>
@@ -1034,23 +1219,28 @@ export default function OperatorCatalogPage() {
 
                   <div
                     className="
-                                        flex
-                                        flex-col
-                                        gap-2
-                                    "
+                      flex
+                      flex-col
+                      gap-2
+                    "
                   >
                     <button
                       onClick={() =>
                         setClosureForm({
-                          id: reason.id,
-                          name: reason.name,
-                          description: reason.description || "",
+                          id:
+                            reason.id,
+
+                          name:
+                            reason.name,
+
+                          description:
+                            reason.description || "",
                         })
                       }
                       className="
-                                                text-blue-700
-                                                font-bold
-                                            "
+                        text-blue-700
+                        font-bold
+                      "
                     >
                       Editar
                     </button>
@@ -1065,9 +1255,9 @@ export default function OperatorCatalogPage() {
                         await loadCatalog();
                       }}
                       className="
-                                                text-red-700
-                                                font-bold
-                                            "
+                        text-red-700
+                        font-bold
+                      "
                     >
                       {reason.active ? "Desactivar" : "Activar"}
                     </button>
@@ -1089,6 +1279,7 @@ export default function OperatorCatalogPage() {
     </div>
   );
 }
+
 function SlaSection({
   slaConfigurations,
   saving,
@@ -1096,50 +1287,60 @@ function SlaSection({
 }: {
   slaConfigurations: SlaConfiguration[];
   saving: boolean;
-  onSave: (priority: "BAJO" | "MEDIO" | "ALTO", responseHours: number) => Promise<void>;
+  onSave: (
+    priority: "BAJO" | "MEDIO" | "ALTO",
+    responseHours: number
+  ) => Promise<void>;
 }) {
-  const [values, setValues] = useState<Record<"BAJO" | "MEDIO" | "ALTO", number>>({
-    BAJO: 72,
-    MEDIO: 48,
-    ALTO: 24,
-  });
+  const [values, setValues] =
+    useState<Record<"BAJO" | "MEDIO" | "ALTO", number>>({
+      BAJO: 72,
+      MEDIO: 48,
+      ALTO: 24,
+    });
 
   useEffect(() => {
     setValues({
-      BAJO: slaConfigurations.find((item) => item.priority === "BAJO")?.responseHours || 72,
+      BAJO:
+        slaConfigurations.find((item) => item.priority === "BAJO")
+          ?.responseHours || 72,
 
-      MEDIO: slaConfigurations.find((item) => item.priority === "MEDIO")?.responseHours || 48,
+      MEDIO:
+        slaConfigurations.find((item) => item.priority === "MEDIO")
+          ?.responseHours || 48,
 
-      ALTO: slaConfigurations.find((item) => item.priority === "ALTO")?.responseHours || 24,
+      ALTO:
+        slaConfigurations.find((item) => item.priority === "ALTO")
+          ?.responseHours || 24,
     });
   }, [slaConfigurations]);
 
   return (
     <section
       className="
-            bg-white
-            border
-            rounded-3xl
-            p-6
-            space-y-6
-        "
+        bg-white
+        border
+        rounded-3xl
+        p-6
+        space-y-6
+      "
     >
       <div>
         <h2
           className="
-                    text-2xl
-                    font-bold
-                    text-[#03152E]
-                "
+            text-2xl
+            font-bold
+            text-[#03152E]
+          "
         >
           Tiempos objetivo por prioridad
         </h2>
 
         <p
           className="
-                    text-gray-500
-                    mt-2
-                "
+            text-gray-500
+            mt-2
+          "
         >
           Define las horas máximas esperadas para atender reportes según su prioridad.
         </p>
@@ -1147,39 +1348,39 @@ function SlaSection({
 
       <div
         className="
-                grid
-                grid-cols-1
-                md:grid-cols-3
-                gap-5
-            "
+          grid
+          grid-cols-1
+          md:grid-cols-3
+          gap-5
+        "
       >
         {(["BAJO", "MEDIO", "ALTO"] as const).map((priority) => (
           <div
             key={priority}
             className="
-                                border
-                                rounded-2xl
-                                p-5
-                                space-y-4
-                            "
+              border
+              rounded-2xl
+              p-5
+              space-y-4
+            "
           >
             <h3
               className="
-                                text-xl
-                                font-bold
-                                text-[#03152E]
-                            "
+                text-xl
+                font-bold
+                text-[#03152E]
+              "
             >
               Prioridad {priority}
             </h3>
 
             <label
               className="
-                                block
-                                text-sm
-                                font-bold
-                                text-gray-600
-                            "
+                block
+                text-sm
+                font-bold
+                text-gray-600
+              "
             >
               Horas objetivo
             </label>
@@ -1191,29 +1392,30 @@ function SlaSection({
               onChange={(event) =>
                 setValues((prev) => ({
                   ...prev,
-                  [priority]: Number(event.target.value),
+                  [priority]:
+                    Number(event.target.value),
                 }))
               }
               className="
-                                    w-full
-                                    border
-                                    rounded-xl
-                                    p-3
-                                "
+                w-full
+                border
+                rounded-xl
+                p-3
+              "
             />
 
             <button
               onClick={() => onSave(priority, values[priority])}
               disabled={saving}
               className="
-                                    w-full
-                                    bg-blue-700
-                                    text-white
-                                    font-bold
-                                    rounded-xl
-                                    py-3
-                                    disabled:bg-gray-300
-                                "
+                w-full
+                bg-blue-700
+                text-white
+                font-bold
+                rounded-xl
+                py-3
+                disabled:bg-gray-300
+              "
             >
               Guardar SLA
             </button>

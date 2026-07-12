@@ -11,7 +11,7 @@ export class ProblemTypeService {
     return await problemTypeRepository.findActive();
   }
 
-  async create(data: { name: string; description?: string; categoryId: string }) {
+  async create(data: { name: string; description?: string; categoryId: string, suggestedSkillId?: string; }) {
     if (!data.name?.trim()) {
       throw new Error("El nombre del tipo de problema es obligatorio.");
     }
@@ -24,6 +24,7 @@ export class ProblemTypeService {
       name: data.name.trim(),
       description: data.description?.trim() || undefined,
       categoryId: data.categoryId,
+      suggestedSkillId: data.suggestedSkillId || undefined,
     });
   }
 
@@ -34,6 +35,7 @@ export class ProblemTypeService {
       description?: string;
       categoryId?: string;
       active?: boolean;
+      suggestedSkillId?: string | null;
     }
   ) {
     if (!id) {
@@ -44,7 +46,9 @@ export class ProblemTypeService {
       name: data.name?.trim(),
       description: data.description?.trim(),
       categoryId: data.categoryId,
+      suggestedSkillId: data.suggestedSkillId || null,
       active: data.active,
+      
     });
   }
 

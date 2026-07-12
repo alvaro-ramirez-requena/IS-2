@@ -44,6 +44,10 @@ export type CreateReportDTO = {
   imageUrls: string[];
 
   userId: string;
+  
+  categoryId?: string;
+  
+  problemTypeId?: string;
 };
 
 export type ApiReport = {

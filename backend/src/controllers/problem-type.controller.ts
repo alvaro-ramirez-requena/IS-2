@@ -34,6 +34,7 @@ export class ProblemTypeController {
         name: req.body.name,
         description: req.body.description,
         categoryId: req.body.categoryId,
+        suggestedSkillId: req.body.suggestedSkillId,
       });
 
       return res.status(201).json(problemType);
@@ -50,6 +51,7 @@ export class ProblemTypeController {
         name: req.body.name,
         description: req.body.description,
         categoryId: req.body.categoryId,
+        suggestedSkillId: req.body.suggestedSkillId,
         active: req.body.active,
       });
 

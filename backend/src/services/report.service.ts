@@ -84,6 +84,10 @@ export class ReportService {
     userId: string;
 
     imageUrls: string[];
+
+    categoryId?: string;
+
+    problemTypeId?: string;
   }) {
     const user =
       await this.userRepository.findById(data.userId);

@@ -5,6 +5,7 @@ export class ProblemTypeRepository {
     return await prisma.problemType.findMany({
       include: {
         category: true,
+        suggestedSkill: true,
       },
       orderBy: {
         name: "asc",
@@ -22,6 +23,7 @@ export class ProblemTypeRepository {
       },
       include: {
         category: true,
+        suggestedSkill: true,
       },
       orderBy: {
         name: "asc",
@@ -56,6 +58,7 @@ export class ProblemTypeRepository {
       name?: string;
       description?: string;
       categoryId?: string;
+      suggestedSkillId?: string | null;
       active?: boolean;
     }
   ) {
@@ -66,6 +69,7 @@ export class ProblemTypeRepository {
       data,
       include: {
         category: true,
+        suggestedSkill: true,
       },
     });
   }

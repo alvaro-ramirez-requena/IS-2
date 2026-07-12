@@ -16,6 +16,13 @@ export type ProblemType = {
   active: boolean;
   categoryId: string;
   category?: Category;
+  suggestedSkillId?: string | null;
+  suggestedSkill?: {
+    id: string;
+    name: string;
+    description?: string | null;
+    active: boolean;
+  } | null;
 };
 
 export type ClosureReason = {
@@ -102,7 +109,12 @@ export const OperationalCatalogService = {
     )) as ProblemType[];
   },
 
-  async createProblemType(data: { name: string; description?: string; categoryId: string }) {
+  async createProblemType(data: {
+    name: string;
+    description?: string;
+    categoryId: string;
+    suggestedSkillId?: string;
+  }) {
     const response = await fetch(`${API_BASE}/problem-types`, {
       method: "POST",
       headers: {
@@ -120,6 +132,7 @@ export const OperationalCatalogService = {
       name?: string;
       description?: string;
       categoryId?: string;
+      suggestedSkillId?: string | null;
       active?: boolean;
     }
   ) {
