@@ -1,5 +1,12 @@
 import { TechnicalClosureRepository } from "../repositories/technical-closure.repository";
 
+import {
+  isFollowUpReason,
+  normalizeClosureResult,
+  validateBasicClosureFields,
+  validateFollowUpRequirement,
+} from "../utils/technicalClosure.utils";
+
 const technicalClosureRepository = new TechnicalClosureRepository();
 
 type CreateTechnicalClosureInput = {
@@ -12,28 +19,10 @@ type CreateTechnicalClosureInput = {
   followUpNotes?: string;
 };
 
-function isFollowUpReason(reasonName: string) {
-  const value = reasonName
-    .toUpperCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
-  return value.includes("SEGUIMIENTO") || value.includes("FOLLOW");
-}
 
 export class TechnicalClosureService {
   async createClosure(data: CreateTechnicalClosureInput) {
-    if (!data.reportId) {
-      throw new Error("El reporte es obligatorio.");
-    }
-
-    if (!data.technicianId) {
-      throw new Error("El técnico es obligatorio.");
-    }
-
-    if (!data.observations?.trim()) {
-      throw new Error("Las observaciones de cierre son obligatorias.");
-    }
+    validateBasicClosureFields(data);
 
     let result = data.result?.trim();
 
@@ -57,13 +46,13 @@ export class TechnicalClosureService {
       followUpRequired = isFollowUpReason(closureReason.name);
     }
 
-    if (!result) {
-      throw new Error("El resultado técnico es obligatorio.");
-    }
+    result = normalizeClosureResult(result);
 
-    if (followUpRequired && !data.followUpNotes?.trim()) {
-      throw new Error("Debes registrar las notas de seguimiento.");
-    }
+    const followUpNotes =
+      validateFollowUpRequirement(
+        followUpRequired,
+        data.followUpNotes
+      );
 
     return await technicalClosureRepository.create({
       reportId: data.reportId,
@@ -80,7 +69,7 @@ export class TechnicalClosureService {
 
       followUpRequired,
 
-      followUpNotes: data.followUpNotes?.trim() || undefined,
+      followUpNotes,
     });
   }
 
