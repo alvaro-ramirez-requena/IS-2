@@ -4,6 +4,10 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { statusLabels } from "../utils/reportLabels";
 
+import {
+  validateTechnicianAttention,
+} from "../utils/technicianAttend.utils";
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 type Report = {
@@ -790,27 +794,12 @@ export default function TechnicianAttendPage() {
   };
 
   const validar = (): Record<string, string> => {
-    const nuevosErrores: Record<string, string> = {};
-
-    catalogo.camposObligatorios.forEach((campo) => {
-      const valor = campos[campo.label] ?? "";
-
-      if (valor.trim() === "") {
-        nuevosErrores[campo.label] = "Este campo es obligatorio.";
-      } else if (campo.minLength && valor.trim().length < campo.minLength) {
-        nuevosErrores[campo.label] = `Debe tener al menos ${campo.minLength} caracteres.`;
-      }
+    return validateTechnicianAttention({
+      camposObligatorios: catalogo.camposObligatorios,
+      campos,
+      accionSeleccionada,
+      resultadoSeleccionado,
     });
-
-    if (!accionSeleccionada) {
-      nuevosErrores["accion"] = "Debes seleccionar una acción realizada.";
-    }
-
-    if (!resultadoSeleccionado) {
-      nuevosErrores["resultado"] = "Debes seleccionar una evaluación preliminar.";
-    }
-
-    return nuevosErrores;
   };
 
   const saveTechnicalAttention = async () => {
