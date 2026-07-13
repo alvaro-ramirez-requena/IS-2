@@ -1,215 +1,139 @@
-import {
-    useEffect,
-    useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-    useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-import { NotificationService }
-    from "../../services/notification.service";
+import { NotificationService } from "../../services/notification.service";
 
-import { ReportFollowService }
-    from "../../services/reportFollow.service";
+import { ReportFollowService } from "../../services/reportFollow.service";
 
-import {
-    statusLabels,
-} from "../../utils/reportLabels";
-
-
+import { statusLabels } from "../../utils/reportLabels";
 
 export default function Navbar() {
+  const navigate = useNavigate();
 
-    const navigate =
-        useNavigate();
+  const token = localStorage.getItem("token");
 
-    const token =
-        localStorage.getItem("token");
+  const firstName = localStorage.getItem("firstName");
 
-    const firstName =
-        localStorage.getItem("firstName");
+  const role = localStorage.getItem("role");
 
-    const role =
-        localStorage.getItem("role");
-    
-    const isLoggedIn =
-        Boolean(token);
+  const isLoggedIn = Boolean(token);
 
-    const initial =
-        isLoggedIn
-            ? firstName?.charAt(0).toUpperCase() || "U"
-            : "?";
+  const initial = isLoggedIn ? firstName?.charAt(0).toUpperCase() || "U" : "?";
 
-    const [searchQuery, setSearchQuery] =
-        useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-    const [showMenu, setShowMenu] =
-        useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
-    const [notifications, setNotifications] =
-        useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
-    const [unreadCount, setUnreadCount] =
-        useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-    const [followedReports, setFollowedReports] =
-        useState<any[]>([]);
+  const [followedReports, setFollowedReports] = useState<any[]>([]);
 
-    const handleUserClick = () => {
+  const handleUserClick = () => {
+    if (!isLoggedIn) {
+      alert("Debes iniciar sesión para acceder a tu cuenta.");
+      return;
+    }
 
-        if (!isLoggedIn) {
-            alert("Debes iniciar sesión para acceder a tu cuenta.");
-            return;
-        }
+    setShowMenu(!showMenu);
+  };
 
-        setShowMenu(!showMenu);
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+
+    localStorage.removeItem("userId");
+
+    localStorage.removeItem("role");
+
+    localStorage.removeItem("firstName");
+
+    setShowMenu(false);
+
+    navigate("/");
+  };
+
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const query = searchQuery.trim();
+
+    setShowMenu(false);
+
+    if (query.length > 0) {
+      navigate(`/reports/map?search=${encodeURIComponent(query)}`);
+      return;
+    }
+
+    navigate("/reports/map");
+  };
+
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+
+    if (!userId || !isLoggedIn) {
+      return;
+    }
+
+    const fetchUserPanelData = async () => {
+      try {
+        const notificationData = await NotificationService.getByUser(userId);
+
+        setNotifications(notificationData.notifications || []);
+
+        setUnreadCount(notificationData.unreadCount || 0);
+
+        const followedData = await ReportFollowService.getFollowedReports(userId);
+
+        setFollowedReports(followedData || []);
+      } catch (error) {
+        console.error(error);
+      }
     };
 
-    const handleLogout = () => {
+    fetchUserPanelData();
+  }, [isLoggedIn]);
 
-        localStorage.removeItem("token");
+  const handleNotificationClick = async (notification: any) => {
+    try {
+      await NotificationService.markAsRead(notification.id);
 
-        localStorage.removeItem("userId");
+      setNotifications((prev) => prev.filter((item) => item.id !== notification.id));
 
-        localStorage.removeItem("role");
+      setUnreadCount((prev) => Math.max(prev - 1, 0));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setShowMenu(false);
 
-        localStorage.removeItem("firstName");
+      const currentUserId = localStorage.getItem("userId");
 
-        setShowMenu(false);
+      const reportOwnerId = notification.report?.userId;
 
-        navigate("/");
-    };
+      const problemType = notification.report?.problemType;
 
-    const handleSearchSubmit = (
-        event: React.FormEvent<HTMLFormElement>
-    ) => {
-        event.preventDefault();
+      if (reportOwnerId && currentUserId && reportOwnerId === currentUserId) {
+        navigate(`/my-reports?highlight=${notification.reportId}`);
 
-        const query =
-            searchQuery.trim();
+        return;
+      }
 
-        setShowMenu(false);
+      if (problemType) {
+        navigate(
+          `/reports/problem/${encodeURIComponent(problemType)}?highlight=${notification.reportId}`
+        );
 
-        if (query.length > 0) {
-            navigate(
-                `/reports/map?search=${encodeURIComponent(query)}`
-            );
-            return;
-        }
+        return;
+      }
 
-        navigate("/reports/map");
-    };
+      navigate("/home");
+    }
+  };
 
-    useEffect(() => {
-
-        const userId =
-            localStorage.getItem("userId");
-
-        if (!userId || !isLoggedIn) {
-            return;
-        }
-
-        const fetchUserPanelData =
-            async () => {
-
-                try {
-
-                    const notificationData =
-                        await NotificationService
-                            .getByUser(userId);
-
-                    setNotifications(
-                        notificationData.notifications || []
-                    );
-
-                    setUnreadCount(
-                        notificationData.unreadCount || 0
-                    );
-
-                    const followedData =
-                        await ReportFollowService
-                            .getFollowedReports(userId);
-
-                    setFollowedReports(
-                        followedData || []
-                    );
-
-                } catch (error) {
-
-                    console.error(error);
-                }
-            };
-
-        fetchUserPanelData();
-
-    }, [isLoggedIn]);
-
-    const handleNotificationClick = async (
-        notification: any
-    ) => {
-
-        try {
-
-            await NotificationService
-                .markAsRead(notification.id);
-
-            setNotifications((prev) =>
-                prev.filter(
-                    (item) => item.id !== notification.id
-                )
-            );
-
-            setUnreadCount((prev) =>
-                Math.max(prev - 1, 0)
-            );
-
-        } catch (error) {
-
-            console.error(error);
-
-        } finally {
-
-            setShowMenu(false);
-
-            const currentUserId =
-                localStorage.getItem("userId");
-
-            const reportOwnerId =
-                notification.report?.userId;
-
-            const problemType =
-                notification.report?.problemType;
-
-            if (
-                reportOwnerId &&
-                currentUserId &&
-                reportOwnerId === currentUserId
-            ) {
-
-                navigate(
-                    `/my-reports?highlight=${notification.reportId}`
-                );
-
-                return;
-            }
-
-            if (problemType) {
-
-                navigate(
-                    `/reports/problem/${encodeURIComponent(problemType)}?highlight=${notification.reportId}`
-                );
-
-                return;
-            }
-
-            navigate("/home");
-        }
-    };
-
-    return (
-
-        <header className="
+  return (
+    <header
+      className="
             bg-[#03152E]
             px-4
             lg:px-10
@@ -222,35 +146,35 @@ export default function Navbar() {
             items-center
             justify-between
             shadow-lg
-        ">
-
-            <div className="
+        "
+    >
+      <div
+        className="
                 flex
                 flex-col
                 lg:flex-row
                 items-center
                 gap-6
                 lg:gap-10
-            ">
-
-                <h1 className="
+            "
+      >
+        <h1
+          className="
                     text-3xl
                     lg:text-4xl
                     font-bold
                     text-white
-                ">
-                    reporta
-                    <span className="text-yellow-400">
-                        Ya
-                    </span>
-                </h1>
+                "
+        >
+          reporta
+          <span className="text-yellow-400">Ya</span>
+        </h1>
+      </div>
 
-            </div>
-
-            {isLoggedIn && role !== "OPERATOR" && role !== "TECHNICIAN" && (
-                <form
-                    onSubmit={handleSearchSubmit}
-                    className="
+      {isLoggedIn && role !== "OPERATOR" && role !== "TECHNICIAN" && (
+        <form
+          onSubmit={handleSearchSubmit}
+          className="
                         w-full
                         max-w-2xl
                         hidden
@@ -263,14 +187,12 @@ export default function Navbar() {
                         border-white/20
                         shadow-sm
                     "
-                >
-                    <input
-                        value={searchQuery}
-                        onChange={(event) =>
-                            setSearchQuery(event.target.value)
-                        }
-                        placeholder="Buscar reportes por zona, distrito o dirección..."
-                        className="
+        >
+          <input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Buscar reportes por zona, distrito o dirección..."
+            className="
                             flex-1
                             px-5
                             py-3
@@ -278,11 +200,11 @@ export default function Navbar() {
                             outline-none
                             text-sm
                         "
-                    />
+          />
 
-                    <button
-                        type="submit"
-                        className="
+          <button
+            type="submit"
+            className="
                             px-5
                             py-3
                             bg-yellow-400
@@ -291,13 +213,14 @@ export default function Navbar() {
                             hover:bg-yellow-300
                             transition
                         "
-                    >
-                        Ver mapa
-                    </button>
-                </form>
-            )}
+          >
+            Ver mapa
+          </button>
+        </form>
+      )}
 
-            <div className="
+      <div
+        className="
                 w-full
                 lg:w-auto
                 flex
@@ -305,13 +228,12 @@ export default function Navbar() {
                 justify-center
                 lg:justify-end
                 gap-6
-            ">
-
-                <div className="relative">
-
-                    <button
-                        onClick={handleUserClick}
-                        className="
+            "
+      >
+        <div className="relative">
+          <button
+            onClick={handleUserClick}
+            className="
                             w-14
                             h-14
                             rounded-full
@@ -322,14 +244,13 @@ export default function Navbar() {
                             text-xl
                             font-bold
                         "
-                    >
-                        {initial}
-                    </button>
+          >
+            {initial}
+          </button>
 
-                    {
-    isLoggedIn && showMenu && (
-
-        <div className="
+          {isLoggedIn && showMenu && (
+            <div
+              className="
             absolute
             right-0
             mt-3
@@ -340,111 +261,116 @@ export default function Navbar() {
             border
             overflow-hidden
             z-50
-        ">
-
-            <div className="
+        "
+            >
+              <div
+                className="
                     px-5
                     py-4
                     border-b
-                ">
-
-                    <p className="
+                "
+              >
+                <p
+                  className="
                         font-bold
                         text-[#03152E]
                         text-lg
-                    ">
-                        {firstName || "Usuario"}
-                    </p>
+                    "
+                >
+                  {firstName || "Usuario"}
+                </p>
 
-                    <p className="
+                <p
+                  className="
                         text-sm
                         text-gray-500
                         mt-1
-                    ">
-                        {
-                            role === "OPERATOR"
-                                ? "Operador municipal"
-                                : role === "TECHNICIAN"
-                                    ? "Técnico de campo"
-                                    : "Ciudadano"
-                        }
-                    </p>
+                    "
+                >
+                  {role === "OPERATOR"
+                    ? "Operador municipal"
+                    : role === "TECHNICIAN"
+                      ? "Técnico de campo"
+                      : "Ciudadano"}
+                </p>
+              </div>
 
-                </div>
-
-                <div
-        className="
+              <div
+                className="
             w-full
             text-left
             px-5
             py-4
             border-b
         "
-    >
-        <div className="
+              >
+                <div
+                  className="
             flex
             items-center
             justify-between
             gap-4
-        ">
-            <span className="
+        "
+                >
+                  <span
+                    className="
                 font-semibold
                 text-[#03152E]
-            ">
-                🔔 Notificaciones
-            </span>
+            "
+                  >
+                    🔔 Notificaciones
+                  </span>
 
-            <span className="
+                  <span
+                    className="
                 bg-red-600
                 text-white
                 text-xs
                 px-2
                 py-1
                 rounded-full
-            ">
-                {unreadCount}
-            </span>
-        </div>
+            "
+                  >
+                    {unreadCount}
+                  </span>
+                </div>
 
-        {notifications.filter((notification) => !notification.read).length === 0 ? (
-            <p className="
+                {notifications.filter((notification) => !notification.read).length === 0 ? (
+                  <p
+                    className="
                 mt-3
                 text-sm
                 text-gray-500
-            ">
-                No tienes notificaciones nuevas.
-            </p>
-        ) : (
-            <div className="
+            "
+                  >
+                    No tienes notificaciones nuevas.
+                  </p>
+                ) : (
+                  <div
+                    className="
                 mt-3
                 space-y-2
                 max-h-52
                 overflow-y-auto
-            ">
-                {notifications
-                .filter((notification) => !notification.read)
-                .slice(0, 3)
-                .map((notification) => {
+            "
+                  >
+                    {notifications
+                      .filter((notification) => !notification.read)
+                      .slice(0, 3)
+                      .map((notification) => {
+                        const reportTitle =
+                          notification.report?.title ||
+                          notification.report?.problemType ||
+                          "Reporte";
 
-                    const reportTitle =
-                        notification.report?.title ||
-                        notification.report?.problemType ||
-                        "Reporte";
+                        const notificationMessage = notification.message
+                          ? notification.message.replace(/"[^"]+"/, `"${reportTitle}"`)
+                          : notification.title;
 
-                    const notificationMessage =
-                        notification.message
-                            ? notification.message.replace(
-                                /"[^"]+"/,
-                                `"${reportTitle}"`
-                            )
-                            : notification.title;
-
-                    return (
-                        <button
+                        return (
+                          <button
                             key={notification.id}
-                            onClick={() =>
-                                handleNotificationClick(notification)
-                            }
+                            onClick={() => handleNotificationClick(notification)}
                             className="
                                 w-full
                                 text-left
@@ -454,93 +380,103 @@ export default function Navbar() {
                                 hover:bg-gray-100
                                 transition
                             "
-                        >
-                            <p className="
+                          >
+                            <p
+                              className="
                                 font-semibold
                                 text-sm
                                 text-[#03152E]
-                            ">
-                                {reportTitle}
+                            "
+                            >
+                              {reportTitle}
                             </p>
 
-                            <p className="
+                            <p
+                              className="
                                 text-xs
                                 text-gray-500
                                 mt-1
-                            ">
-                                {notification.title}
+                            "
+                            >
+                              {notification.title}
                             </p>
 
-                            <p className="
+                            <p
+                              className="
                                 text-sm
                                 text-gray-600
                                 mt-1
                                 leading-relaxed
-                            ">
-                                {notificationMessage}
+                            "
+                            >
+                              {notificationMessage}
                             </p>
-                        </button>
-                    );
-                })}
-            </div>
-        )}
-    </div>
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
 
-            <div className="
+              <div
+                className="
                 px-5
                 py-4
                 border-b
-            ">
-
-    <p className="
+            "
+              >
+                <p
+                  className="
         font-semibold
         text-[#03152E]
         text-lg
-    ">
-        📌 Reportes seguidos
-    </p>
+    "
+                >
+                  📌 Reportes seguidos
+                </p>
 
-    <p className="
+                <p
+                  className="
         text-sm
         text-gray-500
         mt-1
-    ">
-        Reportes que estás monitoreando
-    </p>
+    "
+                >
+                  Reportes que estás monitoreando
+                </p>
 
-    {followedReports.length === 0 ? (
-
-        <p className="
+                {followedReports.length === 0 ? (
+                  <p
+                    className="
             mt-3
             text-sm
             text-gray-500
-        ">
-            No sigues ningún reporte todavía.
-        </p>
-
-    ) : (
-
-        <div className="
+        "
+                  >
+                    No sigues ningún reporte todavía.
+                  </p>
+                ) : (
+                  <div
+                    className="
             mt-3
             space-y-2
             max-h-48
             overflow-y-auto
-        ">
+        "
+                  >
+                    {followedReports.slice(0, 3).map((follow) => (
+                      <button
+                        key={follow.id}
+                        onClick={() => {
+                          setShowMenu(false);
 
-            {followedReports.slice(0, 3).map((follow) => (
-
-                <button
-                    key={follow.id}
-                    onClick={() => {
-                        setShowMenu(false);
-
-                        navigate(
+                          navigate(
                             `/reports/problem/${encodeURIComponent(
-                                follow.report.problemType
+                              follow.report.problemType
                             )}?highlight=${follow.report.id}`
-                        );
-                    }}
-                    className="
+                          );
+                        }}
+                        className="
                             w-full
                             text-left
                             p-3
@@ -549,45 +485,44 @@ export default function Navbar() {
                             hover:bg-gray-100
                             transition
                         "
-                    >
-
-                        <p className="
+                      >
+                        <p
+                          className="
                             font-semibold
                             text-sm
                             text-[#03152E]
-                        ">
-                            {follow.report.title || follow.report.problemType}
+                        "
+                        >
+                          {follow.report.title || follow.report.problemType}
                         </p>
 
-                        <p className="
+                        <p
+                          className="
                             text-xs
                             text-gray-500
                             mt-1
-                        ">
-                            Tipo: {follow.report.problemType}
+                        "
+                        >
+                          Tipo: {follow.report.problemType}
                         </p>
 
-                        <p className="
+                        <p
+                          className="
                             text-xs
                             text-gray-500
                             mt-1
-                        ">
-                            Estado actual: {
-                                statusLabels[
-                                    follow.report.status
-                                ] || follow.report.status
-                            }
+                        "
+                        >
+                          Estado actual:{" "}
+                          {statusLabels[follow.report.status] || follow.report.status}
                         </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                    </button>
-                ))}
-
-            </div>
-        )}
-
-    </div>
-
-            <button
+              <button
                 onClick={handleLogout}
                 className="
                     w-full
@@ -599,18 +534,13 @@ export default function Navbar() {
                     font-semibold
                     transition
                 "
-            >
+              >
                 Cerrar sesión
-            </button>
-
-        </div>
-    )
-}
-
-                </div>
-
+              </button>
             </div>
-
-        </header>
-    );
+          )}
+        </div>
+      </div>
+    </header>
+  );
 }

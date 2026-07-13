@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
-
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface FieldWorkEvidence {
@@ -43,17 +42,13 @@ function formatTime(iso: string | null): string {
 }
 
 function savePendingAction(action: PendingAction) {
-  const existing: PendingAction[] = JSON.parse(
-    localStorage.getItem("pendingFieldWork") || "[]"
-  );
+  const existing: PendingAction[] = JSON.parse(localStorage.getItem("pendingFieldWork") || "[]");
   existing.push(action);
   localStorage.setItem("pendingFieldWork", JSON.stringify(existing));
 }
 
 async function syncPendingActions() {
-  const pending: PendingAction[] = JSON.parse(
-    localStorage.getItem("pendingFieldWork") || "[]"
-  );
+  const pending: PendingAction[] = JSON.parse(localStorage.getItem("pendingFieldWork") || "[]");
   if (pending.length === 0) return;
 
   const remaining: PendingAction[] = [];
@@ -94,11 +89,13 @@ export default function FieldWorkPage() {
   const [fieldWork, setFieldWork] = useState<FieldWorkState | null>(null);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" | "warning" } | null>(null);
+  const [message, setMessage] = useState<{
+    text: string;
+    type: "success" | "error" | "warning";
+  } | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [uploadingPhase, setUploadingPhase] = useState<"BEFORE" | "AFTER" | null>(null);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
-
 
   const lastSavedNotes = useRef("");
 
@@ -106,13 +103,19 @@ export default function FieldWorkPage() {
   useEffect(() => {
     const handleOnline = async () => {
       setIsOnline(true);
-      setMessage({ text: "Conexión recuperada. Sincronizando datos...", type: "success" });
+      setMessage({
+        text: "Conexión recuperada. Sincronizando datos...",
+        type: "success",
+      });
       await syncPendingActions();
       await loadFieldWork();
     };
     const handleOffline = () => {
       setIsOnline(false);
-      setMessage({ text: "Sin conexión. Los cambios se guardarán localmente.", type: "warning" });
+      setMessage({
+        text: "Sin conexión. Los cambios se guardarán localmente.",
+        type: "warning",
+      });
     };
 
     window.addEventListener("online", handleOnline);
@@ -137,7 +140,10 @@ export default function FieldWorkPage() {
         await startFieldWork();
       }
     } catch {
-      setMessage({ text: "Error al cargar el trabajo de campo", type: "error" });
+      setMessage({
+        text: "Error al cargar el trabajo de campo",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -146,7 +152,6 @@ export default function FieldWorkPage() {
   useEffect(() => {
     loadFieldWork();
   }, [reportId]);
-
 
   // ── Iniciar trabajo de campo ─────────────────────────────────────────────────
   async function startFieldWork() {
@@ -157,10 +162,13 @@ export default function FieldWorkPage() {
         body: JSON.stringify({ technicianId: TECHNICIAN_ID }),
       });
       if (res.ok) {
-  await loadFieldWork();
-}
+        await loadFieldWork();
+      }
     } catch {
-      setMessage({ text: "Error al iniciar el trabajo de campo", type: "error" });
+      setMessage({
+        text: "Error al iniciar el trabajo de campo",
+        type: "error",
+      });
     }
   }
 
@@ -174,9 +182,17 @@ export default function FieldWorkPage() {
         };
 
         if (!isOnline) {
-          savePendingAction({ type: "arrive", reportId: reportId!, payload, timestamp: Date.now() });
-          setMessage({ text: "Llegada guardada localmente. Se sincronizará al recuperar conexión.", type: "warning" });
-          setFieldWork((prev) => prev ? { ...prev, arrivedAt: new Date().toISOString() } : prev);
+          savePendingAction({
+            type: "arrive",
+            reportId: reportId!,
+            payload,
+            timestamp: Date.now(),
+          });
+          setMessage({
+            text: "Llegada guardada localmente. Se sincronizará al recuperar conexión.",
+            type: "warning",
+          });
+          setFieldWork((prev) => (prev ? { ...prev, arrivedAt: new Date().toISOString() } : prev));
           return;
         }
 
@@ -192,9 +208,15 @@ export default function FieldWorkPage() {
           if (data.locationWarning) {
             setMessage({ text: data.locationWarning, type: "warning" });
           } else if (data.distanceMeters !== null) {
-            setMessage({ text: `✅ Llegada registrada. Estás a ${Math.round(data.distanceMeters)} metros del punto reportado.`, type: "success" });
+            setMessage({
+              text: `✅ Llegada registrada. Estás a ${Math.round(data.distanceMeters)} metros del punto reportado.`,
+              type: "success",
+            });
           } else {
-            setMessage({ text: "✅ Llegada registrada correctamente.", type: "success" });
+            setMessage({
+              text: "✅ Llegada registrada correctamente.",
+              type: "success",
+            });
           }
         } catch {
           setMessage({ text: "Error al registrar la llegada", type: "error" });
@@ -209,9 +231,17 @@ export default function FieldWorkPage() {
 
   async function registerArrivalWithoutGPS() {
     if (!isOnline) {
-      savePendingAction({ type: "arrive", reportId: reportId!, payload: {}, timestamp: Date.now() });
-      setFieldWork((prev) => prev ? { ...prev, arrivedAt: new Date().toISOString() } : prev);
-      setMessage({ text: "Llegada guardada sin GPS. Se sincronizará al recuperar conexión.", type: "warning" });
+      savePendingAction({
+        type: "arrive",
+        reportId: reportId!,
+        payload: {},
+        timestamp: Date.now(),
+      });
+      setFieldWork((prev) => (prev ? { ...prev, arrivedAt: new Date().toISOString() } : prev));
+      setMessage({
+        text: "Llegada guardada sin GPS. Se sincronizará al recuperar conexión.",
+        type: "warning",
+      });
       return;
     }
     try {
@@ -221,8 +251,11 @@ export default function FieldWorkPage() {
         body: JSON.stringify({}),
       });
       const data = await res.json();
-      setFieldWork((prev) => prev ? { ...prev, ...data } : prev);
-      setMessage({ text: "✅ Llegada registrada (sin validación de ubicación).", type: "success" });
+      setFieldWork((prev) => (prev ? { ...prev, ...data } : prev));
+      setMessage({
+        text: "✅ Llegada registrada (sin validación de ubicación).",
+        type: "success",
+      });
     } catch {
       setMessage({ text: "Error al registrar la llegada", type: "error" });
     }
@@ -231,7 +264,12 @@ export default function FieldWorkPage() {
   // ── Guardar notas ────────────────────────────────────────────────────────────
   async function saveNotes(text: string, silent = false) {
     if (!isOnline) {
-      savePendingAction({ type: "notes", reportId: reportId!, payload: { notes: text }, timestamp: Date.now() });
+      savePendingAction({
+        type: "notes",
+        reportId: reportId!,
+        payload: { notes: text },
+        timestamp: Date.now(),
+      });
       lastSavedNotes.current = text;
       if (!silent) setMessage({ text: "Nota guardada localmente.", type: "warning" });
       return;
@@ -252,15 +290,27 @@ export default function FieldWorkPage() {
   // ── Cerrar trabajo ───────────────────────────────────────────────────────────
   async function registerClosure() {
     if (!isOnline) {
-      savePendingAction({ type: "close", reportId: reportId!, timestamp: Date.now() });
-      setFieldWork((prev) => prev ? { ...prev, closedAt: new Date().toISOString() } : prev);
-      setMessage({ text: "Cierre guardado localmente. Se sincronizará al recuperar conexión.", type: "warning" });
+      savePendingAction({
+        type: "close",
+        reportId: reportId!,
+        timestamp: Date.now(),
+      });
+      setFieldWork((prev) => (prev ? { ...prev, closedAt: new Date().toISOString() } : prev));
+      setMessage({
+        text: "Cierre guardado localmente. Se sincronizará al recuperar conexión.",
+        type: "warning",
+      });
       return;
     }
     try {
-      await fetch(`${API}/api/fieldwork/${reportId}/close`, { method: "PATCH" });
-await loadFieldWork();
-      setMessage({ text: "✅ Trabajo cerrado correctamente.", type: "success" });
+      await fetch(`${API}/api/fieldwork/${reportId}/close`, {
+        method: "PATCH",
+      });
+      await loadFieldWork();
+      setMessage({
+        text: "✅ Trabajo cerrado correctamente.",
+        type: "success",
+      });
     } catch {
       setMessage({ text: "Error al cerrar el trabajo", type: "error" });
     }
@@ -283,7 +333,10 @@ await loadFieldWork();
       setFieldWork((prev) =>
         prev ? { ...prev, evidences: [...prev.evidences, newEvidence] } : prev
       );
-      setMessage({ text: `✅ Foto ${phase === "BEFORE" ? "anterior" : "posterior"} subida correctamente.`, type: "success" });
+      setMessage({
+        text: `✅ Foto ${phase === "BEFORE" ? "anterior" : "posterior"} subida correctamente.`,
+        type: "success",
+      });
     } catch {
       setMessage({ text: "Error al subir la imagen", type: "error" });
     } finally {
@@ -299,7 +352,10 @@ await loadFieldWork();
       });
       setFieldWork((prev) =>
         prev
-          ? { ...prev, evidences: prev.evidences.filter((e) => e.id !== evidenceId) }
+          ? {
+              ...prev,
+              evidences: prev.evidences.filter((e) => e.id !== evidenceId),
+            }
           : prev
       );
     } catch {
@@ -322,32 +378,39 @@ await loadFieldWork();
 
   return (
     <div className="max-w-2xl mx-auto p-4 pb-20">
-
       {/* ── Indicador de conexión ── */}
-      <div className={`flex items-center gap-2 text-sm mb-4 px-3 py-2 rounded-lg ${isOnline ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"}`}>
+      <div
+        className={`flex items-center gap-2 text-sm mb-4 px-3 py-2 rounded-lg ${isOnline ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"}`}
+      >
         <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-500" : "bg-yellow-500"}`} />
         {isOnline ? "Conectado" : "Sin conexión — guardando datos localmente"}
       </div>
 
       {/* ── Mensaje ── */}
       {message && (
-        <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${
-          message.type === "success" ? "bg-green-50 text-green-700" :
-          message.type === "warning" ? "bg-yellow-50 text-yellow-700" :
-          "bg-red-50 text-red-700"
-        }`}>
+        <div
+          className={`mb-4 px-4 py-3 rounded-lg text-sm ${
+            message.type === "success"
+              ? "bg-green-50 text-green-700"
+              : message.type === "warning"
+                ? "bg-yellow-50 text-yellow-700"
+                : "bg-red-50 text-red-700"
+          }`}
+        >
           {message.text}
-          <button onClick={() => setMessage(null)} className="float-right font-bold">×</button>
+          <button onClick={() => setMessage(null)} className="float-right font-bold">
+            ×
+          </button>
         </div>
       )}
 
       <button
-  onClick={() => navigate("/my-reports")}
-  className="mb-4 text-blue-700 font-semibold hover:underline"
->
-  ← Volver a Mis reportes
-</button>
-<h1 className="text-2xl font-bold text-gray-800 mb-6">Trabajo en campo</h1>
+        onClick={() => navigate("/my-reports")}
+        className="mb-4 text-blue-700 font-semibold hover:underline"
+      >
+        ← Volver a Mis reportes
+      </button>
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">Trabajo en campo</h1>
 
       {/* ── Resumen de tiempos ── */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-5">
@@ -355,30 +418,33 @@ await loadFieldWork();
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-xs text-gray-500 mb-1">Llegada</p>
-            <p className="text-lg font-semibold text-gray-800">{formatTime(fieldWork?.arrivedAt || null)}</p>
+            <p className="text-lg font-semibold text-gray-800">
+              {formatTime(fieldWork?.arrivedAt || null)}
+            </p>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-xs text-gray-500 mb-1">Cierre</p>
-            <p className="text-lg font-semibold text-gray-800">{formatTime(fieldWork?.closedAt || null)}</p>
+            <p className="text-lg font-semibold text-gray-800">
+              {formatTime(fieldWork?.closedAt || null)}
+            </p>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-xs text-gray-500 mb-1">Duración</p>
             <p className="text-lg font-semibold text-gray-800">
               {fieldWork?.durationMinutes != null
-              ? fieldWork.durationMinutes < 60
-              ? `${fieldWork.durationMinutes} min`
-              : `${Math.floor(fieldWork.durationMinutes / 60)} h ${fieldWork.durationMinutes % 60} min`
-              : "—"}
+                ? fieldWork.durationMinutes < 60
+                  ? `${fieldWork.durationMinutes} min`
+                  : `${Math.floor(fieldWork.durationMinutes / 60)} h ${fieldWork.durationMinutes % 60} min`
+                : "—"}
             </p>
           </div>
         </div>
 
-
-      
-
         {/* Distancia al punto */}
         {fieldWork?.distanceMeters != null && (
-          <p className={`text-sm mt-3 text-center ${fieldWork.distanceMeters > 200 ? "text-yellow-600" : "text-green-600"}`}>
+          <p
+            className={`text-sm mt-3 text-center ${fieldWork.distanceMeters > 200 ? "text-yellow-600" : "text-green-600"}`}
+          >
             {fieldWork.distanceMeters > 200
               ? `⚠️ ${Math.round(fieldWork.distanceMeters)} m del punto reportado`
               : `✅ ${Math.round(fieldWork.distanceMeters)} m del punto reportado`}
@@ -412,42 +478,42 @@ await loadFieldWork();
         </div>
       </div>
 
-{/* ── Notas de trabajo ── */}
-<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-5">
-  <h2 className="font-semibold text-gray-700 mb-3">Notas de trabajo</h2>
-  <textarea
-    value={notes}
-    onChange={(e) => setNotes(e.target.value)}
-    placeholder="Describe las acciones realizadas, observaciones y estado del problema..."
-    rows={5}
-    disabled={!isEditingNotes && !!lastSavedNotes.current}
-    className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-      !isEditingNotes && lastSavedNotes.current
-        ? "border-gray-100 bg-gray-50 text-gray-500 cursor-not-allowed"
-        : "border-gray-200"
-    }`}
-  />
-  <div className="flex justify-end gap-2 mt-2">
-    {!isEditingNotes && lastSavedNotes.current ? (
-      <button
-        onClick={() => setIsEditingNotes(true)}
-        className="px-4 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
-      >
-        Editar
-      </button>
-    ) : (
-      <button
-        onClick={() => {
-          saveNotes(notes);
-          setIsEditingNotes(false);
-        }}
-        className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-      >
-        Guardar notas
-      </button>
-    )}
-  </div>
-</div>
+      {/* ── Notas de trabajo ── */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-5">
+        <h2 className="font-semibold text-gray-700 mb-3">Notas de trabajo</h2>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Describe las acciones realizadas, observaciones y estado del problema..."
+          rows={5}
+          disabled={!isEditingNotes && !!lastSavedNotes.current}
+          className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            !isEditingNotes && lastSavedNotes.current
+              ? "border-gray-100 bg-gray-50 text-gray-500 cursor-not-allowed"
+              : "border-gray-200"
+          }`}
+        />
+        <div className="flex justify-end gap-2 mt-2">
+          {!isEditingNotes && lastSavedNotes.current ? (
+            <button
+              onClick={() => setIsEditingNotes(true)}
+              className="px-4 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Editar
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                saveNotes(notes);
+                setIsEditingNotes(false);
+              }}
+              className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Guardar notas
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* ── Fotos antes ── */}
       <EvidenceSection
@@ -470,7 +536,6 @@ await loadFieldWork();
         onRemove={removeEvidence}
         disabled={!!fieldWork?.closedAt}
       />
-
     </div>
   );
 }
@@ -521,11 +586,13 @@ function EvidenceSection({
 
       {/* Botón de carga */}
       {!disabled && (
-        <label className={`flex items-center justify-center gap-2 w-full py-2 border-2 border-dashed rounded-lg text-sm cursor-pointer transition-colors ${
-          uploading
-            ? "border-gray-200 text-gray-400 cursor-not-allowed"
-            : "border-blue-300 text-blue-600 hover:bg-blue-50"
-        }`}>
+        <label
+          className={`flex items-center justify-center gap-2 w-full py-2 border-2 border-dashed rounded-lg text-sm cursor-pointer transition-colors ${
+            uploading
+              ? "border-gray-200 text-gray-400 cursor-not-allowed"
+              : "border-blue-300 text-blue-600 hover:bg-blue-50"
+          }`}
+        >
           <input
             type="file"
             accept="image/*"

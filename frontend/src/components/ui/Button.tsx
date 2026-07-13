@@ -5,15 +5,8 @@ type Props = {
   onClick?: () => void;
 };
 
-export default function Button({
-  children,
-  type = "button",
-  disabled = false,
-  onClick,
-}: Props) {
-
+export default function Button({ children, type = "button", disabled = false, onClick }: Props) {
   return (
-
     <button
       type={type}
       disabled={disabled}

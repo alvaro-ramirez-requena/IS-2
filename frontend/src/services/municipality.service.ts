@@ -1,6 +1,4 @@
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export type Municipality = {
   id: string;
@@ -12,17 +10,12 @@ export type Municipality = {
 
 export const MunicipalityService = {
   async getAll() {
-    const response =
-      await fetch(
-        `${API_URL}/api/municipalities`
-      );
+    const response = await fetch(`${API_URL}/api/municipalities`);
 
     if (!response.ok) {
-      throw new Error(
-        "No se pudieron cargar las municipalidades."
-      );
+      throw new Error("No se pudieron cargar las municipalidades.");
     }
 
-    return await response.json() as Municipality[];
+    return (await response.json()) as Municipality[];
   },
 };

@@ -1,449 +1,366 @@
-import {
-    useEffect,
-    useMemo,
-    useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import {
-    AssignmentService,
-} from "../../services/assignment.service";
+import { AssignmentService } from "../../services/assignment.service";
 
-import type {
-    Technician,
-} from "../../types/assignment.types";
+import type { Technician } from "../../types/assignment.types";
 
 type AssignmentSectionProps = {
-    reportId: string;
-    reportTitle?: string;
-    problemType?: string;
-    address?: string;
-    priority?: string;
-    municipalityId?: string;
-    municipalityName?: string;
-    onAssigned?: () => void;
-    isReassignment?: boolean;
+  reportId: string;
+  reportTitle?: string;
+  problemType?: string;
+  address?: string;
+  priority?: string;
+  municipalityId?: string;
+  municipalityName?: string;
+  onAssigned?: () => void;
+  isReassignment?: boolean;
 };
 
 function normalizeText(value: string) {
-    return value
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function getSuggestedSkillByProblemType(problemType?: string) {
-    if (!problemType) {
-        return "";
-    }
-
-    const normalized =
-        normalizeText(problemType);
-
-    if (
-        normalized.includes("bache") ||
-        normalized.includes("pista") ||
-        normalized.includes("vereda")
-    ) {
-        return "Mantenimiento de pistas y baches";
-    }
-
-    if (
-        normalized.includes("alumbrado") ||
-        normalized.includes("semaforo") ||
-        normalized.includes("senalizacion")
-    ) {
-        return "Alumbrado público";
-    }
-
-    if (
-        normalized.includes("basura") ||
-        normalized.includes("residuo") ||
-        normalized.includes("mal olor") ||
-        normalized.includes("quema")
-    ) {
-        return "Recojo de residuos";
-    }
-
-    if (
-        normalized.includes("area verde") ||
-        normalized.includes("contaminacion")
-    ) {
-        return "Áreas verdes y contaminación";
-    }
-
-    if (
-        normalized.includes("estacionamiento") ||
-        normalized.includes("auto") ||
-        normalized.includes("vehiculo") ||
-        normalized.includes("congestion") ||
-        normalized.includes("velocidad") ||
-        normalized.includes("transporte")
-    ) {
-        return "Gestión de tránsito y movilidad";
-    }
-
-    if (
-        normalized.includes("ruido") ||
-        normalized.includes("robo") ||
-        normalized.includes("asalto") ||
-        normalized.includes("sospechosa") ||
-        normalized.includes("alcohol")
-    ) {
-        return "Apoyo en seguridad ciudadana";
-    }
-
-    if (
-        normalized.includes("venta ambulante") ||
-        normalized.includes("comercio")
-    ) {
-        return "Control de comercio informal";
-    }
-
+  if (!problemType) {
     return "";
+  }
+
+  const normalized = normalizeText(problemType);
+
+  if (
+    normalized.includes("bache") ||
+    normalized.includes("pista") ||
+    normalized.includes("vereda")
+  ) {
+    return "Mantenimiento de pistas y baches";
+  }
+
+  if (
+    normalized.includes("alumbrado") ||
+    normalized.includes("semaforo") ||
+    normalized.includes("senalizacion")
+  ) {
+    return "Alumbrado público";
+  }
+
+  if (
+    normalized.includes("basura") ||
+    normalized.includes("residuo") ||
+    normalized.includes("mal olor") ||
+    normalized.includes("quema")
+  ) {
+    return "Recojo de residuos";
+  }
+
+  if (normalized.includes("area verde") || normalized.includes("contaminacion")) {
+    return "Áreas verdes y contaminación";
+  }
+
+  if (
+    normalized.includes("estacionamiento") ||
+    normalized.includes("auto") ||
+    normalized.includes("vehiculo") ||
+    normalized.includes("congestion") ||
+    normalized.includes("velocidad") ||
+    normalized.includes("transporte")
+  ) {
+    return "Gestión de tránsito y movilidad";
+  }
+
+  if (
+    normalized.includes("ruido") ||
+    normalized.includes("robo") ||
+    normalized.includes("asalto") ||
+    normalized.includes("sospechosa") ||
+    normalized.includes("alcohol")
+  ) {
+    return "Apoyo en seguridad ciudadana";
+  }
+
+  if (normalized.includes("venta ambulante") || normalized.includes("comercio")) {
+    return "Control de comercio informal";
+  }
+
+  return "";
 }
 
-function technicianHasSkill(
-    technician: Technician,
-    skill: string
-) {
-    if (!skill) {
-        return false;
-    }
+function technicianHasSkill(technician: Technician, skill: string) {
+  if (!skill) {
+    return false;
+  }
 
-    const skills =
-        technician.technicianProfile?.skills || [];
+  const skills = technician.technicianProfile?.skills || [];
 
-    return skills.some((item) =>
-        normalizeText(item).includes(normalizeText(skill)) ||
-        normalizeText(skill).includes(normalizeText(item))
-    );
+  return skills.some(
+    (item) =>
+      normalizeText(item).includes(normalizeText(skill)) ||
+      normalizeText(skill).includes(normalizeText(item))
+  );
 }
 
-function getTechnicianScore(
-    technician: Technician,
-    suggestedSkill: string
-) {
-    let score = 0;
+function getTechnicianScore(technician: Technician, suggestedSkill: string) {
+  let score = 0;
 
-    const profile =
-        technician.technicianProfile;
+  const profile = technician.technicianProfile;
 
-    if (!profile) {
-        return score;
-    }
-
-    if (profile.available) {
-        score += 3;
-    }
-
-    if (profile.municipalityId) {
-        score += 2;
-    }
-
-    if (
-        suggestedSkill &&
-        technicianHasSkill(
-            technician,
-            suggestedSkill
-        )
-    ) {
-        score += 5;
-    }
-
+  if (!profile) {
     return score;
+  }
+
+  if (profile.available) {
+    score += 3;
+  }
+
+  if (profile.municipalityId) {
+    score += 2;
+  }
+
+  if (suggestedSkill && technicianHasSkill(technician, suggestedSkill)) {
+    score += 5;
+  }
+
+  return score;
 }
 
 function getCompatibilityLabel(score: number) {
-    if (score >= 8) {
-        return "Alta";
-    }
+  if (score >= 8) {
+    return "Alta";
+  }
 
-    if (score >= 5) {
-        return "Media";
-    }
+  if (score >= 5) {
+    return "Media";
+  }
 
-    return "Baja";
+  return "Baja";
 }
 
 export default function AssignmentSection({
-    reportId,
-    reportTitle,
-    problemType,
-    priority,
-    municipalityId,
-    municipalityName,
-    onAssigned,
-    isReassignment = false,
+  reportId,
+  reportTitle,
+  problemType,
+  priority,
+  municipalityId,
+  municipalityName,
+  onAssigned,
+  isReassignment = false,
 }: AssignmentSectionProps) {
-    const [technicians, setTechnicians] =
-        useState<Technician[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
 
-    const [selectedTechnicianId, setSelectedTechnicianId] =
-        useState("");
+  const [selectedTechnicianId, setSelectedTechnicianId] = useState("");
 
-    const [loading, setLoading] =
-        useState(true);
+  const [loading, setLoading] = useState(true);
 
-    const [saving, setSaving] =
-        useState(false);
+  const [saving, setSaving] = useState(false);
 
-    const [error, setError] =
-        useState("");
+  const [error, setError] = useState("");
 
-    const [successMessage, setSuccessMessage] =
-        useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-    const [specialtyFilter, setSpecialtyFilter] =
-        useState("");
+  const [specialtyFilter, setSpecialtyFilter] = useState("");
 
-    const [notes, setNotes] =
-        useState("");
+  const [notes, setNotes] = useState("");
 
-    const currentUserId =
-        localStorage.getItem("userId") || "";
+  const currentUserId = localStorage.getItem("userId") || "";
 
-    const suggestedSkill =
-        getSuggestedSkillByProblemType(problemType);
+  const suggestedSkill = getSuggestedSkillByProblemType(problemType);
 
-    useEffect(() => {
-        const fetchTechnicians =
-            async () => {
-                try {
-                    setLoading(true);
-                    setError("");
+  useEffect(() => {
+    const fetchTechnicians = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-                    const data =
-                        await AssignmentService.getTechnicians({
-                            municipalityId,
-                            availability: true,
-                        });
+        const data = await AssignmentService.getTechnicians({
+          municipalityId,
+          availability: true,
+        });
 
-                    setTechnicians(data || []);
-                } catch (error: any) {
-                    setError(
-                        error.message ||
-                        "No se pudieron cargar los técnicos."
-                    );
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-        fetchTechnicians();
-    }, [municipalityId]);
-
-    const specialties =
-        useMemo(() => {
-            const values =
-                technicians.flatMap((technician) =>
-                    technician
-                        .technicianProfile
-                        ?.skills || []
-                );
-
-            return Array.from(
-                new Set(values)
-            );
-        }, [technicians]);
-
-    const filteredTechnicians =
-        useMemo(() => {
-            return technicians
-                .filter((technician) => {
-                    const profile =
-                        technician.technicianProfile;
-
-                    if (!profile) {
-                        return false;
-                    }
-
-                    if (
-                        specialtyFilter &&
-                        !profile.skills.includes(
-                            specialtyFilter
-                        )
-                    ) {
-                        return false;
-                    }
-
-                    return true;
-                })
-                .sort((a, b) => {
-                    const scoreA =
-                        getTechnicianScore(
-                            a,
-                            suggestedSkill
-                        );
-
-                    const scoreB =
-                        getTechnicianScore(
-                            b,
-                            suggestedSkill
-                        );
-
-                    return scoreB - scoreA;
-                });
-        }, [
-            technicians,
-            specialtyFilter,
-            suggestedSkill,
-        ]);
-
-    const selectedTechnician =
-        filteredTechnicians.find(
-            (technician) =>
-                technician.id === selectedTechnicianId
-        );
-
-    const selectedScore =
-        selectedTechnician
-            ? getTechnicianScore(
-                selectedTechnician,
-                suggestedSkill
-            )
-            : 0;
-
-    const handleApplySuggestedSkill = () => {
-        if (suggestedSkill) {
-            setSpecialtyFilter(suggestedSkill);
-            setSelectedTechnicianId("");
-        }
+        setTechnicians(data || []);
+      } catch (error: any) {
+        setError(error.message || "No se pudieron cargar los técnicos.");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const handleAssign = async () => {
-        if (!selectedTechnicianId) {
-            setError(
-                "Selecciona un técnico antes de asignar."
-            );
-            return;
+    fetchTechnicians();
+  }, [municipalityId]);
+
+  const specialties = useMemo(() => {
+    const values = technicians.flatMap((technician) => technician.technicianProfile?.skills || []);
+
+    return Array.from(new Set(values));
+  }, [technicians]);
+
+  const filteredTechnicians = useMemo(() => {
+    return technicians
+      .filter((technician) => {
+        const profile = technician.technicianProfile;
+
+        if (!profile) {
+          return false;
         }
 
-        if (!currentUserId) {
-            setError(
-                "No se encontró el usuario operador en sesión."
-            );
-            return;
+        if (specialtyFilter && !profile.skills.includes(specialtyFilter)) {
+          return false;
         }
 
-        try {
-            setSaving(true);
-            setError("");
-            setSuccessMessage("");
+        return true;
+      })
+      .sort((a, b) => {
+        const scoreA = getTechnicianScore(a, suggestedSkill);
 
-            const assignmentData = {
-                reportId,
-                technicianId: selectedTechnicianId,
-                assignedById: currentUserId,
-                notes,
-            };
+        const scoreB = getTechnicianScore(b, suggestedSkill);
 
-            if (isReassignment) {
-                await AssignmentService
-                    .reassignTechnician(
-                        assignmentData
-                    );
-            } else {
-                await AssignmentService
-                    .assignTechnician(
-                        assignmentData
-                    );
-            }
+        return scoreB - scoreA;
+      });
+  }, [technicians, specialtyFilter, suggestedSkill]);
 
-            setSuccessMessage(
-                isReassignment
-                    ? "Técnico reasignado correctamente."
-                    : "Técnico asignado correctamente."
-            );
+  const selectedTechnician = filteredTechnicians.find(
+    (technician) => technician.id === selectedTechnicianId
+  );
 
-            if (onAssigned) {
-                onAssigned();
-            }
-        } catch (error: any) {
-            setError(
-                error.message ||
-                "No se pudo asignar el técnico."
-            );
-        } finally {
-            setSaving(false);
-        }
-    };
+  const selectedScore = selectedTechnician
+    ? getTechnicianScore(selectedTechnician, suggestedSkill)
+    : 0;
 
-    return (
-        <section className="
+  const handleApplySuggestedSkill = () => {
+    if (suggestedSkill) {
+      setSpecialtyFilter(suggestedSkill);
+      setSelectedTechnicianId("");
+    }
+  };
+
+  const handleAssign = async () => {
+    if (!selectedTechnicianId) {
+      setError("Selecciona un técnico antes de asignar.");
+      return;
+    }
+
+    if (!currentUserId) {
+      setError("No se encontró el usuario operador en sesión.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+      setSuccessMessage("");
+
+      const assignmentData = {
+        reportId,
+        technicianId: selectedTechnicianId,
+        assignedById: currentUserId,
+        notes,
+      };
+
+      if (isReassignment) {
+        await AssignmentService.reassignTechnician(assignmentData);
+      } else {
+        await AssignmentService.assignTechnician(assignmentData);
+      }
+
+      setSuccessMessage(
+        isReassignment ? "Técnico reasignado correctamente." : "Técnico asignado correctamente."
+      );
+
+      if (onAssigned) {
+        onAssigned();
+      }
+    } catch (error: any) {
+      setError(error.message || "No se pudo asignar el técnico.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section
+      className="
             bg-white
             border
             rounded-3xl
             p-6
             shadow-sm
             space-y-6
-        ">
-            <div>
-                <p className="
+        "
+    >
+      <div>
+        <p
+          className="
                     text-blue-700
                     font-semibold
                     text-sm
-                ">
-                    Gestión operativa
-                </p>
+                "
+        >
+          Gestión operativa
+        </p>
 
-                <h2 className="
+        <h2
+          className="
                     text-3xl
                     font-bold
                     text-[#03152E]
                     leading-tight
                     mt-1
-                ">
-                    Asignación de técnico
-                </h2>
+                "
+        >
+          Asignación de técnico
+        </h2>
 
-                <p className="
+        <p
+          className="
                     text-gray-500
                     mt-2
                     leading-relaxed
-                ">
-                    Selecciona un técnico disponible de la municipalidad
-                    correspondiente al reporte.
-                </p>
-            </div>
+                "
+        >
+          Selecciona un técnico disponible de la municipalidad correspondiente al reporte.
+        </p>
+      </div>
 
-            <div className="
+      <div
+        className="
                 bg-blue-50
                 border
                 border-blue-200
                 rounded-2xl
                 p-5
                 space-y-3
-            ">
-                <h3 className="
+            "
+      >
+        <h3
+          className="
                     font-bold
                     text-[#03152E]
                     text-lg
-                ">
-                    Reporte a asignar
-                </h3>
+                "
+        >
+          Reporte a asignar
+        </h3>
 
-                <p className="text-gray-700">
-                    <strong>Título:</strong>{" "}
-                    {reportTitle || "Reporte sin título"}
-                </p>
+        <p className="text-gray-700">
+          <strong>Título:</strong> {reportTitle || "Reporte sin título"}
+        </p>
 
-                <p className="text-gray-700">
-                    <strong>Tipo:</strong>{" "}
-                    {problemType || "No especificado"}
-                </p>
+        <p className="text-gray-700">
+          <strong>Tipo:</strong> {problemType || "No especificado"}
+        </p>
 
-                <p className="text-gray-700">
-                    <strong>Municipalidad:</strong>{" "}
-                    {municipalityName || "No definida"}
-                </p>
+        <p className="text-gray-700">
+          <strong>Municipalidad:</strong> {municipalityName || "No definida"}
+        </p>
 
-                <p className="text-gray-700">
-                    <strong>Prioridad:</strong>{" "}
-                    {priority || "No definida"}
-                </p>
+        <p className="text-gray-700">
+          <strong>Prioridad:</strong> {priority || "No definida"}
+        </p>
 
-                {suggestedSkill && (
-                    <div className="
+        {suggestedSkill && (
+          <div
+            className="
                         bg-white
                         border
                         border-green-200
@@ -453,28 +370,34 @@ export default function AssignmentSection({
                         py-3
                         font-semibold
                         text-sm
-                    ">
-                        Especialidad sugerida: {suggestedSkill}
-                    </div>
-                )}
-            </div>
+                    "
+          >
+            Especialidad sugerida: {suggestedSkill}
+          </div>
+        )}
+      </div>
 
-            <div className="
+      <div
+        className="
                 bg-gray-50
                 border
                 rounded-2xl
                 p-5
                 space-y-4
-            ">
-                <h3 className="
+            "
+      >
+        <h3
+          className="
                     font-bold
                     text-[#03152E]
                     text-lg
-                ">
-                    Filtros
-                </h3>
+                "
+        >
+          Filtros
+        </h3>
 
-                <div className="
+        <div
+          className="
                     bg-blue-50
                     border
                     border-blue-100
@@ -483,30 +406,30 @@ export default function AssignmentSection({
                     text-sm
                     text-blue-700
                     font-semibold
-                ">
-                    Los técnicos se filtran automáticamente por la
-                    municipalidad del reporte.
-                </div>
+                "
+        >
+          Los técnicos se filtran automáticamente por la municipalidad del reporte.
+        </div>
 
-                <div>
-                    <label className="
+        <div>
+          <label
+            className="
                         block
                         font-semibold
                         text-[#03152E]
                         mb-2
-                    ">
-                        Especialidad
-                    </label>
+                    "
+          >
+            Especialidad
+          </label>
 
-                    <select
-                        value={specialtyFilter}
-                        onChange={(event) => {
-                            setSpecialtyFilter(
-                                event.target.value
-                            );
-                            setSelectedTechnicianId("");
-                        }}
-                        className="
+          <select
+            value={specialtyFilter}
+            onChange={(event) => {
+              setSpecialtyFilter(event.target.value);
+              setSelectedTechnicianId("");
+            }}
+            className="
                             w-full
                             border
                             rounded-xl
@@ -514,27 +437,22 @@ export default function AssignmentSection({
                             py-3
                             bg-white
                         "
-                    >
-                        <option value="">
-                            Todas las especialidades
-                        </option>
+          >
+            <option value="">Todas las especialidades</option>
 
-                        {specialties.map((specialty) => (
-                            <option
-                                key={specialty}
-                                value={specialty}
-                            >
-                                {specialty}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+            {specialties.map((specialty) => (
+              <option key={specialty} value={specialty}>
+                {specialty}
+              </option>
+            ))}
+          </select>
+        </div>
 
-                {suggestedSkill && (
-                    <button
-                        type="button"
-                        onClick={handleApplySuggestedSkill}
-                        className="
+        {suggestedSkill && (
+          <button
+            type="button"
+            onClick={handleApplySuggestedSkill}
+            className="
                             w-full
                             bg-blue-50
                             border
@@ -547,52 +465,52 @@ export default function AssignmentSection({
                             hover:bg-blue-100
                             transition
                         "
-                    >
-                        Aplicar especialidad sugerida
-                    </button>
-                )}
-            </div>
+          >
+            Aplicar especialidad sugerida
+          </button>
+        )}
+      </div>
 
-            <div className="
+      <div
+        className="
                 bg-white
                 border
                 rounded-2xl
                 p-5
                 space-y-4
-            ">
-                <h3 className="
+            "
+      >
+        <h3
+          className="
                     font-bold
                     text-[#03152E]
                     text-lg
-                ">
-                    Técnico a asignar
-                </h3>
+                "
+        >
+          Técnico a asignar
+        </h3>
 
-                {loading ? (
-                    <p className="text-gray-500">
-                        Cargando técnicos disponibles...
-                    </p>
-                ) : filteredTechnicians.length === 0 ? (
-                    <div className="
+        {loading ? (
+          <p className="text-gray-500">Cargando técnicos disponibles...</p>
+        ) : filteredTechnicians.length === 0 ? (
+          <div
+            className="
                         bg-yellow-50
                         border
                         border-yellow-200
                         rounded-xl
                         p-4
                         text-yellow-700
-                    ">
-                        No se encontraron técnicos disponibles con los filtros seleccionados.
-                    </div>
-                ) : (
-                    <>
-                        <select
-                            value={selectedTechnicianId}
-                            onChange={(event) =>
-                                setSelectedTechnicianId(
-                                    event.target.value
-                                )
-                            }
-                            className="
+                    "
+          >
+            No se encontraron técnicos disponibles con los filtros seleccionados.
+          </div>
+        ) : (
+          <>
+            <select
+              value={selectedTechnicianId}
+              onChange={(event) => setSelectedTechnicianId(event.target.value)}
+              className="
                                 w-full
                                 border
                                 rounded-xl
@@ -600,83 +518,78 @@ export default function AssignmentSection({
                                 py-3
                                 bg-white
                             "
-                        >
-                            <option value="">
-                                Selecciona un técnico
-                            </option>
+            >
+              <option value="">Selecciona un técnico</option>
 
-                            {filteredTechnicians.map((technician) => {
-                                const score =
-                                    getTechnicianScore(
-                                        technician,
-                                        suggestedSkill
-                                    );
+              {filteredTechnicians.map((technician) => {
+                const score = getTechnicianScore(technician, suggestedSkill);
 
-                                const compatibility =
-                                    getCompatibilityLabel(
-                                        score
-                                    );
+                const compatibility = getCompatibilityLabel(score);
 
-                                return (
-                                    <option
-                                        key={technician.id}
-                                        value={technician.id}
-                                    >
-                                        {technician.firstName} {technician.lastName} - Compatibilidad {compatibility}
-                                    </option>
-                                );
-                            })}
-                        </select>
+                return (
+                  <option key={technician.id} value={technician.id}>
+                    {technician.firstName} {technician.lastName} - Compatibilidad {compatibility}
+                  </option>
+                );
+              })}
+            </select>
 
-                        <p className="
+            <p
+              className="
                             text-sm
                             text-gray-500
-                        ">
-                            Técnicos disponibles encontrados:{" "}
-                            <strong>
-                                {filteredTechnicians.length}
-                            </strong>
-                        </p>
-                    </>
-                )}
-            </div>
+                        "
+            >
+              Técnicos disponibles encontrados: <strong>{filteredTechnicians.length}</strong>
+            </p>
+          </>
+        )}
+      </div>
 
-            {selectedTechnician && (
-                <div className="
+      {selectedTechnician && (
+        <div
+          className="
                     bg-blue-50
                     border
                     border-blue-200
                     rounded-2xl
                     p-5
                     space-y-4
-                ">
-                    <div className="
+                "
+        >
+          <div
+            className="
                         flex
                         items-start
                         justify-between
                         gap-3
-                    ">
-                        <div>
-                            <h3 className="
+                    "
+          >
+            <div>
+              <h3
+                className="
                                 text-2xl
                                 font-bold
                                 text-[#03152E]
-                            ">
-                                {selectedTechnician.firstName}{" "}
-                                {selectedTechnician.lastName}
-                            </h3>
+                            "
+              >
+                {selectedTechnician.firstName} {selectedTechnician.lastName}
+              </h3>
 
-                            <p className="
+              <p
+                className="
                                 text-sm
                                 text-gray-600
                                 break-all
                                 mt-1
-                            ">
-                                {selectedTechnician.email}
-                            </p>
-                        </div>
+                            "
+              >
+                {selectedTechnician.email}
+              </p>
+            </div>
 
-                        <span className="
+            <span
+              className="
                             bg-green-100
                             text-green-700
                             text-xs
@@ -684,80 +597,67 @@ export default function AssignmentSection({
                             py-1
                             rounded-full
                             font-bold
-                        ">
-                            Disponible
-                        </span>
-                    </div>
+                        "
+            >
+              Disponible
+            </span>
+          </div>
 
-                    <div className="
+          <div
+            className="
                         grid
                         grid-cols-1
                         gap-3
                         text-sm
                         text-gray-700
-                    ">
-                        <p>
-                            <strong>Municipalidad:</strong>{" "}
-                            {
-                                selectedTechnician
-                                    .technicianProfile
-                                    ?.municipality
-                                    ?.name ||
-                                "No definida"
-                            }
-                        </p>
+                    "
+          >
+            <p>
+              <strong>Municipalidad:</strong>{" "}
+              {selectedTechnician.technicianProfile?.municipality?.name || "No definida"}
+            </p>
 
-                        <p>
-                            <strong>Cuadrilla:</strong>{" "}
-                            {
-                                selectedTechnician
-                                    .technicianProfile
-                                    ?.crewName ||
-                                "No asignada"
-                            }
-                        </p>
+            <p>
+              <strong>Cuadrilla:</strong>{" "}
+              {selectedTechnician.technicianProfile?.crewName || "No asignada"}
+            </p>
 
-                        <p>
-                            <strong>Compatibilidad:</strong>{" "}
-                            <span className="
+            <p>
+              <strong>Compatibilidad:</strong>{" "}
+              <span
+                className="
                                 font-bold
                                 text-blue-700
-                            ">
-                                {
-                                    getCompatibilityLabel(
-                                        selectedScore
-                                    )
-                                }
-                            </span>
-                        </p>
-                    </div>
+                            "
+              >
+                {getCompatibilityLabel(selectedScore)}
+              </span>
+            </p>
+          </div>
 
-                    <div>
-                        <strong className="
+          <div>
+            <strong
+              className="
                             text-sm
                             text-gray-700
-                        ">
-                            Especialidades:
-                        </strong>
+                        "
+            >
+              Especialidades:
+            </strong>
 
-                        <div className="
+            <div
+              className="
                             flex
                             flex-wrap
                             gap-2
                             mt-2
-                        ">
-                            {
-                                selectedTechnician
-                                    .technicianProfile
-                                    ?.skills
-                                    ?.length
-                                    ? selectedTechnician
-                                        .technicianProfile
-                                        .skills
-                                        .map((skill) => (
-                                            <span
-                                                key={skill}
-                                                className="
+                        "
+            >
+              {selectedTechnician.technicianProfile?.skills?.length ? (
+                selectedTechnician.technicianProfile.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="
                                                     bg-white
                                                     text-gray-700
                                                     rounded-full
@@ -767,41 +667,42 @@ export default function AssignmentSection({
                                                     font-semibold
                                                     border
                                                 "
-                                            >
-                                                {skill}
-                                            </span>
-                                        ))
-                                    : (
-                                        <span className="
+                  >
+                    {skill}
+                  </span>
+                ))
+              ) : (
+                <span
+                  className="
                                             text-gray-500
                                             text-sm
-                                        ">
-                                            No registradas
-                                        </span>
-                                    )
-                            }
-                        </div>
-                    </div>
-                </div>
-            )}
+                                        "
+                >
+                  No registradas
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-            <div>
-                <label className="
+      <div>
+        <label
+          className="
                     block
                     font-semibold
                     text-[#03152E]
                     mb-2
-                ">
-                    Observaciones para la asignación
-                </label>
+                "
+        >
+          Observaciones para la asignación
+        </label>
 
-                <textarea
-                    value={notes}
-                    onChange={(event) =>
-                        setNotes(event.target.value)
-                    }
-                    placeholder="Ejemplo: atender en horario de menor tránsito o coordinar con seguridad ciudadana."
-                    className="
+        <textarea
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          placeholder="Ejemplo: atender en horario de menor tránsito o coordinar con seguridad ciudadana."
+          className="
                         w-full
                         border
                         rounded-2xl
@@ -810,11 +711,12 @@ export default function AssignmentSection({
                         min-h-[100px]
                         resize-none
                     "
-                />
-            </div>
+        />
+      </div>
 
-            {error && (
-                <div className="
+      {error && (
+        <div
+          className="
                     bg-red-50
                     border
                     border-red-200
@@ -822,13 +724,15 @@ export default function AssignmentSection({
                     rounded-2xl
                     p-4
                     font-semibold
-                ">
-                    {error}
-                </div>
-            )}
+                "
+        >
+          {error}
+        </div>
+      )}
 
-            {successMessage && (
-                <div className="
+      {successMessage && (
+        <div
+          className="
                     bg-green-50
                     border
                     border-green-200
@@ -836,19 +740,17 @@ export default function AssignmentSection({
                     rounded-2xl
                     p-4
                     font-semibold
-                ">
-                    {successMessage}
-                </div>
-            )}
+                "
+        >
+          {successMessage}
+        </div>
+      )}
 
-            <button
-                type="button"
-                onClick={handleAssign}
-                disabled={
-                    saving ||
-                    !selectedTechnicianId
-                }
-                className="
+      <button
+        type="button"
+        onClick={handleAssign}
+        disabled={saving || !selectedTechnicianId}
+        className="
                     w-full
                     bg-blue-700
                     text-white
@@ -861,17 +763,15 @@ export default function AssignmentSection({
                     disabled:bg-gray-300
                     disabled:cursor-not-allowed
                 "
-            >
-                {
-                    saving
-                        ? "Asignando..."
-                        : isReassignment
-                            ? "Reasignar técnico"
-                            : selectedTechnician
-                                ? `Asignar a ${selectedTechnician.firstName} ${selectedTechnician.lastName}`
-                                : "Selecciona un técnico"
-                }
-            </button>
-        </section>
-    );
+      >
+        {saving
+          ? "Asignando..."
+          : isReassignment
+            ? "Reasignar técnico"
+            : selectedTechnician
+              ? `Asignar a ${selectedTechnician.firstName} ${selectedTechnician.lastName}`
+              : "Selecciona un técnico"}
+      </button>
+    </section>
+  );
 }

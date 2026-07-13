@@ -21,9 +21,7 @@ export default function VerifyEmailPage() {
 
     const verifyEmail = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:3000/api/auth/verify-email?token=${token}`
-        );
+        const response = await fetch(`http://localhost:3000/api/auth/verify-email?token=${token}`);
 
         const data = await response.json();
 
@@ -47,9 +45,7 @@ export default function VerifyEmailPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
       <div className="bg-white shadow-md rounded-xl p-8 max-w-md text-center">
-        <h1 className="text-2xl font-bold mb-4 text-[#03152E]">
-          Verificación de correo
-        </h1>
+        <h1 className="text-2xl font-bold mb-4 text-[#03152E]">Verificación de correo</h1>
 
         <p>{message}</p>
       </div>

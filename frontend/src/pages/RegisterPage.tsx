@@ -1,20 +1,14 @@
 import { useState } from "react";
 
-import type {
-    RegisterFormValues,
-} from "../types/auth.types";
+import type { RegisterFormValues } from "../types/auth.types";
 
-import { AuthFactory }
-    from "../factories/auth.factory";
+import { AuthFactory } from "../factories/auth.factory";
 
-import { validateRegister }
-    from "../validators/auth.validator";
+import { validateRegister } from "../validators/auth.validator";
 
-import { AuthService }
-    from "../services/auth.service";
+import { AuthService } from "../services/auth.service";
 
-import Input
-    from "../components/ui/Input";
+import Input from "../components/ui/Input";
 
 import Button from "../components/ui/Button";
 
@@ -23,129 +17,89 @@ import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
 
-    const navigate =
-        useNavigate();
+  useEffect(() => {
+    const token = localStorage.getItem("token");
 
-    useEffect(() => {
+    const role = localStorage.getItem("role");
 
-        const token =
-            localStorage.getItem("token");
+    if (token) {
+      if (role === "OPERATOR") {
+        navigate("/operator");
+      } else {
+        navigate("/home");
+      }
+    }
+  }, [navigate]);
 
-        const role =
-            localStorage.getItem("role");
+  const [formData, setFormData] = useState<RegisterFormValues>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+  });
 
-        if (token) {
+  const [errors, setErrors] = useState<Partial<Record<keyof RegisterFormValues, string>>>({});
 
-            if (role === "OPERATOR") {
+  const [message, setMessage] = useState("");
 
-                navigate("/operator");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-            } else {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
 
-                navigate("/home");
-            }
-        }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-    }, [navigate]);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    const [formData, setFormData] =
-        useState<RegisterFormValues>({
-            firstName: "",
-            lastName: "",
-            email: "",
-            password: "",
-        });
+    setMessage("");
 
-    const [errors, setErrors] =
-        useState<
-            Partial<
-                Record<
-                    keyof RegisterFormValues,
-                    string
-                >
-            >
-        >({});
+    const validationErrors = validateRegister(formData);
 
-    const [message, setMessage] =
-        useState("");
+    setErrors(validationErrors);
 
-    const [isSubmitting, setIsSubmitting] =
-        useState(false);
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
 
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement>
-    ) => {
+    try {
+      setIsSubmitting(true);
 
-        const { name, value } = e.target;
+      const dto = AuthFactory.toRegisterDTO(formData);
 
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-    };
+      const response = await AuthService.register(dto);
 
-    const handleSubmit = async (
-        e: React.FormEvent
-    ) => {
+      setMessage(response.message);
 
-        e.preventDefault();
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+      });
+    } catch (error: any) {
+      setMessage(error?.message || "Error inesperado");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-        setMessage("");
-
-        const validationErrors =
-            validateRegister(formData);
-
-        setErrors(validationErrors);
-
-        if (
-            Object.keys(validationErrors).length > 0
-        ) {
-            return;
-        }
-
-        try {
-
-            setIsSubmitting(true);
-
-            const dto =
-                AuthFactory.toRegisterDTO(
-                    formData
-                );
-
-            const response =
-                await AuthService.register(dto);
-
-            setMessage(response.message);
-
-            setFormData({
-                firstName: "",
-                lastName: "",
-                email: "",
-                password: "",
-            });
-
-        } catch (error: any) {
-
-            setMessage(
-                error?.message
-                || "Error inesperado"
-            );
-
-        } finally {
-
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <div className="
+  return (
+    <div
+      className="
   min-h-screen
   grid
   lg:grid-cols-2
-">
-
-            <div className="
+"
+    >
+      <div
+        className="
   bg-[#03152E]
   text-white
   p-8
@@ -153,72 +107,71 @@ export default function RegisterPage() {
   flex
   flex-col
   justify-center
-">
+"
+      >
+        <h1 className="text-5xl font-bold">
+          reporta
+          <span className="text-yellow-400">Ya</span>
+        </h1>
 
-                <h1 className="text-5xl font-bold">
-                    reporta
-                    <span className="text-yellow-400">
-                        Ya
-                    </span>
-                </h1>
-
-                <div className="mt-16">
-
-                    <h2 className="
+        <div className="mt-16">
+          <h2
+            className="
   text-3xl
   lg:text-5xl
   font-bold
   leading-tight
-">
-                        Únete y ayuda a mejorar tu distrito
-                    </h2>
+"
+          >
+            Únete y ayuda a mejorar tu distrito
+          </h2>
 
-                    <p className="
+          <p
+            className="
   mt-6
   lg:mt-8
   text-lg
   lg:text-2xl
   text-gray-300
-">
-                        Reporta problemas de tu comunidad
-                        y haz la diferencia.
-                    </p>
+"
+          >
+            Reporta problemas de tu comunidad y haz la diferencia.
+          </p>
+        </div>
+      </div>
 
-                </div>
-
-            </div>
-
-            <div className="bg-white flex items-center justify-center">
-
-                <div className="
+      <div className="bg-white flex items-center justify-center">
+        <div
+          className="
   w-full
   max-w-xl
   px-6
   lg:px-0
-">
-
-                    <div className="
+"
+        >
+          <div
+            className="
     flex
     gap-4
     mb-8
-">
-
-                        <Link
-                            to="/login"
-                            className="
+"
+          >
+            <Link
+              to="/login"
+              className="
             px-6
             py-2
             rounded-full
             border
             font-semibold
         "
-                        >
-                            Login
-                        </Link>
+            >
+              Login
+            </Link>
 
-                        <Link
-                            to="/register"
-                            className="
+            <Link
+              to="/register"
+              className="
             px-6
             py-2
             rounded-full
@@ -226,112 +179,84 @@ export default function RegisterPage() {
             text-white
             font-semibold
         "
-                        >
-                            Registrarse
-                        </Link>
+            >
+              Registrarse
+            </Link>
+          </div>
 
-                    </div>
+          <h2 className="text-4xl font-bold text-gray-800 mb-10">Crear cuenta</h2>
 
-                    <h2 className="text-4xl font-bold text-gray-800 mb-10">
-                        Crear cuenta
-                    </h2>
-
-                    <form
-                        className="space-y-6"
-                        onSubmit={handleSubmit}
-                    >
-
-                        <div className="
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div
+              className="
   grid
   md:grid-cols-2
   gap-4
-">
+"
+            >
+              <div>
+                <Input
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="Nombres"
+                  error={errors.firstName}
+                />
+              </div>
 
-                            <div>
+              <div>
+                <Input
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder="Apellidos"
+                  error={errors.lastName}
+                />
+              </div>
+            </div>
 
-                                <Input
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    placeholder="Nombres"
-                                    error={errors.firstName}
-                                />
+            <div>
+              <Input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Correo electrónico"
+                error={errors.email}
+              />
+            </div>
 
-                            </div>
+            <div>
+              <Input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Contraseña"
+                error={errors.password}
+              />
 
-                            <div>
-
-                                <Input
-                                    name="lastName"
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    placeholder="Apellidos"
-                                    error={errors.lastName}
-                                />
-
-                            </div>
-
-                        </div>
-
-                        <div>
-
-                            <Input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                placeholder="Correo electrónico"
-                                error={errors.email}
-                            />
-
-                        </div>
-
-                        <div>
-
-                            <Input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="Contraseña"
-                                error={errors.password}
-                            />
-
-                            <p className="
+              <p
+                className="
                                 mt-2
                                 text-sm
                                 text-gray-500
                                 leading-relaxed
-                            ">
-                                La contraseña debe tener mínimo 8 caracteres, una mayúscula,
-                                una minúscula, un número y un carácter especial.
-                            </p>
-
-                        </div>
-
-                        <Button
-                            type="submit"
-                            disabled={isSubmitting}
-                        >
-                            {
-                                isSubmitting
-                                    ? "Registrando..."
-                                    : "Registrarme"
-                            }
-                        </Button>
-
-                        {message && (
-                            <div className="text-center">
-                                {message}
-                            </div>
-                        )}
-
-                    </form>
-
-                </div>
-
+                            "
+              >
+                La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un
+                número y un carácter especial.
+              </p>
             </div>
 
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Registrando..." : "Registrarme"}
+            </Button>
+
+            {message && <div className="text-center">{message}</div>}
+          </form>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

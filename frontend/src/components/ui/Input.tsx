@@ -3,26 +3,14 @@ type Props = {
   name: string;
   value: string;
   placeholder: string;
-  onChange: (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 
   error?: string;
 };
 
-export default function Input({
-  type = "text",
-  name,
-  value,
-  placeholder,
-  onChange,
-  error,
-}: Props) {
-
+export default function Input({ type = "text", name, value, placeholder, onChange, error }: Props) {
   return (
-
     <div>
-
       <input
         type={type}
         name={name}
@@ -37,12 +25,7 @@ export default function Input({
         "
       />
 
-      {error && (
-        <p className="text-red-500 text-sm mt-1">
-          {error}
-        </p>
-      )}
-
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );
 }

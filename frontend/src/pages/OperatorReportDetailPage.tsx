@@ -1,371 +1,281 @@
-import {
-    useEffect,
-    useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-    useNavigate,
-    useParams,
-} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-import {
-    statusLabels,
-} from "../utils/reportLabels";
+import { statusLabels } from "../utils/reportLabels";
 
-import AssignmentSection
-    from "../components/assignment/AssignmentSection";
+import AssignmentSection from "../components/assignment/AssignmentSection";
 
-// US22 - IA (Leonardo Ttito)
-import AIAnalysisPanel
-    from "../components/AIAnalysisPanel";
+import AIAnalysisPanel from "../components/AIAnalysisPanel";
 
-import {
-    formatTargetDate,
-    getPriorityLabel,
-    getSlaViewState,
-} from "../utils/sla.utils";
+import { formatTargetDate, getPriorityLabel, getSlaViewState } from "../utils/sla.utils";
 
-const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-type PriorityValue =
-    "ALTO" |
-    "MEDIO" |
-    "BAJO";
+type PriorityValue = "ALTO" | "MEDIO" | "BAJO";
 
 type Report = {
+  id: string;
+  title: string;
+  problemType: string;
+  description: string;
+  status: string;
+
+  priority?: PriorityValue;
+  impact?: PriorityValue;
+  probability?: PriorityValue;
+  operationalType?: string;
+  targetDate?: string;
+  justification?: string;
+
+  createdAt: string;
+
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+
+  municipalityId?: string | null;
+
+  municipality?: {
     id: string;
-    title: string;
-    problemType: string;
-    description: string;
-    status: string;
+    name: string;
+    district?: string | null;
+    province?: string | null;
+    department?: string | null;
+  } | null;
 
-    priority?: PriorityValue;
-    impact?: PriorityValue;
-    probability?: PriorityValue;
-    operationalType?: string;
-    targetDate?: string;
-    justification?: string;
+  evidences: {
+    imageUrl: string;
+  }[];
 
-    createdAt: string;
+  isAnonymous: boolean;
 
-    latitude?: number;
-    longitude?: number;
-    address?: string;
+  user?: {
+    firstName: string;
+    lastName: string;
+  };
 
-    municipalityId?: string | null;
-
-    municipality?: {
-        id: string;
-        name: string;
-        district?: string | null;
-        province?: string | null;
-        department?: string | null;
-    } | null;
-
-    evidences: {
-        imageUrl: string;
-    }[];
-
-    isAnonymous: boolean;
-
-    user?: {
-        firstName: string;
-        lastName: string;
-    };
-
-    message?: string;
+  message?: string;
 };
 
 export default function OperatorReportDetailPage() {
-    const navigate =
-        useNavigate();
+  const navigate = useNavigate();
 
-    const { id } =
-        useParams();
+  const { id } = useParams();
 
-    const [report, setReport] =
-        useState<Report | null>(null);
+  const [report, setReport] = useState<Report | null>(null);
 
-    const [loading, setLoading] =
-        useState(true);
+  const [loading, setLoading] = useState(true);
 
-    const [impact, setImpact] =
-        useState<PriorityValue>("BAJO");
+  const [impact, setImpact] = useState<PriorityValue>("BAJO");
 
-    const [probability, setProbability] =
-        useState<PriorityValue>("BAJO");
+  const [probability, setProbability] = useState<PriorityValue>("BAJO");
 
-    const [operationalType, setOperationalType] =
-        useState("");
+  const [operationalType, setOperationalType] = useState("");
 
-    const [justification, setJustification] =
-        useState("");
+  const [justification, setJustification] = useState("");
 
-    const [submitting, setSubmitting] =
-        useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-    const fetchReport = async () => {
-        try {
-            setLoading(true);
+  const fetchReport = async () => {
+    try {
+      setLoading(true);
 
-            const response =
-                await fetch(
-                    `${API_URL}/api/reports/${id}`
-                );
+      const response = await fetch(`${API_URL}/api/reports/${id}`);
 
-            const data =
-                await response.json();
+      const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(
-                    data?.message ||
-                    "No se pudo obtener el reporte."
-                );
-            }
+      if (!response.ok) {
+        throw new Error(data?.message || "No se pudo obtener el reporte.");
+      }
 
-            setReport(data);
+      setReport(data);
 
-            setImpact(
-                data.impact ||
-                "BAJO"
-            );
+      setImpact(data.impact || "BAJO");
 
-            setProbability(
-                data.probability ||
-                "BAJO"
-            );
+      setProbability(data.probability || "BAJO");
 
-            setOperationalType(
-                data.operationalType ||
-                ""
-            );
+      setOperationalType(data.operationalType || "");
 
-            setJustification(
-                data.justification ||
-                ""
-            );
+      setJustification(data.justification || "");
+    } catch (error) {
+      console.error(error);
+      setReport(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        } catch (error) {
-            console.error(error);
-            setReport(null);
+  useEffect(() => {
+    fetchReport();
+  }, [id]);
 
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchReport();
-    }, [id]);
-
-    const updateStatus = async (
-        status: string
-    ) => {
-        if (!report) {
-            return;
-        }
-
-        try {
-            const response =
-                await fetch(
-                    `${API_URL}/api/reports/${report.id}/status`,
-                    {
-                        method: "PATCH",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            status,
-                        }),
-                    }
-                );
-
-            const data =
-                await response.json()
-                    .catch(() => null);
-
-            if (!response.ok) {
-                throw new Error(
-                    data?.message ||
-                    "No se pudo actualizar el estado."
-                );
-            }
-
-            navigate("/operator");
-
-        } catch (error: any) {
-            console.error(error);
-            alert(
-                error.message ||
-                "Hubo un error al actualizar el estado."
-            );
-        }
-    };
-
-    const handlePrioritize = async (
-        event: React.FormEvent
-    ) => {
-        event.preventDefault();
-
-        if (
-            !operationalType ||
-            !justification
-        ) {
-            alert(
-                "Por favor, completa todos los campos de priorización."
-            );
-            return;
-        }
-
-        setSubmitting(true);
-
-        try {
-            const response =
-                await fetch(
-                    `${API_URL}/api/reports/${id}/prioritize`,
-                    {
-                        method: "PATCH",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                            body: JSON.stringify({
-                            impact,
-                            probability,
-                            operationalType,
-                            justification,
-                        }),
-                    }
-                );
-
-            const data =
-                await response.json()
-                    .catch(() => null);
-
-            if (!response.ok) {
-                throw new Error(
-                    data?.message ||
-                    "No se pudo priorizar el reporte."
-                );
-            }
-
-            alert(
-                "Reporte priorizado correctamente."
-            );
-
-            await fetchReport();
-
-        } catch (error: any) {
-            console.error(error);
-
-            alert(
-                error.message ||
-                "Hubo un error al procesar la priorización."
-            );
-
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const priorityClass = (
-        priority?: string
-    ) => {
-        if (priority === "ALTO") {
-            return "bg-red-100 text-red-800 border-red-200";
-        }
-
-        if (priority === "MEDIO") {
-            return "bg-orange-100 text-orange-800 border-orange-200";
-        }
-
-        if (priority === "BAJO") {
-            return "bg-green-100 text-green-800 border-green-200";
-        }
-
-        return "bg-gray-100 text-gray-700 border-gray-200";
-    };
-
-    if (loading) {
-        return (
-            <div className="
-                min-h-screen
-                flex
-                items-center
-                justify-center
-                text-3xl
-                font-bold
-            ">
-                Cargando...
-            </div>
-        );
+  const updateStatus = async (status: string) => {
+    if (!report) {
+      return;
     }
 
-    if (!report || report.message) {
-        return (
-            <div className="
-                min-h-screen
-                flex
-                items-center
-                justify-center
-                text-3xl
-                font-bold
-            ">
-                Reporte no encontrado
-            </div>
-        );
+    try {
+      const response = await fetch(`${API_URL}/api/reports/${report.id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.message || "No se pudo actualizar el estado.");
+      }
+
+      navigate("/operator");
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message || "Hubo un error al actualizar el estado.");
+    }
+  };
+
+  const handlePrioritize = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!operationalType || !justification) {
+      alert("Por favor, completa todos los campos de priorización.");
+      return;
     }
 
-    const canEvaluate =
-        report.status === "REGISTERED";
+    setSubmitting(true);
 
-    const canPrioritize =
-        report.status === "APPROVED" ||
-        report.status === "PRIORITIZED";
+    try {
+      const response = await fetch(`${API_URL}/api/reports/${id}/prioritize`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          impact,
+          probability,
+          operationalType,
+          justification,
+        }),
+      });
 
-    const canAssign =
-        report.status === "PRIORITIZED" ||
-        report.status === "ASSIGNED";
-    const slaState =
-        getSlaViewState(
-            report.targetDate,
-            report.status
-        );
+      const data = await response.json().catch(() => null);
 
+      if (!response.ok) {
+        throw new Error(data?.message || "No se pudo priorizar el reporte.");
+      }
+
+      alert("Reporte priorizado correctamente.");
+
+      await fetchReport();
+    } catch (error: any) {
+      console.error(error);
+
+      alert(error.message || "Hubo un error al procesar la priorización.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const priorityClass = (priority?: string) => {
+    if (priority === "ALTO") {
+      return "bg-red-100 text-red-800 border-red-200";
+    }
+
+    if (priority === "MEDIO") {
+      return "bg-orange-100 text-orange-800 border-orange-200";
+    }
+
+    if (priority === "BAJO") {
+      return "bg-green-100 text-green-800 border-green-200";
+    }
+
+    return "bg-gray-100 text-gray-700 border-gray-200";
+  };
+
+  if (loading) {
     return (
-        <div className="
+      <div
+        className="
+                min-h-screen
+                flex
+                items-center
+                justify-center
+                text-3xl
+                font-bold
+            "
+      >
+        Cargando...
+      </div>
+    );
+  }
+
+  if (!report || report.message) {
+    return (
+      <div
+        className="
+                min-h-screen
+                flex
+                items-center
+                justify-center
+                text-3xl
+                font-bold
+            "
+      >
+        Reporte no encontrado
+      </div>
+    );
+  }
+
+  const canEvaluate = report.status === "REGISTERED";
+
+  const canPrioritize = report.status === "APPROVED" || report.status === "PRIORITIZED";
+
+  const canAssign = report.status === "PRIORITIZED" || report.status === "ASSIGNED";
+  const slaState = getSlaViewState(report.targetDate, report.status);
+
+  return (
+    <div
+      className="
             min-h-screen
             bg-[#F5F7FA]
             p-6
             lg:p-8
-        ">
-            <div className="
+        "
+    >
+      <div
+        className="
                 max-w-7xl
                 mx-auto
                 space-y-8
-            ">
-                <button
-                    onClick={() =>
-                        navigate("/operator")
-                    }
-                    className="
+            "
+      >
+        <button
+          onClick={() => navigate("/operator")}
+          className="
                         text-blue-600
                         font-semibold
                         hover:underline
                     "
-                >
-                    ← Volver
-                </button>
+        >
+          ← Volver
+        </button>
 
-                <div className="
+        <div
+          className="
                     grid
                     grid-cols-1
                     xl:grid-cols-[1fr_420px]
                     gap-8
                     items-start
-                ">
-                    <main className="
+                "
+        >
+          <main
+            className="
                         bg-white
                         rounded-3xl
                         border
@@ -373,321 +283,327 @@ export default function OperatorReportDetailPage() {
                         p-6
                         lg:p-8
                         space-y-10
-                    ">
-                        <section className="
+                    "
+          >
+            <section
+              className="
                             flex
                             flex-col
                             lg:flex-row
                             lg:items-start
                             lg:justify-between
                             gap-6
-                        ">
-                            <div>
-                                <h1 className="
+                        "
+            >
+              <div>
+                <h1
+                  className="
                                     text-4xl
                                     lg:text-5xl
                                     font-bold
                                     text-[#03152E]
                                     leading-tight
-                                ">
-                                    {
-                                        report.title ||
-                                        report.problemType
-                                    }
-                                </h1>
+                                "
+                >
+                  {report.title || report.problemType}
+                </h1>
 
-                                <div className="
+                <div
+                  className="
                                     mt-4
                                     flex
                                     items-center
                                     gap-3
                                     flex-wrap
-                                ">
-                                    <p className="
+                                "
+                >
+                  <p
+                    className="
                                         text-lg
                                         font-semibold
                                         text-gray-700
-                                    ">
-                                        {
-                                            report.isAnonymous
-                                                ? "Anónimo"
-                                                : `${report.user?.firstName || ""} ${report.user?.lastName || ""}`
-                                        }
-                                    </p>
+                                    "
+                  >
+                    {report.isAnonymous
+                      ? "Anónimo"
+                      : `${report.user?.firstName || ""} ${report.user?.lastName || ""}`}
+                  </p>
 
-                                    <p className="
+                  <p
+                    className="
                                         text-gray-500
-                                    ">
-                                        {
-                                            new Date(
-                                                report.createdAt
-                                            ).toLocaleDateString()
-                                        }
-                                    </p>
-                                </div>
-                            </div>
+                                    "
+                  >
+                    {new Date(report.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
 
-                            <div className="
+              <div
+                className="
                                 flex
                                 flex-row
                                 lg:flex-col
                                 gap-2
                                 lg:items-end
                                 flex-wrap
-                            ">
-                                <span className="
+                            "
+              >
+                <span
+                  className="
                                     bg-yellow-100
                                     text-yellow-700
                                     px-5
                                     py-3
                                     rounded-full
                                     font-semibold
-                                ">
-                                    {
-                                        statusLabels[report.status] ||
-                                        report.status
-                                    }
-                                </span>
+                                "
+                >
+                  {statusLabels[report.status] || report.status}
+                </span>
 
-                                {report.priority && (
-                                    <span className={`
+                {report.priority && (
+                  <span
+                    className={`
                                         px-5
                                         py-3
                                         rounded-full
                                         font-semibold
                                         border
                                         ${priorityClass(report.priority)}
-                                    `}>
-                                        Prioridad: {getPriorityLabel(report.priority)}
-                                    </span>
-                                )}
-                            </div>
-                        </section>
+                                    `}
+                  >
+                    Prioridad: {getPriorityLabel(report.priority)}
+                  </span>
+                )}
+              </div>
+            </section>
 
-                        <section>
-                            <img
-                                src={
-                                    report.evidences?.[0]?.imageUrl ||
-                                    "https://placehold.co/1200x600?text=Sin+Evidencia"
-                                }
-                                alt={report.problemType}
-                                className="
+            <section>
+              <img
+                src={
+                  report.evidences?.[0]?.imageUrl ||
+                  "https://placehold.co/1200x600?text=Sin+Evidencia"
+                }
+                alt={report.problemType}
+                className="
                                     w-full
                                     max-h-[520px]
                                     object-cover
                                     rounded-3xl
                                     border
                                 "
-                            />
-                        </section>
+              />
+            </section>
 
-                        <section className="
+            <section
+              className="
                             grid
                             grid-cols-1
                             lg:grid-cols-2
                             gap-10
-                        ">
-                            <div>
-                                <h2 className="
+                        "
+            >
+              <div>
+                <h2
+                  className="
                                     text-3xl
                                     font-bold
                                     mb-6
                                     text-[#03152E]
-                                ">
-                                    Descripción
-                                </h2>
+                                "
+                >
+                  Descripción
+                </h2>
 
-                                <p className="
+                <p
+                  className="
                                     text-lg
                                     text-gray-600
                                     leading-relaxed
-                                ">
-                                    {report.description}
-                                </p>
-                            </div>
+                                "
+                >
+                  {report.description}
+                </p>
+              </div>
 
-                            <div>
-                                <h2 className="
+              <div>
+                <h2
+                  className="
                                     text-3xl
                                     font-bold
                                     mb-6
                                     text-[#03152E]
-                                ">
-                                    Datos municipales
-                                </h2>
+                                "
+                >
+                  Datos municipales
+                </h2>
 
-                                <div className="
+                <div
+                  className="
                                     bg-blue-50
                                     border
                                     border-blue-100
                                     rounded-2xl
                                     p-6
                                     space-y-3
-                                ">
-                                    <p>
-                                        <strong>Municipalidad:</strong>{" "}
-                                        {
-                                            report.municipality?.name ||
-                                            "No definida"
-                                        }
-                                    </p>
+                                "
+                >
+                  <p>
+                    <strong>Municipalidad:</strong> {report.municipality?.name || "No definida"}
+                  </p>
 
-                                    <p>
-                                        <strong>Distrito:</strong>{" "}
-                                        {
-                                            report.municipality?.district ||
-                                            "No definido"
-                                        }
-                                    </p>
+                  <p>
+                    <strong>Distrito:</strong> {report.municipality?.district || "No definido"}
+                  </p>
 
-                                    <p>
-                                        <strong>Provincia:</strong>{" "}
-                                        {
-                                            report.municipality?.province ||
-                                            "No definida"
-                                        }
-                                    </p>
+                  <p>
+                    <strong>Provincia:</strong> {report.municipality?.province || "No definida"}
+                  </p>
 
-                                    <p>
-                                        <strong>Departamento:</strong>{" "}
-                                        {
-                                            report.municipality?.department ||
-                                            "No definido"
-                                        }
-                                    </p>
-                                </div>
-                            </div>
-                        </section>
+                  <p>
+                    <strong>Departamento:</strong>{" "}
+                    {report.municipality?.department || "No definido"}
+                  </p>
+                </div>
+              </div>
+            </section>
 
-                        <section>
-                            <h2 className="
+            <section>
+              <h2
+                className="
                                 text-3xl
                                 font-bold
                                 mb-6
                                 text-[#03152E]
-                            ">
-                                Ubicación
-                            </h2>
+                            "
+              >
+                Ubicación
+              </h2>
 
-                            <div className="
+              <div
+                className="
                                 bg-gray-50
                                 rounded-2xl
                                 p-6
                                 border
-                            ">
-                                <p className="
+                            "
+              >
+                <p
+                  className="
                                     text-gray-500
                                     mb-2
-                                ">
-                                    Dirección registrada
-                                </p>
+                                "
+                >
+                  Dirección registrada
+                </p>
 
-                                <p className="
+                <p
+                  className="
                                     text-xl
                                     font-semibold
                                     leading-relaxed
                                     text-[#03152E]
-                                ">
-                                    {
-                                        report.address ||
-                                        "Ubicación no disponible"
-                                    }
-                                </p>
+                                "
+                >
+                  {report.address || "Ubicación no disponible"}
+                </p>
 
-                                {
-                                    report.latitude &&
-                                    report.longitude && (
-                                        <div className="
+                {report.latitude && report.longitude && (
+                  <div
+                    className="
                                             mt-6
                                             space-y-4
-                                        ">
-                                            <p className="
+                                        "
+                  >
+                    <p
+                      className="
                                                 text-sm
                                                 text-gray-500
-                                            ">
-                                                Latitud: {report.latitude} | Longitud: {report.longitude}
-                                            </p>
+                                            "
+                    >
+                      Latitud: {report.latitude} | Longitud: {report.longitude}
+                    </p>
 
-                                            <iframe
-                                                title="Ubicación del reporte"
-                                                width="100%"
-                                                height="320"
-                                                loading="lazy"
-                                                className="
+                    <iframe
+                      title="Ubicación del reporte"
+                      width="100%"
+                      height="320"
+                      loading="lazy"
+                      className="
                                                     rounded-2xl
                                                     border
                                                 "
-                                                src={`https://www.google.com/maps?q=${report.latitude},${report.longitude}&z=17&output=embed`}
-                                            />
+                      src={`https://www.google.com/maps?q=${report.latitude},${report.longitude}&z=17&output=embed`}
+                    />
 
-                                            <a
-                                                href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="
+                    <a
+                      href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="
                                                     inline-block
                                                     text-blue-700
                                                     font-semibold
                                                     hover:underline
                                                 "
-                                            >
-                                                Abrir ubicación en Google Maps
-                                            </a>
-                                        </div>
-                                    )
-                                }
-                            </div>
-                        </section>
+                    >
+                      Abrir ubicación en Google Maps
+                    </a>
+                  </div>
+                )}
+              </div>
+            </section>
 
-                        <section>
-                            <h2 className="
+            <section>
+              <h2
+                className="
                                 text-3xl
                                 font-bold
                                 mb-6
                                 text-[#03152E]
-                            ">
-                                Evidencias
-                            </h2>
+                            "
+              >
+                Evidencias
+              </h2>
 
-                            <div className="
+              <div
+                className="
                                 flex
                                 gap-4
                                 flex-wrap
-                            ">
-                                {
-                                    report.evidences?.length
-                                        ? report.evidences.map(
-                                            (
-                                                evidence,
-                                                index
-                                            ) => (
-                                                <img
-                                                    key={index}
-                                                    src={evidence.imageUrl}
-                                                    alt="Evidencia"
-                                                    className="
+                            "
+              >
+                {report.evidences?.length ? (
+                  report.evidences.map((evidence, index) => (
+                    <img
+                      key={index}
+                      src={evidence.imageUrl}
+                      alt="Evidencia"
+                      className="
                                                         w-[150px]
                                                         h-[150px]
                                                         rounded-2xl
                                                         object-cover
                                                         border
                                                     "
-                                                />
-                                            )
-                                        )
-                                        : (
-                                            <p className="
+                    />
+                  ))
+                ) : (
+                  <p
+                    className="
                                                 text-gray-500
-                                            ">
-                                                No hay evidencias registradas.
-                                            </p>
-                                        )
-                                }
-                            </div>
-                        </section>
-                    </main>
+                                            "
+                  >
+                    No hay evidencias registradas.
+                  </p>
+                )}
+              </div>
+            </section>
+          </main>
 
-                    <aside className="
+          <aside
+            className="
                         bg-white
                         rounded-3xl
                         border
@@ -698,38 +614,41 @@ export default function OperatorReportDetailPage() {
                         space-y-6
                         xl:sticky
                         xl:top-8
-                    ">
-                        {canEvaluate && (
-                            <div className="
+                    "
+          >
+            {canEvaluate && (
+              <div
+                className="
                                 space-y-4
-                            ">
-                                <h2 className="
+                            "
+              >
+                <h2
+                  className="
                                     text-2xl
                                     font-bold
                                     text-[#03152E]
-                                ">
-                                    Evaluar reporte
-                                </h2>
+                                "
+                >
+                  Evaluar reporte
+                </h2>
 
-                                <p className="
+                <p
+                  className="
                                     text-gray-500
                                     text-sm
-                                ">
-                                    Revisa la descripción, ubicación y evidencias antes de aprobar o rechazar.
-                                </p>
+                                "
+                >
+                  Revisa la descripción, ubicación y evidencias antes de aprobar o rechazar.
+                </p>
 
-                                <hr />
+                <hr />
 
-                                {/* US22 - Panel de análisis IA */}
-                                {report && (
-                                    <AIAnalysisPanel reportId={report.id} />
-                                )}
+                {/* US22 - Panel de análisis IA */}
+                {report && <AIAnalysisPanel reportId={report.id} />}
 
-                                <button
-                                    onClick={() =>
-                                        updateStatus("APPROVED")
-                                    }
-                                    className="
+                <button
+                  onClick={() => updateStatus("APPROVED")}
+                  className="
                                         w-full
                                         bg-green-600
                                         hover:bg-green-700
@@ -740,15 +659,13 @@ export default function OperatorReportDetailPage() {
                                         font-semibold
                                         transition
                                     "
-                                >
-                                    Aprobar reporte
-                                </button>
+                >
+                  Aprobar reporte
+                </button>
 
-                                <button
-                                    onClick={() =>
-                                        updateStatus("REJECTED")
-                                    }
-                                    className="
+                <button
+                  onClick={() => updateStatus("REJECTED")}
+                  className="
                                         w-full
                                         bg-red-600
                                         hover:bg-red-700
@@ -759,176 +676,177 @@ export default function OperatorReportDetailPage() {
                                         font-semibold
                                         transition
                                     "
-                                >
-                                    Rechazar reporte
-                                </button>
-                            </div>
-                        )}
+                >
+                  Rechazar reporte
+                </button>
+              </div>
+            )}
 
-                        {canPrioritize && (
-                            <form
-                                onSubmit={handlePrioritize}
-                                className="
+            {canPrioritize && (
+              <form
+                onSubmit={handlePrioritize}
+                className="
                                     space-y-5
                                 "
-                            >
-                                <h2 className="
+              >
+                <h2
+                  className="
                                     text-2xl
                                     font-bold
                                     text-[#03152E]
-                                ">
-                                    Priorización
-                                </h2>
+                                "
+                >
+                  Priorización
+                </h2>
 
-                                <hr />
+                <hr />
 
-                                <div>
-                                    <label className="
+                <div>
+                  <label
+                    className="
                                         block
                                         text-sm
                                         font-semibold
                                         text-gray-700
                                         mb-1
-                                    ">
-                                        Impacto del problema
-                                    </label>
+                                    "
+                  >
+                    Impacto del problema
+                  </label>
 
-                                    <select
-                                        value={impact}
-                                        onChange={(event) =>
-                                            setImpact(
-                                                event.target.value as PriorityValue
-                                            )
-                                        }
-                                        className="
+                  <select
+                    value={impact}
+                    onChange={(event) => setImpact(event.target.value as PriorityValue)}
+                    className="
                                             w-full
                                             border
                                             rounded-xl
                                             p-3
                                         "
-                                    >
-                                        <option value="BAJO">Bajo</option>
-                                        <option value="MEDIO">Medio</option>
-                                        <option value="ALTO">Alto</option>
-                                    </select>
-                                </div>
+                  >
+                    <option value="BAJO">Bajo</option>
+                    <option value="MEDIO">Medio</option>
+                    <option value="ALTO">Alto</option>
+                  </select>
+                </div>
 
-                                <div>
-                                    <label className="
+                <div>
+                  <label
+                    className="
                                         block
                                         text-sm
                                         font-semibold
                                         text-gray-700
                                         mb-1
-                                    ">
-                                        Probabilidad
-                                    </label>
+                                    "
+                  >
+                    Probabilidad
+                  </label>
 
-                                    <select
-                                        value={probability}
-                                        onChange={(event) =>
-                                            setProbability(
-                                                event.target.value as PriorityValue
-                                            )
-                                        }
-                                        className="
+                  <select
+                    value={probability}
+                    onChange={(event) => setProbability(event.target.value as PriorityValue)}
+                    className="
                                             w-full
                                             border
                                             rounded-xl
                                             p-3
                                         "
-                                    >
-                                        <option value="BAJO">Baja</option>
-                                        <option value="MEDIO">Media</option>
-                                        <option value="ALTO">Alta</option>
-                                    </select>
-                                </div>
+                  >
+                    <option value="BAJO">Baja</option>
+                    <option value="MEDIO">Media</option>
+                    <option value="ALTO">Alta</option>
+                  </select>
+                </div>
 
-                                <div className="
+                <div
+                  className="
                                     bg-blue-50
                                     border
                                     border-blue-100
                                     rounded-2xl
                                     p-4
-                                ">
-                                    <p className="
+                                "
+                >
+                  <p
+                    className="
                                         text-sm
                                         font-bold
                                         text-blue-800
-                                    ">
-                                        SLA automático
-                                    </p>
+                                    "
+                  >
+                    SLA automático
+                  </p>
 
-                                    <p className="
+                  <p
+                    className="
                                         text-sm
                                         text-blue-700
                                         mt-1
-                                    ">
-                                        La fecha objetivo se calculará automáticamente según la prioridad resultante de impacto y probabilidad.
-                                    </p>
-                                </div>
+                                    "
+                  >
+                    La fecha objetivo se calculará automáticamente según la prioridad resultante de
+                    impacto y probabilidad.
+                  </p>
+                </div>
 
-                                <div>
-                                    <label className="
+                <div>
+                  <label
+                    className="
                                         block
                                         text-sm
                                         font-semibold
                                         text-gray-700
                                         mb-1
-                                    ">
-                                        Tipo operativo
-                                    </label>
+                                    "
+                  >
+                    Tipo operativo
+                  </label>
 
-                                    <input
-                                        value={operationalType}
-                                        onChange={(event) =>
-                                            setOperationalType(
-                                                event.target.value
-                                            )
-                                        }
-                                        className="
+                  <input
+                    value={operationalType}
+                    onChange={(event) => setOperationalType(event.target.value)}
+                    className="
                                             w-full
                                             border
                                             rounded-xl
                                             p-3
                                         "
-                                        placeholder="Ej. Limpieza, infraestructura, movilidad"
-                                    />
-                                </div>
+                    placeholder="Ej. Limpieza, infraestructura, movilidad"
+                  />
+                </div>
 
-                                <div>
-                                    <label className="
+                <div>
+                  <label
+                    className="
                                         block
                                         text-sm
                                         font-semibold
                                         text-gray-700
                                         mb-1
-                                    ">
-                                        Justificación
-                                    </label>
+                                    "
+                  >
+                    Justificación
+                  </label>
 
-                                    <textarea
-                                        value={justification}
-                                        onChange={(event) =>
-                                            setJustification(
-                                                event.target.value
-                                            )
-                                        }
-                                        className="
+                  <textarea
+                    value={justification}
+                    onChange={(event) => setJustification(event.target.value)}
+                    className="
                                             w-full
                                             border
                                             rounded-xl
                                             p-3
                                             min-h-[120px]
                                         "
-                                        placeholder="Explica por qué se asigna esta prioridad."
-                                    />
-                                </div>
+                    placeholder="Explica por qué se asigna esta prioridad."
+                  />
+                </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="
                                         w-full
                                         bg-blue-700
                                         hover:bg-blue-800
@@ -940,141 +858,138 @@ export default function OperatorReportDetailPage() {
                                         font-semibold
                                         transition
                                     "
-                                >
-                                    {
-                                        submitting
-                                            ? "Guardando..."
-                                            : "Guardar priorización"
-                                    }
-                                </button>
-                            </form>
-                        )}
+                >
+                  {submitting ? "Guardando..." : "Guardar priorización"}
+                </button>
+              </form>
+            )}
 
-                        {report.priority && (
-                            <div className="
+            {report.priority && (
+              <div
+                className="
                                 bg-gray-50
                                 rounded-2xl
                                 p-5
                                 space-y-4
                                 border
-                            ">
-                                <div className="
+                            "
+              >
+                <div
+                  className="
                                     flex
                                     items-center
                                     justify-between
                                     gap-3
-                                ">
-                                    <h3 className="
+                                "
+                >
+                  <h3
+                    className="
                                         font-bold
                                         text-lg
                                         text-[#03152E]
-                                    ">
-                                        SLA / Tiempo objetivo
-                                    </h3>
+                                    "
+                  >
+                    SLA / Tiempo objetivo
+                  </h3>
 
-                                    <span className={`
+                  <span
+                    className={`
                                         px-3
                                         py-1
                                         rounded-full
                                         text-xs
                                         font-bold
                                         ${slaState.className}
-                                    `}>
-                                        {slaState.label}
-                                    </span>
-                                </div>
+                                    `}
+                  >
+                    {slaState.label}
+                  </span>
+                </div>
 
-                                <div className="
+                <div
+                  className="
                                     space-y-2
                                     text-sm
                                     text-gray-700
-                                ">
-                                    <p>
-                                        <strong>Prioridad:</strong>{" "}
-                                        {getPriorityLabel(report.priority)}
-                                    </p>
+                                "
+                >
+                  <p>
+                    <strong>Prioridad:</strong> {getPriorityLabel(report.priority)}
+                  </p>
 
-                                    {report.operationalType && (
-                                        <p>
-                                            <strong>Tipo operativo:</strong>{" "}
-                                            {report.operationalType}
-                                        </p>
-                                    )}
+                  {report.operationalType && (
+                    <p>
+                      <strong>Tipo operativo:</strong> {report.operationalType}
+                    </p>
+                  )}
 
-                                    <p>
-                                        <strong>Fecha objetivo:</strong>{" "}
-                                        {formatTargetDate(report.targetDate)}
-                                    </p>
+                  <p>
+                    <strong>Fecha objetivo:</strong> {formatTargetDate(report.targetDate)}
+                  </p>
 
-                                    <p>
-                                        <strong>Estado SLA:</strong>{" "}
-                                        {slaState.description}
-                                    </p>
+                  <p>
+                    <strong>Estado SLA:</strong> {slaState.description}
+                  </p>
 
-                                    {report.justification && (
-                                        <p>
-                                            <strong>Justificación:</strong>{" "}
-                                            {report.justification}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        )}
+                  {report.justification && (
+                    <p>
+                      <strong>Justificación:</strong> {report.justification}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
-                        {
-                            !canEvaluate &&
-                            !canPrioritize &&
-                            !canAssign && (
-                                <div>
-                                    <h2 className="
+            {!canEvaluate && !canPrioritize && !canAssign && (
+              <div>
+                <h2
+                  className="
                                         text-2xl
                                         font-bold
                                         text-[#03152E]
-                                    ">
-                                        Acciones no disponibles
-                                    </h2>
+                                    "
+                >
+                  Acciones no disponibles
+                </h2>
 
-                                    <p className="
+                <p
+                  className="
                                         text-gray-500
                                         mt-2
-                                    ">
-                                        Este reporte ya avanzó a otra etapa del flujo.
-                                    </p>
-                                </div>
-                            )
-                        }
-                    </aside>
-                </div>
+                                    "
+                >
+                  Este reporte ya avanzó a otra etapa del flujo.
+                </p>
+              </div>
+            )}
+          </aside>
+        </div>
 
-                {canAssign && (
-                    <div className="
+        {canAssign && (
+          <div
+            className="
                         bg-white
                         rounded-3xl
                         border
                         shadow-sm
                         p-6
                         lg:p-8
-                    ">
-                        <AssignmentSection
-                            reportId={report.id}
-                            reportTitle={report.title}
-                            problemType={report.problemType}
-                            address={report.address}
-                            priority={report.priority}
-                            municipalityId={
-                                report.municipalityId || undefined
-                            }
-                            municipalityName={
-                                report.municipality?.name || undefined
-                            }
-                            isReassignment={
-                                report.status === "ASSIGNED"
-                            }
-                            onAssigned={fetchReport}
-                        />
-                    </div>
-                )}
-            </div>
-        </div>
-    );
+                    "
+          >
+            <AssignmentSection
+              reportId={report.id}
+              reportTitle={report.title}
+              problemType={report.problemType}
+              address={report.address}
+              priority={report.priority}
+              municipalityId={report.municipalityId || undefined}
+              municipalityName={report.municipality?.name || undefined}
+              isReassignment={report.status === "ASSIGNED"}
+              onAssigned={fetchReport}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

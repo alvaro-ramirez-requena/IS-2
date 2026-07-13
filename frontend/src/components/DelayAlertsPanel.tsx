@@ -68,9 +68,10 @@ export default function DelayAlertsPanel() {
 
   return (
     <div className="bg-white rounded-2xl border overflow-hidden">
-
       {/* Header */}
-      <div className={`px-5 py-3 flex items-center justify-between ${criticos > 0 ? "bg-red-50" : "bg-yellow-50"}`}>
+      <div
+        className={`px-5 py-3 flex items-center justify-between ${criticos > 0 ? "bg-red-50" : "bg-yellow-50"}`}
+      >
         <div className="flex items-center gap-2">
           <span className="text-lg">⏰</span>
           <h3 className={`font-semibold ${criticos > 0 ? "text-red-700" : "text-yellow-700"}`}>
@@ -102,14 +103,18 @@ export default function DelayAlertsPanel() {
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm text-gray-800 truncate">{alert.problemType}</p>
               <p className="text-xs text-gray-500 truncate">{alert.address || "Sin dirección"}</p>
-              <p className="text-xs text-gray-400 mt-0.5">Estado: {statusLabels[alert.status] || alert.status}</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Estado: {statusLabels[alert.status] || alert.status}
+              </p>
             </div>
             <div className="ml-3 text-right flex-shrink-0">
-              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                alert.alertLevel === "CRITICO"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-yellow-100 text-yellow-700"
-              }`}>
+              <span
+                className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  alert.alertLevel === "CRITICO"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-yellow-100 text-yellow-700"
+                }`}
+              >
                 {alert.daysDelayed}d de retraso
               </span>
               <p className="text-xs text-gray-400 mt-1">Límite: {alert.expectedDays}d</p>
@@ -117,7 +122,6 @@ export default function DelayAlertsPanel() {
           </div>
         ))}
       </div>
-
     </div>
   );
 }

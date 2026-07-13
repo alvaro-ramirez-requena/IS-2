@@ -1,132 +1,89 @@
-import {
-    useRef,
-    useEffect,
-    useState,
-} from "react";
+import { useRef, useEffect, useState } from "react";
 
-import {
-    useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 type TopProblem = {
+  problemType: string;
 
-    problemType: string;
-
-    _count: {
-
-        problemType: number;
-    };
+  _count: {
+    problemType: number;
+  };
 };
 
 export default function ProblemBanner() {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
-    const scrollRef =
+  const navigate = useNavigate();
 
+  const [problems, setProblems] = useState<TopProblem[]>([]);
 
+  const scroll = (direction: "left" | "right") => {
+    const container = scrollRef.current;
 
-        useRef<HTMLDivElement | null>(
-            null
-        );
-
-    const navigate =
-        useNavigate();
-
-    const [problems, setProblems] =
-        useState<TopProblem[]>([]);
-
-    const scroll = (
-        direction: "left" | "right"
-    ) => {
-
-        const container =
-            scrollRef.current;
-
-        if (!container) {
-            return;
-        }
-
-        const scrollAmount =
-            container.clientWidth;
-
-        container.scrollBy({
-
-            left:
-                direction === "left"
-                    ? -scrollAmount
-                    : scrollAmount,
-
-            behavior: "smooth",
-        });
-    };
-
-    useEffect(() => {
-
-        const fetchTopProblems =
-            async () => {
-
-                try {
-
-                    const response =
-                        await fetch(
-
-                            `${API_URL}/api/reports/top-problems`
-                        );
-
-                    const data =
-                        await response.json();
-
-                    setProblems(data);
-
-                } catch (error) {
-
-                    console.error(error);
-                }
-            };
-
-        fetchTopProblems();
-
-    }, []);
-
-    if (problems.length === 0) {
-
-        return null;
+    if (!container) {
+      return;
     }
 
-    return (
+    const scrollAmount = container.clientWidth;
 
-        <section className="mb-12">
+    container.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
 
-            <h2 className="
+      behavior: "smooth",
+    });
+  };
+
+  useEffect(() => {
+    const fetchTopProblems = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/reports/top-problems`);
+
+        const data = await response.json();
+
+        setProblems(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchTopProblems();
+  }, []);
+
+  if (problems.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mb-12">
+      <h2
+        className="
     text-5xl
     font-bold
     mb-4
     text-center
-">
-                Los 7 problemas más graves
-            </h2>
+"
+      >
+        Los 7 problemas más graves
+      </h2>
 
-            <p className="
+      <p
+        className="
     text-gray-500
     text-xl
     mb-8
     text-center
-">
-                Basado en reportes ciudadanos
-                y análisis recientes
-            </p>
+"
+      >
+        Basado en reportes ciudadanos y análisis recientes
+      </p>
 
-            <div className="relative">
+      <div className="relative">
+        <button
+          onClick={() => scroll("left")}
 
-                <button
-                    onClick={() =>
-                        scroll("left")
-                    }
-
-                    className="
+          className="
             hidden
             md:flex
             absolute
@@ -143,16 +100,14 @@ export default function ProblemBanner() {
             justify-center
             font-bold
         "
-                >
-                    ←
-                </button>
+        >
+          ←
+        </button>
 
-                <button
-                    onClick={() =>
-                        scroll("right")
-                    }
+        <button
+          onClick={() => scroll("right")}
 
-                    className="
+          className="
             hidden
             md:flex
             absolute
@@ -169,15 +124,14 @@ export default function ProblemBanner() {
             justify-center
             font-bold
         "
-                >
-                    →
-                </button>
+        >
+          →
+        </button>
 
-                <div
+        <div
+          ref={scrollRef}
 
-                    ref={scrollRef}
-
-                    className={`
+          className={`
     flex
     gap-4
     overflow-x-auto
@@ -185,32 +139,18 @@ export default function ProblemBanner() {
     snap-mandatory
     scroll-smooth
     pb-2
-    ${problems.length < 5
-                            ? "justify-center"
-                            : "justify-start"
-                        }
+    ${problems.length < 5 ? "justify-center" : "justify-start"}
 `}
-                >
+        >
+          {problems.map((problem, index) => (
+            <div
+              key={problem.problemType}
 
-                    {problems.map((
-                        problem,
-                        index
-                    ) => (
+              onClick={() =>
+                navigate(`/reports/problem/${encodeURIComponent(problem.problemType)}`)
+              }
 
-                        <div
-                            key={problem.problemType}
-
-                            onClick={() =>
-
-                                navigate(
-
-                                    `/reports/problem/${encodeURIComponent(
-                                        problem.problemType
-                                    )}`
-                                )
-                            }
-
-                            className="
+              className="
                     min-w-full
                     sm:min-w-[48%]
                     md:min-w-[31%]
@@ -235,18 +175,17 @@ hover:scale-[1.02]
 transition
                 "
 
-                            style={{
-                                backgroundImage:
-                                    `linear-gradient(
+              style={{
+                backgroundImage: `linear-gradient(
             to top,
             rgba(0,0,0,0.8),
             rgba(0,0,0,0.2)
         ),
         url(https://images.unsplash.com/photo-1518391846015-55a9cc003b25)`,
-                            }}
-                        >
-
-                            <div className="
+              }}
+            >
+              <div
+                className="
                     absolute
                     top-4
                     left-4
@@ -259,35 +198,32 @@ transition
                     items-center
                     justify-center
                     font-bold
-                ">
-                                {index + 1}
-                            </div>
+                "
+              >
+                {index + 1}
+              </div>
 
-                            <h3 className="
+              <h3
+                className="
                     text-3xl
                     font-bold
-                ">
-                                {problem.problemType}
-                            </h3>
+                "
+              >
+                {problem.problemType}
+              </h3>
 
-                            <p className="
+              <p
+                className="
                     text-xl
                     mt-2
-                ">
-                                {
-                                    problem._count.problemType
-                                } reportes
-                            </p>
-
-                        </div>
-
-
-                    ))}
-
-                </div>
-
+                "
+              >
+                {problem._count.problemType} reportes
+              </p>
             </div>
-
-        </section>
-    );
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }

@@ -1,290 +1,227 @@
-import {
-    useRef,
-    useEffect,
-    useState,
-} from "react";
+import { useRef, useEffect, useState } from "react";
 
-import CategoryCard
-    from "./CategoryCard";
+import CategoryCard from "./CategoryCard";
 
-const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 type TopProblem = {
+  problemType: string;
 
-    problemType: string;
-
-    _count: {
-
-        problemType: number;
-    };
+  _count: {
+    problemType: number;
+  };
 };
 
 const sections = [
+  {
+    title: "Seguridad ciudadana",
 
-    {
-        title: "Seguridad ciudadana",
+    color: "bg-red-50",
 
-        color: "bg-red-50",
+    problems: [
+      {
+        title: "Robos y asaltos",
+        reports: 320,
+      },
 
-        problems: [
+      {
+        title: "Consumo de alcohol en la vía pública",
+        reports: 168,
+      },
 
-            {
-                title: "Robos y asaltos",
-                reports: 320,
-            },
+      {
+        title: "Venta ambulante no autorizada",
+        reports: 175,
+      },
 
-            {
-                title:
-                    "Consumo de alcohol en la vía pública",
-                reports: 168,
-            },
+      {
+        title: "Personas sospechosas",
+        reports: 142,
+      },
 
-            {
-                title:
-                    "Venta ambulante no autorizada",
-                reports: 175,
-            },
+      {
+        title: "Ruidos molestos",
+        reports: 123,
+      },
+    ],
+  },
 
-            {
-                title:
-                    "Personas sospechosas",
-                reports: 142,
-            },
+  {
+    title: "Ambiente y limpieza",
 
-            {
-                title:
-                    "Ruidos molestos",
-                reports: 123,
-            },
-        ],
-    },
+    color: "bg-green-50",
 
-    {
-        title: "Ambiente y limpieza",
+    problems: [
+      {
+        title: "Acumulación de basura",
+        reports: 1248,
+      },
 
-        color: "bg-green-50",
+      {
+        title: "Mal olor en la vía pública",
+        reports: 433,
+      },
 
-        problems: [
+      {
+        title: "Contaminación de áreas verdes",
+        reports: 311,
+      },
 
-            {
-                title:
-                    "Acumulación de basura",
-                reports: 1248,
-            },
+      {
+        title: "Residuos fuera de contenedores",
+        reports: 276,
+      },
 
-            {
-                title:
-                    "Mal olor en la vía pública",
-                reports: 433,
-            },
+      {
+        title: "Quema de residuos",
+        reports: 103,
+      },
+    ],
+  },
 
-            {
-                title:
-                    "Contaminación de áreas verdes",
-                reports: 311,
-            },
+  {
+    title: "Infraestructura",
 
-            {
-                title:
-                    "Residuos fuera de contenedores",
-                reports: 276,
-            },
+    color: "bg-yellow-50",
 
-            {
-                title:
-                    "Quema de residuos",
-                reports: 103,
-            },
-        ],
-    },
+    problems: [
+      {
+        title: "Pistas en mal estado",
+        reports: 842,
+      },
 
-    {
-        title: "Infraestructura",
+      {
+        title: "Alumbrado público defectuoso",
+        reports: 987,
+      },
 
-        color: "bg-yellow-50",
+      {
+        title: "Veredas en mal estado",
+        reports: 543,
+      },
 
-        problems: [
+      {
+        title: "Semáforos inoperativos",
+        reports: 312,
+      },
 
-            {
-                title:
-                    "Pistas en mal estado",
-                reports: 842,
-            },
+      {
+        title: "Señalización dañada",
+        reports: 256,
+      },
+    ],
+  },
 
-            {
-                title:
-                    "Alumbrado público defectuoso",
-                reports: 987,
-            },
+  {
+    title: "Movilidad",
 
-            {
-                title:
-                    "Veredas en mal estado",
-                reports: 543,
-            },
+    color: "bg-blue-50",
 
-            {
-                title:
-                    "Semáforos inoperativos",
-                reports: 312,
-            },
+    problems: [
+      {
+        title: "Congestión vehicular",
+        reports: 512,
+      },
 
-            {
-                title:
-                    "Señalización dañada",
-                reports: 256,
-            },
-        ],
-    },
+      {
+        title: "Autos abandonados",
+        reports: 231,
+      },
 
-    {
-        title: "Movilidad",
+      {
+        title: "Exceso de velocidad",
+        reports: 189,
+      },
 
-        color: "bg-blue-50",
+      {
+        title: "Estacionamiento en zonas prohibidas",
+        reports: 398,
+      },
 
-        problems: [
-
-            {
-                title:
-                    "Congestión vehicular",
-                reports: 512,
-            },
-
-            {
-                title:
-                    "Autos abandonados",
-                reports: 231,
-            },
-
-            {
-                title:
-                    "Exceso de velocidad",
-                reports: 189,
-            },
-
-            {
-                title:
-                    "Estacionamiento en zonas prohibidas",
-                reports: 398,
-            },
-
-            {
-                title:
-                    "Transporte público deficiente",
-                reports: 264,
-            },
-        ],
-    },
+      {
+        title: "Transporte público deficiente",
+        reports: 264,
+      },
+    ],
+  },
 ];
 
 export default function CategorySection() {
+  const [topProblems, setTopProblems] = useState<TopProblem[]>([]);
 
-    const [topProblems, setTopProblems] =
-        useState<TopProblem[]>([]);
+  const scrollRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-    const scrollRefs =
-        useRef<(HTMLDivElement | null)[]>(
-            []
-        );
+  const scroll = (index: number, direction: "left" | "right") => {
+    const container = scrollRefs.current[index];
 
+    if (!container) {
+      return;
+    }
 
-    const scroll = (
-        index: number,
-        direction: "left" | "right"
-    ) => {
+    const scrollAmount = container.clientWidth;
 
-        const container =
-            scrollRefs.current[index];
+    container.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
 
-        if (!container) {
-            return;
-        }
+      behavior: "smooth",
+    });
+  };
 
-        const scrollAmount =
-            container.clientWidth;
+  useEffect(() => {
+    const fetchTopProblems = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/reports/top-problems`);
 
-        container.scrollBy({
+        const data = await response.json();
 
-            left:
-                direction === "left"
-                    ? -scrollAmount
-                    : scrollAmount,
-
-            behavior: "smooth",
-        });
+        setTopProblems(data);
+      } catch (error) {
+        console.error(error);
+      }
     };
 
-    useEffect(() => {
+    fetchTopProblems();
+  }, []);
 
-        const fetchTopProblems =
-            async () => {
-
-                try {
-
-                    const response =
-                        await fetch(
-
-                            `${API_URL}/api/reports/top-problems`
-                        );
-
-                    const data =
-                        await response.json();
-
-                    setTopProblems(data);
-
-                } catch (error) {
-
-                    console.error(error);
-                }
-            };
-
-        fetchTopProblems();
-
-    }, []);
-
-    return (
-
-        <section className="space-y-12">
-
-            {sections.map((section, index) => (
-
-                <div key={section.title}>
-
-                    <div className="
+  return (
+    <section className="space-y-12">
+      {sections.map((section, index) => (
+        <div key={section.title}>
+          <div
+            className="
     flex
     items-center
     justify-between
     mb-6
-">
-
-                        <h2 className="
+"
+          >
+            <h2
+              className="
               text-3xl
               font-bold
-            ">
-                            {section.title}
-                        </h2>
+            "
+            >
+              {section.title}
+            </h2>
 
-                        <div className="
+            <div
+              className="
     flex
     items-center
     gap-4
-">
-
-
-                            <div className="
+"
+            >
+              <div
+                className="
         flex
         items-center
         gap-3
-    ">
+    "
+              >
+                <button
+                  onClick={() => scroll(index, "left")}
 
-                                <button
-                                    onClick={() =>
-                                        scroll(index, "left")
-                                    }
-
-                                    className="
+                  className="
                 w-10
                 h-10
                 rounded-full
@@ -293,16 +230,14 @@ export default function CategorySection() {
                 hover:bg-gray-100
                 font-bold
             "
-                                >
-                                    ←
-                                </button>
+                >
+                  ←
+                </button>
 
-                                <button
-                                    onClick={() =>
-                                        scroll(index, "right")
-                                    }
+                <button
+                  onClick={() => scroll(index, "right")}
 
-                                    className="
+                  className="
                 w-10
                 h-10
                 rounded-full
@@ -311,23 +246,19 @@ export default function CategorySection() {
                 hover:bg-gray-100
                 font-bold
             "
-                                >
-                                    →
-                                </button>
+                >
+                  →
+                </button>
+              </div>
+            </div>
+          </div>
 
-                            </div>
+          <div
+            ref={(el) => {
+              scrollRefs.current[index] = el;
+            }}
 
-                        </div>
-
-                    </div>
-
-                    <div
-
-                        ref={(el) => {
-                            scrollRefs.current[index] = el;
-                        }}
-
-                        className="
+            className="
         flex
         gap-6
         overflow-x-auto
@@ -336,46 +267,30 @@ export default function CategorySection() {
         snap-mandatory
         pb-2
     "
-                    >
+          >
+            {section.problems.map((problem) => (
+              <div
+                key={problem.title}
 
-                        {section.problems.map((problem) => (
-
-                            <div
-                                key={problem.title}
-
-                                className="
+                className="
     min-w-[calc(33.333%-16px)]
     flex-shrink-0
     snap-start
 "
-                            >
-
-                                <CategoryCard
-
-                                    title={problem.title}
-                                    reports={
-
-                                        topProblems.find(
-
-                                            (topProblem) =>
-
-                                                topProblem.problemType ===
-                                                problem.title
-                                        )
-
-                                            ?._count.problemType || 0
-                                    }
-                                    color={section.color}
-                                />
-
-                            </div>
-                        ))}
-
-                    </div>
-
-                </div>
+              >
+                <CategoryCard
+                  title={problem.title}
+                  reports={
+                    topProblems.find((topProblem) => topProblem.problemType === problem.title)
+                      ?._count.problemType || 0
+                  }
+                  color={section.color}
+                />
+              </div>
             ))}
-
-        </section>
-    );
+          </div>
+        </div>
+      ))}
+    </section>
+  );
 }
