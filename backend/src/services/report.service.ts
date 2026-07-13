@@ -18,6 +18,12 @@ import {
   resolveMunicipalityIdFromLocation,
 } from "../utils/municipalityResolver";
 
+import {
+  calculatePriorityByMatrix,
+  parseManualTargetDate,
+  validatePrioritizationFields,
+} from "../utils/prioritization.utils";
+
 export class ReportService {
   private reportRepository = new ReportRepository();
 
@@ -341,48 +347,28 @@ export class ReportService {
       );
     }
 
-    if (!data.operationalType?.trim()) {
-      throw new Error("El tipo operativo es obligatorio.");
-    }
+  validatePrioritizationFields({
+    operationalType: data.operationalType,
+    justification: data.justification,
+  });
 
-    if (!data.justification?.trim()) {
-      throw new Error("La justificación es obligatoria.");
-    }
-
-    let computedPriority: Priority =
-      Priority.BAJO;
-
-    if (
-      (data.impact === "ALTO" && data.probability === "ALTO") ||
-      (data.impact === "ALTO" && data.probability === "MEDIO") ||
-      (data.impact === "MEDIO" && data.probability === "ALTO")
-    ) {
-      computedPriority =
-        Priority.ALTO;
-    } else if (
-      (data.impact === "MEDIO" && data.probability === "MEDIO") ||
-      (data.impact === "ALTO" && data.probability === "BAJO") ||
-      (data.impact === "BAJO" && data.probability === "ALTO") ||
-      (data.impact === "MEDIO" && data.probability === "BAJO")
-    ) {
-      computedPriority =
-        Priority.MEDIO;
-    }
+  const computedPriority =
+    calculatePriorityByMatrix(
+      data.impact,
+      data.probability
+    ) as Priority;
 
     let targetDate =
       await this.calculateTargetDateByPriority(computedPriority);
 
-    if (!targetDate && data.targetDate) {
-      const manualTargetDate =
-        new Date(`${data.targetDate}T00:00:00`);
+  if (!targetDate && data.targetDate) {
+    const manualTargetDate =
+      parseManualTargetDate(data.targetDate);
 
-      if (Number.isNaN(manualTargetDate.getTime())) {
-        throw new Error("La fecha objetivo no es válida.");
-      }
-
-      targetDate =
-        manualTargetDate;
+    if (manualTargetDate) {
+      targetDate = manualTargetDate;
     }
+  }
 
     if (!targetDate) {
       throw new Error(
